@@ -1,0 +1,31 @@
+meta {
+  name: Update webhook
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{base_url}}/{{version}}/notification/webhooks/:webhook_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  webhook_id: {{webhook_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "{{webhook_url}}",
+    "event_types": [
+      "payment.request.*",
+      "payment.dispute.*"
+    ],
+    "signing_key_id": "{{signing_key_id}}",
+    "status": "ENABLED"
+  }
+}

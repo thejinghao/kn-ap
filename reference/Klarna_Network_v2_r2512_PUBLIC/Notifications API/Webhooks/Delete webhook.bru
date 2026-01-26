@@ -1,0 +1,15 @@
+meta {
+  name: Delete webhook
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{base_url}}/{{version}}/notification/webhooks/:webhook_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  webhook_id: {{webhook_id}}
+}

@@ -1,0 +1,34 @@
+meta {
+  name: Create a Payment Account
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/products/payment/:product_id/payment-accounts
+  body: json
+  auth: inherit
+}
+
+params:path {
+  product_id: {{product_id}}
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "payment_account_reference": "payment_account_reference_{{$randomUUID}}",
+    "payment_acquiring_account_id": "{{payment_acquiring_account_id}}",
+    "default_merchant_category_code":"0742",
+    "partner_business_entity_reference":"{{partner_business_entity_reference}}",
+    "default_store_group_reference":"{{store_group_reference}}"
+  }
+}
+
+script:post-response {
+  bru.setVar('payment_account_id', res.body?.payment_account_id || null);
+}

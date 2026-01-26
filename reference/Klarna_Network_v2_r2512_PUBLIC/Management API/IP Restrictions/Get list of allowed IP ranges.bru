@@ -1,0 +1,20 @@
+meta {
+  name: Get list of allowed IP ranges
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/{{version}}/account/integration/ip-restrictions/allowed-ips
+  body: none
+  auth: inherit
+}
+
+body:json {
+  {
+    "store_group_id": "{{store_group_id}}",
+    "type": "WEBSITE",
+    "store_reference": "{{$randomUUID}}",
+    "url": "https://kn-websdk-v2-authorize.glitch.me"
+  }
+}

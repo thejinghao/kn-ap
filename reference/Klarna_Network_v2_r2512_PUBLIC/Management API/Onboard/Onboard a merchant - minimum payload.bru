@@ -1,0 +1,73 @@
+meta {
+  name: Onboard a merchant - minimum payload
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/distribution/onboard
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "partner_account_reference": "{{$randomUUID}}",
+    "partner_account_name": "{{$randomCompanyName}}",
+    "partner_account_contact": {
+      "given_name": "John",
+      "family_name": "Doe",
+      "email": "john.doe+{{$randomUUID}}@example.com",
+      "phone": "+18445527621"
+    },
+    "products": [
+      {
+        "type": "PAYMENT",
+        "payment_profile_id": "{{payment_profile}}",
+        "payment_accounts": [
+          {
+            "payment_acquiring_account_id": "{{payment_acquiring_account_id}}",
+            "default_merchant_category_code": "0744",
+            "payment_account_reference": "{{$randomUUID}}",
+            "default_store_group_reference": "my-store-group-reference-ABC",
+            "partner_business_entity_reference": "LE_KJDHGFKEHGFLLSKJD"
+          }
+        ]
+      }
+    ],
+    "brands": [
+      {
+        "brand_reference": "klarna_standard_offering",
+        "display_name": "Klarna Standard Offering"
+      }
+    ],
+    "store_groups": [
+      {
+        "store_group_reference": "my-store-group-reference-ABC",
+        "brand_reference": "klarna_standard_offering",
+        "stores": [
+          {
+            "store_reference": "codepen",
+            "type": "WEBSITE",
+            "url": "https://cdpn.io"
+          }
+        ]
+      }
+    ],
+    "partner_business_entities": [
+      {
+        "partner_business_entity_reference": "LE_KJDHGFKEHGFLLSKJD",
+        "legal_registered_entity_name": "Legal Entity LLC",
+        "legal_registration_country": "DE"
+      }
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar('partner_account_id', res.body?.partner_account_id || null);
+}

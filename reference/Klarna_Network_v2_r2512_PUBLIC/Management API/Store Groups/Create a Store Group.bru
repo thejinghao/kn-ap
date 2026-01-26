@@ -1,0 +1,53 @@
+meta {
+  name: Create a Store Group
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/store-groups
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "store_group_reference": "{{$randomUUID}}",
+    "brand_reference": "{{brand_reference}}",
+    "support_contact": {
+      "email": "john.doe+{{$randomUUID}}@example.com",
+      "phone": "+18445527621",
+      "contact_form": "https://example.com/customer-service/contact-form"
+    },
+    "social_media_links": [
+      {
+        "provider": "FACEBOOK",
+        "url": "https://facebook.com/johndoe"
+      },
+      {
+        "provider": "INSTAGRAM",
+        "url": "https://instagram.com/johndoe"
+      }
+    ],
+    "stores": [
+      {
+        "type": "WEBSITE",
+        "store_reference": "example",
+        "url": "https://cdpn.io"
+      }
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar('store_group_id', res.body?.store_group_id || null);
+  bru.setVar('store_group_reference', res.body?.store_group_reference || null);
+}

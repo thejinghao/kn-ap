@@ -1,0 +1,28 @@
+meta {
+  name: List settlements
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/{{version}}/settlements?interval_start={{interval_start}}&interval_end={{interval_end}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  interval_start: {{interval_start}}
+  interval_end: {{interval_end}}
+  ~currency: {{currency}}
+  ~payment_acquiring_account_id: {{payment_acquiring_account_id}}
+}
+
+script:pre-request {
+  let interval_start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('interval_start', interval_start);
+  
+  let now = new Date();
+  let interval_end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59)).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('interval_end', interval_end);
+  
+}

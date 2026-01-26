@@ -1,0 +1,330 @@
+meta {
+  name: Create a payment request - travel
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/payment/requests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  ~Klarna-Customer-Token: {{customer_token}}
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "amount": 12336,
+    "payment_request_reference": "payment-reference-{{$randomUUID}}",
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "Flight ticket",
+          "quantity": 1,
+          "total_amount": 3084,
+          "unit_price": 3084,
+          "total_tax_amount": 535,
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        },
+        {
+          "name": "Bus Ticket",
+          "quantity": 1,
+          "total_amount": 3084,
+          "unit_price": 3084,
+          "total_tax_amount": 535,
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        },
+        {
+          "name": "Train ticket",
+          "quantity": 1,
+          "total_amount": 3084,
+          "unit_price": 3084,
+          "total_tax_amount": 535,
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        },
+        {
+          "name": "Twin room",
+          "quantity": 1,
+          "total_amount": 3084,
+          "unit_price": 3084,
+          "total_tax_amount": 535,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomSportsImage}}",
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        }
+      ],
+      "customer": {
+        "given_name": "{{customer.given_name}}",
+        "family_name": "{{customer.family_name}}",
+        "email": "{{customer.email}}",
+        "email_last_verified_at": "{{customer.email_last_verified_at}}",
+        "phone": "{{customer.phone_country_code}}{{customer.phone}}",
+        "phone_last_verified_at": "{{customer.phone_last_verified_at}}",
+        "address": {
+          "street_address": "{{customer.street_address}}{{customer.house_number}}",
+          "postal_code": "{{customer.postal_code}}",
+          "city": "{{customer.city}}",
+          "country": "{{customer.country}}"
+        },
+        "date_of_birth": "{{customer.date_of_birth}}",
+        "customer_account": {
+          "account_identifier": "{{$randomUUID}}",
+          "loyalty_level": "HIGH",
+          "created_at": "2023-05-14T11:25:53Z",
+          "updated_at": "2024-05-12T19:10:32Z",
+          "last_login": {
+            "occurred_at": "2024-01-01T12:00:00Z",
+            "login_method": "WEBAUTHN_PASSKEY"
+          },
+          "purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ],
+          "device_purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ]
+        },
+        "customer_device": {
+          "app_identifier": "{{$randomUUID}}",
+          "device_identifier": "{{$randomUUID}}",
+          "user_agent": "{{$randomUserAgent}}",
+          "ip_address": "{{$randomIPV4}}",
+          "geolocation": {
+            "country": "NL",
+            "latitude": 52.364530592679166,
+            "longitude": 4.905691191365506
+          }
+        }
+      },
+      "travel_reservations": [
+        {
+          "travel_type": "AIR",
+          "reservation_reference": "{{$randomUUID}}",
+          "departure": {
+            "street_address": "{{$randomStreetAddress}}",
+            "city": "{{$randomCity}}",
+            "country": "{{$randomCountryCode}}"
+          },
+          "arrival": {
+            "arrival_airport": "CDG",
+            "city": "Paris",
+            "country": "FR"
+          },
+          "carrier_name": "KL",
+          "price": 3084,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        },
+        {
+          "travel_type": "BUS",
+          "departure": {
+            "departure_location": "{{$randomCity}}",
+            "departs_at": "{{departs_at}}",
+            "address": {
+              "street_address": "{{$randomStreetAddress}}",
+              "city": "{{$randomCity}}",
+              "country": "{{$randomCountryCode}}"
+            }
+          },
+          "arrival": {
+            "arrival_location": "{{$randomCity}}",
+            "address": {
+              "street_address": "{{$randomStreetAddress}}",
+              "city": "{{$randomCity}}",
+              "country": "{{$randomCountryCode}}"
+            }
+          },
+          "carrier_name": "Flixbus",
+          "price": 3084,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        },
+        {
+          "travel_type": "TRAIN",
+          "departure": {
+            "departure_location": "{{$randomCity}}",
+            "departs_at": "{{departs_at}}",
+            "address": {
+              "street_address": "{{$randomStreetAddress}}",
+              "city": "{{$randomCity}}",
+              "country": "{{$randomCountryCode}}"
+            }
+          },
+          "arrival": {
+            "arrival_location": "{{$randomCity}}",
+            "address": {
+              "street_address": "{{$randomStreetAddress}}",
+              "city": "{{$randomCity}}",
+              "country": "{{$randomCountryCode}}"
+            }
+          },
+          "carrier_name": "Eurostar",
+          "price": 3084,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        }
+      ],
+      "lodging_reservations": [
+        {
+          "lodging_name": "Hotel ABC",
+          "address": {
+            "street_address": "{{$randomStreetAddress}}",
+            "city": "{{$randomCity}}",
+            "country": "{{$randomCountryCode}}"
+          },
+          "starts_at": "{{starts_at}}",
+          "ends_at": "{{ends_at}}",
+          "number_of_spaces": 1,
+          "price": 3084,
+          "currency": "{{currency}}",
+          "lodging_type": "ROOM",
+          "guests": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "hosts": {
+            "host_reference": "{{$randomUUID}}",
+            "host_type": "HOTEL",
+            "country_of_domicile": "{{$randomCountryCode}}",
+            "registered_at": "2024-01-01T12:00:00Z",
+            "number_of_reservations": 100
+          },
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        }
+      ]
+    },
+    "shipping_config": {
+      "mode": "EDITABLE",
+      "supported_countries": [
+        "{{customer.country}}"
+      ]
+    },
+    "customer_interaction_config": {
+      "method": "HANDOVER",
+      "return_url": "https://partner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&payment-token={klarna.payment_request.payment_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+      "app_return_url": "appName://KlarnaPayment"
+    }
+  }
+}
+
+script:pre-request {
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  let departs_at = new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let starts_at = new Date(Date.now()+8*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let ends_at = new Date(Date.now()+15*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+  bru.setVar('departs_at', departs_at);
+  bru.setVar('starts_at', starts_at);
+  bru.setVar('ends_at', ends_at);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.supplementary_purchase_data?.line_items || null);
+  bru.setVar('interoperability_token', res.body?.state_context?.interoperability_token || null);
+  bru.setVar('klarna_network_session_token', res.body?.state_context?.klarna_network_session_token || null);
+}

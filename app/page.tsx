@@ -1,0 +1,292 @@
+'use client';
+
+import React, { useState, useCallback } from 'react';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  HttpMethod,
+  HeaderEntry,
+  ProxyResponse,
+  EndpointPreset,
+  PathParamEntry,
+  ApiCallEntry,
+  ResponseMetadata,
+} from '@/lib/types';
+import RequestForm from '@/components/RequestForm';
+import CallHistoryPanel from '@/components/CallHistoryPanel';
+import { useEnvironment } from '@/lib/env-context';
+
+// Inner component that uses environment context
+function HomeContent() {
+  // Environment context for variable substitution
+  const { substituteVariables, findMissingVariables, saveFromResponse } = useEnvironment();
+
+  // Request state
+  const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointPreset | null>(null);
+  const [method, setMethod] = useState<HttpMethod>('GET');
+  const [path, setPath] = useState('');
+  const [headers, setHeaders] = useState<HeaderEntry[]>([]);
+  const [body, setBody] = useState('');
+  const [pathParams, setPathParams] = useState<PathParamEntry[]>([]);
+
+  // UI state
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+
+  // Call history state
+  const [callHistory, setCallHistory] = useState<ApiCallEntry[]>([]);
+
+  // Handler for saving response values as environment variables
+  const handleSaveVariable = useCallback((name: string, value: string, isSecret?: boolean, metadata?: ResponseMetadata) => {
+    saveFromResponse(name, value, isSecret, metadata);
+  }, [saveFromResponse]);
+
+  // Handle endpoint selection
+  const handleSelectEndpoint = useCallback((preset: EndpointPreset | null) => {
+    setSelectedEndpoint(preset);
+    if (preset) {
+      setMethod(preset.method);
+      setPath(preset.endpoint);
+      if (preset.bodyTemplate) {
+        // If bodyTemplate is already a formatted string, use it directly
+        // Otherwise, stringify it with formatting
+        setBody(
+          typeof preset.bodyTemplate === 'string' 
+            ? preset.bodyTemplate 
+            : JSON.stringify(preset.bodyTemplate, null, 2)
+        );
+      } else {
+        setBody('');
+      }
+      // Set path parameters if available
+      if (preset.pathParams && preset.pathParams.length > 0) {
+        const paramEntries: PathParamEntry[] = preset.pathParams.map((param) => ({
+          id: `${preset.id}-${param.name}`,
+          name: param.name,
+          value: '',
+          required: param.required,
+          description: param.description,
+        }));
+        setPathParams(paramEntries);
+      } else {
+        setPathParams([]);
+      }
+      // Set required headers if available
+      const newHeaders: HeaderEntry[] = [];
+      if (preset.requiredHeaders && preset.requiredHeaders.length > 0) {
+        preset.requiredHeaders.forEach((header) => {
+          newHeaders.push({
+            id: `${preset.id}-header-${header.name}`,
+            key: header.name,
+            value: header.example || '',
+            isRequired: true,
+          });
+        });
+      }
+      setHeaders(newHeaders);
+    } else {
+      setPath('');
+      setBody('');
+      setPathParams([]);
+      setHeaders([]);
+    }
+  }, []);
+
+  // Handle form submission
+  const handleSubmit = useCallback(async () => {
+    const callId = uuidv4();
+    const startTime = Date.now();
+
+    // Replace path parameters in the endpoint
+    let finalPath = path;
+    pathParams.forEach((param) => {
+      if (param.value) {
+        // Substitute environment variables in path param values first
+        const substitutedValue = substituteVariables(param.value);
+        finalPath = finalPath.replace(`{${param.name}}`, substitutedValue);
+      }
+    });
+
+    // Also substitute any remaining {{variables}} in the path itself
+    finalPath = substituteVariables(finalPath);
+
+    // Check for missing environment variables in the path
+    const missingEnvVars = findMissingVariables(finalPath);
+    if (missingEnvVars.length > 0) {
+      const errorEntry: ApiCallEntry = {
+        id: callId,
+        name: selectedEndpoint?.name,
+        method,
+        path: finalPath,
+        timestamp: new Date(),
+        status: 'error',
+        requestBody: body ? JSON.parse(body) : undefined,
+        error: `Missing environment variables: ${missingEnvVars.join(', ')}`,
+      };
+      setCallHistory((prev) => [errorEntry, ...prev]);
+      return;
+    }
+
+    // Validate required path parameters
+    const missingParams = pathParams.filter((p) => p.required && !p.value);
+    if (missingParams.length > 0) {
+      // Create error entry
+      const errorEntry: ApiCallEntry = {
+        id: callId,
+        name: selectedEndpoint?.name,
+        method,
+        path: finalPath,
+        timestamp: new Date(),
+        status: 'error',
+        requestBody: body ? JSON.parse(body) : undefined,
+        error: `Missing required path parameters: ${missingParams.map((p) => p.name).join(', ')}`,
+      };
+      setCallHistory((prev) => [errorEntry, ...prev]);
+      return;
+    }
+
+    // Create pending entry
+    const pendingEntry: ApiCallEntry = {
+      id: callId,
+      name: selectedEndpoint?.name,
+      method,
+      path: finalPath,
+      timestamp: new Date(),
+      status: 'pending',
+      requestBody: body && body.trim() ? JSON.parse(body) : undefined,
+    };
+
+    // Add to history (at the beginning for chronological order - newest first)
+    setCallHistory((prev) => [pendingEntry, ...prev]);
+    setIsLoading(true);
+
+    try {
+      // Build headers from the headers array (both required and custom)
+      // Also substitute environment variables in header values
+      const requestHeaders: Record<string, string> = {};
+      headers
+        .filter((h) => h.key && h.value) // Include all headers with key and value
+        .forEach((h) => {
+          requestHeaders[h.key] = substituteVariables(h.value);
+        });
+
+      // Parse body if it exists
+      let parsedBody: unknown = undefined;
+      if (body && body.trim() !== '' && ['POST', 'PATCH', 'PUT'].includes(method)) {
+        try {
+          // Substitute environment variables in body before parsing
+          const substitutedBody = substituteVariables(body);
+          parsedBody = JSON.parse(substitutedBody);
+        } catch {
+          // Update entry with error
+          const duration = Date.now() - startTime;
+          setCallHistory((prev) =>
+            prev.map((c) =>
+              c.id === callId
+                ? { ...c, status: 'error' as const, error: 'Invalid JSON in request body', duration }
+                : c
+            )
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Make request to our proxy endpoint
+      const proxyResponse = await axios.post<ProxyResponse>('/api/klarna-proxy', {
+        method,
+        endpoint: finalPath,
+        headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
+        body: parsedBody,
+      });
+
+      const duration = Date.now() - startTime;
+
+      // Update entry with response
+      setCallHistory((prev) =>
+        prev.map((c) =>
+          c.id === callId
+            ? {
+                ...c,
+                status: 'success' as const,
+                response: proxyResponse.data,
+                duration,
+              }
+            : c
+        )
+      );
+    } catch (err) {
+      const duration = Date.now() - startTime;
+      let errorMessage = 'An unexpected error occurred';
+      let response: ProxyResponse | undefined;
+
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        if (err.response?.data) {
+          response = err.response.data;
+        }
+      }
+
+      // Update entry with error
+      setCallHistory((prev) =>
+        prev.map((c) =>
+          c.id === callId
+            ? {
+                ...c,
+                status: response ? ('success' as const) : ('error' as const),
+                error: response ? undefined : errorMessage,
+                response,
+                duration,
+              }
+            : c
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [method, path, headers, body, pathParams, selectedEndpoint?.name, substituteVariables, findMissingVariables]);
+
+  // Calculate bottom padding for call history based on form state
+  const formHeight = isFormCollapsed ? 65 : 420; // Approximate heights
+
+  return (
+    <div className="h-[calc(100vh-57px)] flex flex-col bg-gray-50">
+      {/* Scrollable Call History Area */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
+        style={{ paddingBottom: formHeight }}
+      >
+        <CallHistoryPanel calls={callHistory} onSaveVariable={handleSaveVariable} />
+      </div>
+
+      {/* Fixed Bottom Request Form */}
+      <RequestForm
+        method={method}
+        path={path}
+        headers={headers}
+        body={body}
+        isLoading={isLoading}
+        isCollapsed={isFormCollapsed}
+        pathParams={pathParams}
+        selectedEndpoint={selectedEndpoint}
+        onMethodChange={setMethod}
+        onPathChange={setPath}
+        onHeadersChange={setHeaders}
+        onBodyChange={setBody}
+        onPathParamsChange={setPathParams}
+        onSubmit={handleSubmit}
+        onToggleCollapse={() => setIsFormCollapsed(!isFormCollapsed)}
+        onSelectEndpoint={handleSelectEndpoint}
+      />
+    </div>
+  );
+}
+
+// Main component - EnvironmentProvider is now at the root layout level
+export default function Home() {
+  return <HomeContent />;
+}

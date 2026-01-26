@@ -1,0 +1,15 @@
+meta {
+  name: List Webhooks
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{base_url}}/{{version}}/notification/webhooks
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar('webhook_id', res.body?.webhooks[0]?.webhook_id || null);
+}

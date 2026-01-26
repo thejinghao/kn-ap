@@ -1,0 +1,90 @@
+meta {
+  name: Create a deep-link (JWT)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/portal/deep-links
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "jwt": "{{jwt_token}}"
+  }
+}
+
+script:pre-request {
+  const axios = require("axios");
+  const { v4: uuidv4 } = require('uuid');
+  const rs = require("jsrsasign");
+  
+  const now = Math.floor(Date.now() / 1000);
+  if (now < bru.getVar("expiresAt")) {
+      return;
+  }
+  
+  //retrieve parameters from environment variables
+  const partnerAccountId = bru.getEnvVar("partner_account_id");
+  const credentialGroupOwnerId = bru.getEnvVar("credential_group_owner_id");
+  const partnerEmail = bru.getEnvVar("partner_email");
+  const escapedX5c = bru.getEnvVar("x5c");
+  const escapedKey = bru.getEnvVar("secret_key");
+  
+  const key = escapedKey.replace(/\\n/g, '\n');
+  const x5c = escapedX5c.replace('-----BEGIN CERTIFICATE-----','').replace('-----END CERTIFICATE-----','').replace(/\\n/g, '');
+  
+  const jwtToSign = {
+    iss: credentialGroupOwnerId,   // Your credential group ID
+    amr: ["pwd"],
+    sub: partnerEmail, // Random email
+    jti: uuidv4(),
+    iat: Math.floor(Date.now() / 1000),                  // Issued at
+    exp: Math.floor(Date.now() / 1000) + 60 * 60,       // Expiration time (1 hour)
+    account_id: partnerAccountId, // Your partner account ID
+    on_behalf_of: partnerAccountId,
+    roles: ['merchant:admin'], // Example roles
+  };
+  
+  console.log('jwtToSign:', jwtToSign); 
+  
+  const options = {
+      algorithm: "ES256",
+      header: {
+        alg: 'ES256', // Specify the algorithm for signing
+        typ: 'JWT',
+        x5c: [ x5c ] // Add your Base64-encoded certificate here
+     }
+  };
+  
+  const prvKey = rs.KEYUTIL.getKey(key);
+  const assertion = rs.jws.JWS.sign(options.algorithm, options.header, jwtToSign, prvKey);
+  
+  
+  // Store the JWT token in a Bruno variable for use in the request body
+  bru.setVar("jwt_token", assertion);
+  
+  console.log('Generated JWT:', assertion); // Output the JWT for debugging purposes
+}
+
+script:post-response {
+  bru.setVar('deep_link_id', res.body?.deep_link_id || null);
+}
+
+tests {
+  test("should be able to create unsigned deep link", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.deep_link_id).to.match(/^krn:/);
+  });
+}

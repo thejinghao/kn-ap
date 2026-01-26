@@ -1,0 +1,26 @@
+meta {
+  name: List settlement transactions
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/{{version}}/settlements/:settlement_id/transactions
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~size: 20
+  ~starting_after: {{last_item}}
+  ~ending_before: {{first_item}}
+}
+
+params:path {
+  settlement_id: {{settlement_id}}
+}
+
+script:post-response {
+  bru.setVar('last_item', res.body?.pagination?.first_item || null);
+  bru.setVar('last_item', res.body?.pagination?.last_item || null);
+}

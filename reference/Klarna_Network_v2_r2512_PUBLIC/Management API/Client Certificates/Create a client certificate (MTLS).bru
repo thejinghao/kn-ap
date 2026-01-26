@@ -1,0 +1,29 @@
+meta {
+  name: Create a client certificate (MTLS)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "{{environment}} MTLS Credentials",
+    "config": {
+      "usage": "MTLS",
+      "certificate_signing_request": "-----BEGIN CERTIFICATE REQUEST-----\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqhkjOPQIBBggqhkjO\nPQMBBwNCAAS7iV+0tyzWdGaLulL7M99hLoIqUFANnqWGu9VveliyDUGo/ZMq6TYf\nS+gvN7TGcBjG1nxUQWcBzpYF1Hp4Y80QoAAwCgYIKoZIzj0EAwIDSAAwRQIhAMjQ\nKQAbi0Dv8MaRYikwUo1felyh1xJe48drsS25HzO5AiA4zWumrZwWRAd4hjqE7qcF\nW4gq8YFu6JVVxLx+MUYthg==\n-----END CERTIFICATE REQUEST-----"
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar('credential_id', res.body?.credential_id || null);
+}

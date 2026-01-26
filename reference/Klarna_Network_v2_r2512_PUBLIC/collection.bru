@@ -1,0 +1,129 @@
+headers {
+  Klarna-Integration-Metadata: {"integrator":{"name":"AcquiringPartner","session_reference":"ecomm_5555-474","module_name":"subIntegrationPath","module_version":"v1.0"},"originators":[{"name":"ecommerceCompany","session_reference":"{{$randomUUID}}","module_name":"subIntegrationPath","module_version":"v2.0"}]}
+}
+
+auth {
+  mode: basic
+}
+
+auth:basic {
+  username: 
+  password: {{acquiring_partner_api_key}}
+}
+
+vars:pre-request {
+  version: v2
+}
+
+script:pre-request {
+  const { v5: uuidv5, v4: uuidv4 } = require('uuid');
+  
+  const partnerCorrelationId = uuidv4();
+  req.setHeader("Partner-Correlation-Id", partnerCorrelationId);
+  
+  // Get method from Bruno's req API
+  const method = (req.getMethod && req.getMethod()) || req.method;
+  
+  if (method && ['POST', 'PATCH'].includes(method.toUpperCase())) {
+    // "random-like" v5
+    const namespace = uuidv5.URL; //6ba7b811-9dad-11d1-80b4-00c04fd430c8
+    console.log(namespace)
+    const name = partnerCorrelationId; // unique per run
+    const idempotencyKey = uuidv5(name, namespace);
+  
+    // Set header on the request
+   req.setHeader('Klarna-Idempotency-Key', idempotencyKey);
+  }
+}
+
+docs {
+  ## 🔐 Using Process Environment Variables in Bruno
+  
+  ### 1. **Create a `.env` File**
+  Manually create a `.env` file in the **root of the Bruno Klarna Network v2 collection**. This file will hold your API secrets in `key=value` format.
+  
+  ```env
+  acquiring_partner_api_key = klarna_test_api_***
+  subpartner_api_key = klarna_test_api_***
+  payment_profile = krn:network:global:test:payment-profile:***
+  payment_acquiring_account_id = krn:partner:global:account:acquiring-account:***
+  partner_account_id = krn:partner:global:account:test:***
+  payment_account_id_standard = krn:partner:global:account:payment-account:***
+  payment_account_id_PiFnG = krn:partner:global:account:payment-account:***
+  credential_group_owner_id = krn:partner:global:account:test:***
+  klarna_client_id = ***
+  secret_key_jwt = -----BEGIN EC PARAMETERS-----\n****\n-----END EC PARAMETERS-----\n-----BEGIN EC PRIVATE KEY-----\n****\n-----END EC PRIVATE KEY-----
+  x5c_jwt= -----BEGIN CERTIFICATE-----\n*****\n-----END CERTIFICATE-----
+  cpgw_username = ***
+  cpgw_password = ***
+  username = ***
+  password = ***
+  bank_account_preset_id = **
+  legacy_price_plan_standard = ***
+  legacy_price_plan_PiFnG = ***
+  ```
+  
+  Note: all keys starting from `username` is for the legacy onboarding API (should you need to test the KN migrate endpoint).
+  
+  > ⚠️ Bruno does **not** create this file for you — you must add it manually.
+  
+  ---
+  
+  ### 2. **Access Variables in Bruno**
+  In the **Collection Environments** you can access these variables using the `process.env` global object. 
+  
+  Example usage:
+  ```bruno
+  {{process.env.acquiring_partner_api_key}}
+  {{process.env.subpartner_api_key}}
+  {{process.env.payment_profile}}
+  {{process.env.payment_acquiring_account_id}}
+  {{process.env.partner_account_id}}
+  {{process.env.payment_account_id_standard}}
+  {{process.env.payment_account_id_PiFnG}}
+  {{process.env.credential_group_owner_id}}
+  {{process.env.klarna_client_id}}
+  {{process.env.secret_key_jwt}}
+  {{process.env.x5c_jwt}}
+  {{process.env.cpgw_username}}
+  {{process.env.cpgw_password}}
+  {{process.env.username}}
+  {{process.env.password}}
+  {{process.env.bank_account_preset_id}}
+  {{process.env.legacy_price_plan_standard}}
+  {{process.env.legacy_price_plan_PiFnG}}
+  ```
+  
+  ---
+  
+  ### 3. **Secure Your Secrets**
+  Make sure to **add the `.env` file to your `.gitignore`** to avoid committing sensitive data to version control.
+  
+  ```gitignore
+  .env
+  ```
+  
+  ---
+  
+  ### ✅ Benefits
+  - Keeps API keys and secrets out of your main collection files.
+  - Supports safe local development without hardcoding sensitive values.
+  
+  ## Add client certificates
+  - To ensure the security of Partner integrations, Klarna also requires Acquiring Partners to [implement Mutual Transport Layer Security (mTLS)](https://docs.klarna.com/klarna-network-distribution/acquiring-partner-setup/account-security/#configure-mutual-transport-layer-security-mtls).
+  - click on the collection folder in navigation panel of your bruno instance and navigate to the Client Certificates tab to add the Key file / Certificate file and Domain for mTLS authentication.
+  
+  ## Import Sample Data
+  - Postman environment files have been created to cover most sample data from [Klarna Sample Customer Data](https://docs.klarna.com/resources/developer-tools/sample-data/sample-customer-data/). Download these files use the import function in the **Global Environments**.
+  
+  - Download these files from [Google Drive](https://drive.google.com/drive/folders/1SeMDXIhiU3RBa7S_6JRBeTgCCSR1nUZV?usp=drive_link) and use the import function in your **Global Environments**
+  
+  ## Install dependencies
+  
+  Install the `jsrsasign` package in the folder where the collection will be stored on your machine. This is for the execution of the script generating the JWT token necessary for signed deep linking / user access
+   
+  ```shell
+  npm install jsrsasign
+  ```
+  
+}

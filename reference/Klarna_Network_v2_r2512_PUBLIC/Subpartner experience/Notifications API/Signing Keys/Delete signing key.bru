@@ -1,0 +1,22 @@
+meta {
+  name: Delete signing key
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/{{version}}/notification/signing-keys/:signing_key_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  signing_key_id: {{signing_key_id}}
+}
+
+tests {
+  test("should be able to delete signing key", () => {
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+}

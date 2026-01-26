@@ -1,0 +1,29 @@
+meta {
+  name: Create a client certificate (JWT_SIGNING)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "{{environment}} certificate for JWT sining on portal deeplinking and user access",
+    "config": {
+      "usage": "JWT_SIGNING",
+      "certificate_signing_request": "-----BEGIN CERTIFICATE REQUEST-----\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTMzMkNIS1UwWTATBgcqhkjOPQIBBggqhkjO\nPQMBBwNCAAQrwmbGk8sTS1Nqp1MukUY5lOsXThQ3dr/i/jX0RJdWAAyABEcEzBwq\nvFfRg4gaLSIB9UToFiUHg6npokGt84T9oAAwCgYIKoZIzj0EAwIDSAAwRQIhAKj+\nqyASNTPXmbU9WXccbo90fpfgf7UzRvmxWv9gWKjXAiBga+qLaouH5RkdiIybwpZu\n9InTsLThiB3OZcOrFn790A==\n-----END CERTIFICATE REQUEST-----"
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar('credential_id', res.body?.credential_id || null);
+}

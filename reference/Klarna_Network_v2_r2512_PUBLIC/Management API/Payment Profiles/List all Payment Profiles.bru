@@ -1,0 +1,15 @@
+meta {
+  name: List all Payment Profiles
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/distribution/products/payment/profiles
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar('payment_profile_id', res.body[0]?.payment_profile_id || null);
+}

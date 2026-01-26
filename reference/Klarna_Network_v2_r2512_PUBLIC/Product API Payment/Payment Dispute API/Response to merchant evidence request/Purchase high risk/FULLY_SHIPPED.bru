@@ -1,0 +1,48 @@
+meta {
+  name: FULLY_SHIPPED
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "shipping": "FULLY_SHIPPED",
+      "list_of_shipments": [
+        {
+          "payment_capture_id": "{{payment_capture_id}}",
+          "tracking_number": "{{tracking_number}}",
+          "shipping_carrier": "{{shipping_carrier}}",
+          "estimated_delivery_date": "{{estimated_delivery_date}}",
+          "shipping_carrier_contacted": "YES_PURCHASE_HAS_BEEN_DELIVERED_BACK_TO_US"
+        }
+      ]
+    }
+  }
+}

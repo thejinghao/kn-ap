@@ -1,0 +1,55 @@
+meta {
+  name: Authorize (Klarna-Payment-Token)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/authorize
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+  Klarna-Payment-Token: {{payment_token}}
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "request_payment_transaction": {
+      "amount": 12336,
+      "payment_transaction_reference": "payment-transaction-reference-{{$randomUUID}}",
+      "payment_option_id": "S0xBUk5B",
+      "capture": "LATER"
+    },
+    "acquiring_config": {
+      "payment_account_id": "{{payment_account_id_standard}}"
+    }
+  }
+}
+
+script:pre-request {
+  let nextday = new Date(Date.now()+1*24*60*60*1000).toISOString().slice(0, -14);
+  bru.setVar('nextday', nextday);
+}
+
+script:post-response {
+  bru.setVar('payment_transaction_id', res.body?.payment_transaction_response?.payment_transaction?.payment_transaction_id || null);
+  bru.setVar('customer_token', res.body?.customer_token_response?.customer_token || null);
+}
+
+tests {
+  test("should be able to authorize a payment", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_transaction_response.payment_transaction.payment_transaction_id).to.match(/^krn:payment:/)
+    expect(data.payment_transaction_response.result).to.equal("APPROVED");
+  });
+  
+}

@@ -1,0 +1,41 @@
+meta {
+  name: Update a Store Group
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/store-groups/:store_group_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  store_group_id: {{store_group_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "store_group_reference": "{{$randomUUID}}",
+    "support_contact": {
+      "email": "john.doe+{{$randomUUID}}@example.com",
+      "phone": "+18445527621",
+      "contact_form": "https://example.com/customer-service/contact-form"
+    },
+    "social_media_links": [
+      {
+        "provider": "FACEBOOK",
+        "url": "https://facebook.com/johndoe"
+      },
+      {
+        "provider": "INSTAGRAM",
+        "url": "https://instagram.com/johndoe"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Create a Payment Program Enablement
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/v2/accounts/:partner_account_id/products/payment/payment-programs/payment-program-enablements
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+body:json {
+  {
+    "payment_program_id": "krn:network:global:all:payment:payment-program:11cb810d-109e-4a5c-bf2d-0f50ccff779c",
+    "enablement_criteria": {
+      "customer_countries": [
+        "{{customer.country}}"
+      ],
+      "merchant_category_codes": [
+        "0744"
+      ]
+    }
+  }
+}
+
+vars:post-response {
+  payment_program_enablement_id: res.body.payment_program_enablement_id
+  payment_program_id: res.body.payment_program_id
+}
+
+script:pre-request {
+  let effective_from = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('effective_from', effective_from);
+  
+  let effective_to = new Date(Date.now() + 60* 24 * 60 * 60 * 1000).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('effective_to', effective_to);
+}

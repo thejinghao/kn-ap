@@ -1,0 +1,16 @@
+meta {
+  name: Revert suspension of a Payment Product
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/products/payment/:product_id/enable
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  product_id: {{product_id}}
+}

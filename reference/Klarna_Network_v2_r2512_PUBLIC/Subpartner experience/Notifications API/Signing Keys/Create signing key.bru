@@ -1,0 +1,25 @@
+meta {
+  name: Create signing key
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/notification/signing-keys
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar('signing_key_id', res.body?.signing_key_id || null);
+}
+
+tests {
+  test("should be able to create a signing key", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(data.signing_key_id).to.match(/^krn:/)
+    expect(data.signing_key).to.exist;
+  });
+  
+}

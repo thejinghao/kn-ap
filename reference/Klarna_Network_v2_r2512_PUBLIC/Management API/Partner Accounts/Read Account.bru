@@ -1,0 +1,26 @@
+meta {
+  name: Read Account
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id?expand=products&expand=brands&expand=store_groups&expand=partner_business_entities
+  body: none
+  auth: inherit
+}
+
+params:query {
+  expand: products
+  expand: brands
+  expand: store_groups
+  expand: partner_business_entities
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('product_id', res.body?.products[0]?.product_id || null);
+}

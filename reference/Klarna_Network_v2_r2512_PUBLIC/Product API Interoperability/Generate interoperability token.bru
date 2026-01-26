@@ -1,0 +1,19 @@
+meta {
+  name: Generate interoperability token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/interoperability/tokens
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('interoperability_token', res.body?.interoperability_token || null);
+}

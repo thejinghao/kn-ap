@@ -1,0 +1,36 @@
+meta {
+  name: Create a Store - PHYSICAL_STORE
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/stores
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "store_group_id": "{{store_group_id}}",
+    "type": "PHYSICAL_STORE",
+    "store_reference": "{{$randomUUID}}",
+    "address": {
+      "street_address": "{{$randomStreetAddress}}",
+      "city": "{{$randomCity}}",
+      "country": "{{$randomCountryCode}}"
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar('store_id', res.body?.store_id || null);
+}

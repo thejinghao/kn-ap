@@ -1,0 +1,36 @@
+meta {
+  name: Create webhook - Payment Request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/notification/webhooks
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "{{webhook_url}}",
+    "event_types": [
+      "payment.request.state-change.submitted",
+      "payment.request.state-change.in-progress",
+      "payment.request.state-change.canceled",
+      "payment.request.state-change.expired",
+      "payment.request.state-change.completed",
+      "payment.request.updated"
+    ],
+    "event_version": "v2",
+    "signing_key_id": "{{signing_key_id}}",
+    "status": "ENABLED"
+  }
+}
+
+script:post-response {
+  bru.setVar('webhook_id', res.body?.webhook_id || null);
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Read a Price Plan
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/distribution/products/payment/price-plans/:price_plan_id?merchant_category_code=0744&currency={{currency}}&customer_country={{customer.country}}&version={{price_plan_version}}&pricing_payment_category=DIGITAL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  merchant_category_code: 0744
+  currency: {{currency}}
+  customer_country: {{customer.country}}
+  version: {{price_plan_version}}
+  pricing_payment_category: DIGITAL
+  ~partner_country: GB
+  ~payment_program_id: 
+  ~size: 
+  ~starting_after: 
+  ~ending_before: 
+  ~date_time: 
+}
+
+params:path {
+  price_plan_id: {{price_plan_id}}
+}

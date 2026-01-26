@@ -1,0 +1,25 @@
+meta {
+  name: List signing keys
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/notification/signing-keys
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar('signing_key_id', res.body?.signing_keys[0]?.signing_key_id || null);
+  
+}
+
+tests {
+  test("should be able to list signing keys", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.signing_keys).to.be.an('array')
+  });
+  
+}

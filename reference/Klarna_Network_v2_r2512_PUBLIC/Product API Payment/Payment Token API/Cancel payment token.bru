@@ -1,0 +1,16 @@
+meta {
+  name: Cancel payment token
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/tokens/:payment_token
+  body: none
+  auth: inherit
+}
+
+params:path {
+  payment_token: {{payment_token}}
+  partner_account_id: {{partner_account_id}}
+}

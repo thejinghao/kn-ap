@@ -1,0 +1,23 @@
+meta {
+  name: Disable a Client Identifier
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-identifier/:credential_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+tests {
+  test("should be able to disable a client identifier", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+}

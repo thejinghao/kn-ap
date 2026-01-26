@@ -1,0 +1,26 @@
+meta {
+  name: Remove enforcement of MTLS authorization
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{base_url}}/{{version}}/account/integration/client-certificates/enforcement
+  body: none
+  auth: inherit
+}
+
+body:json {
+  {
+    "enforced_from": "NOW"
+  }
+}
+
+tests {
+  test("should be able to remove enforcement of MTLS authorization", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(204);
+    expect(data.enforcement_mode).to.match("REPORTING")
+  });
+  
+}

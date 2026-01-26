@@ -1,0 +1,48 @@
+meta {
+  name: Klarna payment presentation API (Klarna-Interoperability-Token)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=PAY&app_return_url={{app_return_url}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  locale: {{locale}}
+  amount: 12336
+  currency: {{currency}}
+  intents[]: PAY
+  app_return_url: {{app_return_url}}
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+  Klarna-Interoperability-Token: krn:network:us1:interoperability:eyJhbGciOiJSUzI1NiIsImtpZCI6IjgyMzA1ZWJjLWI4MTEtMzYzNy1hYTRjLTY2ZWNhMTg3NGYzZCJ9.eyJwYXltZW50X3JlcXVlc3RzIjpbeyJpZCI6ImtybjpwYXltZW50OnVzMTpyZXF1ZXN0OjcxYjM1ODY0LTFmMGYtNjYzYy1hMzliLTZmMmIzMGRiNDQ4OSIsInN0YXRlIjoiSU5fUFJPR1JFU1MiLCJhbW91bnQiOjQwMDAsImN1cnJlbmN5IjoiRVVSIiwibGFzdF9tb2RpZmllZF9hdCI6IjIwMjUtMTItMDNUMTI6NDk6MzkuMzQ2MTk4MzQ3WiJ9XSwiZXhwIjoxNzY0NzY5ODIxfQ.P8kJfQyTxm2lkPPwlywT0_4S05mdYkPmWYtlHHyYDtF72OGYUv8qbK9pDdFNpVNDFAeaccJELIaUSID7pPCqKmZ8qxTr25spz61v6s5ggw7PJiX3Gn7tdDwclY1C0x5dPkkSgXxEhS5Qdlx-Ecjkh-LD0JttriCjQMmBIvbe3YG6IasK3O733PWL8MiD8PFnMyldQYbW3D6Dv9qoWDAr1EorCHFZh9DVynJKHHNA9Nvm49CaE8wF3RQ9ly8FXGUWpZ-WbJvb2BpOZznGgPJ1YOwLB3NfpUGawoe28xnJPk7kR8PfhMeBBHoBx7XWfvlN3PiM6B3AHqw00WB45jhzZA
+}
+
+body:json {
+  {
+    "locale": "{{locale}}",
+    "amount": 11836,
+    "currency": "{{currency}}",
+    "intents": ["PAY"]
+  }
+}
+
+script:pre-request {
+  // Value you want to encode
+  const base64appReturnUrl = "appName://KlarnaPayment";   // or any string you need
+  
+  // Encode to Base64
+  const encoded = Buffer.from(base64appReturnUrl, "utf8").toString("base64");
+  
+  // Save as a variable so you can use it in headers
+  bru.setVar("app_return_url", encoded);
+}

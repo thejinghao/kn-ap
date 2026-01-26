@@ -1,0 +1,79 @@
+meta {
+  name: Authorize - interoperability_data
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/authorize
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "interoperability_data": "{\"content_type\":\"vnd.klarna.interoperability-data.v2+json\",\"content\":{\"payment_request\":{\"supplementary_purchase_data\":{\"purchase_reference\":\"merchant-purchase-reference-{{$randomUUID}}\",\"line_items\":[{\"name\":\"{{$randomProductName}}\",\"quantity\":2,\"total_amount\":3998,\"total_tax_amount\":694,\"unit_price\":1999,\"product_url\":\"{{$randomUrl}}\",\"image_url\":\"{{$randomImageUrl}}\",\"product_identifier\":\"{{$randomUUID}}\",\"line_item_reference\":\"{{$randomUUID}}\",\"shipping_reference\":\"shipment-recipient-e8fdc4f5\",\"line_item_metadata\":{\"categories\":[\"{{$randomProduct}}\"]}},{\"name\":\"{{$randomProductName}}\",\"quantity\":3,\"total_amount\":10797,\"unit_price\":3599,\"total_tax_amount\":1874,\"product_url\":\"{{$randomUrl}}\",\"image_url\":\"{{$randomSportsImage}}\",\"product_identifier\":\"{{$randomUUID}}\",\"line_item_reference\":\"{{$randomUUID}}\",\"shipping_reference\":\"shipment-recipient-33442f63\",\"line_item_metadata\":{\"categories\":[\"{{$randomProduct}}\"]}},{\"name\":\"Holiday sale 20% off\",\"quantity\":1,\"total_amount\":-2959},{\"name\":\"shipping-option-1\",\"quantity\":1,\"total_amount\":500,\"total_tax_amount\":10}],\"shipping\":[{\"shipping_reference\":\"shipment-recipient-e8fdc4f5\",\"recipient\":{\"given_name\":\"{{shipping.given_name}}\",\"family_name\":\"{{shipping.family_name}}\",\"email\":\"{{shipping.email}}\",\"phone\":\"{{shipping.phone_country_code}}{{shipping.phone}}\"},\"address\":{\"street_address\":\"{{shipping.street_address}}{{shipping.house_number}}\",\"postal_code\":\"{{shipping.postal_code}}\",\"city\":\"{{shipping.city}}\",\"country\":\"{{shipping.country}}\"},\"shipping_option\":{\"shipping_type\":\"TO_DOOR\",\"shipping_type_attributes\":[\"SIGNATURE_REQUIRED\"],\"shipping_carrier\":\"DHL\"}},{\"shipping_reference\":\"shipment-recipient-33442f63\",\"recipient\":{\"given_name\":\"{{shipping.given_name}}\",\"family_name\":\"{{shipping.family_name}}\",\"email\":\"{{shipping.email}}\",\"phone\":\"{{shipping.phone_country_code}}{{shipping.phone}}\"},\"address\":{\"street_address\":\"{{shipping.street_address}}{{shipping.house_number}}\",\"postal_code\":\"{{shipping.postal_code}}\",\"city\":\"{{shipping.city}}\",\"country\":\"{{shipping.country}}\"},\"shipping_option\":{\"shipping_type\":\"PICKUP_STORE\",\"shipping_type_attributes\":[\"SIGNATURE_REQUIRED\"],\"shipping_carrier\":\"DHL\"}}],\"customer\":{\"given_name\":\"{{customer.given_name}}\",\"family_name\":\"{{customer.family_name}}\",\"email\":\"{{customer.email}}\",\"email_last_verified_at\":\"{{customer.email_last_verified_at}}\",\"phone\":\"{{customer.phone_country_code}}{{customer.phone}}\",\"phone_last_verified_at\":\"{{customer.phone_last_verified_at}}\",\"address\":{\"street_address\":\"{{customer.street_address}}{{customer.house_number}}\",\"postal_code\":\"{{customer.postal_code}}\",\"city\":\"{{customer.city}}\",\"country\":\"{{customer.country}}\"},\"date_of_birth\":\"{{customer.date_of_birth}}\",\"customer_account\":{\"account_identifier\":\"{{$randomUUID}}\",\"loyalty_level\":\"HIGH\",\"created_at\":\"2023-05-14T11:25:53Z\",\"updated_at\":\"2024-05-12T19:10:32Z\",\"last_login\":{\"occurred_at\":\"2024-01-01T12:00:00Z\",\"login_method\":\"WEBAUTHN_PASSKEY\"},\"purchase_history\":[{\"number_of_purchases\":10,\"number_of_paid_purchases\":10,\"number_of_disputed_purchases\":2,\"total_amount\":100000,\"currency\":\"{{currency}}\",\"payment_method\":\"CREDIT_CARD\",\"first_purchase_at\":\"2023-05-14T11:32:51Z\",\"last_purchase_at\":\"2024-05-12T19:15:21Z\"}],\"device_purchase_history\":[{\"number_of_purchases\":10,\"number_of_paid_purchases\":10,\"number_of_disputed_purchases\":2,\"total_amount\":100000,\"currency\":\"{{currency}}\",\"payment_method\":\"CREDIT_CARD\",\"first_purchase_at\":\"2023-05-14T11:32:51Z\",\"last_purchase_at\":\"2024-05-12T19:15:21Z\"}]},\"customer_device\":{\"app_identifier\":\"{{$randomUUID}}\",\"device_identifier\":\"{{$randomUUID}}\",\"user_agent\":\"{{$randomUserAgent}}\",\"ip_address\":\"{{$randomIPV4}}\",\"geolocation\":{\"country\":\"{{customer.country}}\",\"latitude\":52.364530592679166,\"longitude\":4.905691191365506}}},\"travel_reservations\":[{\"travel_type\":\"AIR\",\"reservation_reference\":\"{{$randomUUID}}\",\"departure\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"},\"arrival\":{\"arrival_airport\":\"CDG\",\"city\":\"Paris\",\"country\":\"FR\"},\"carrier_name\":\"KL\",\"price\":3084,\"currency\":\"{{currency}}\",\"ticket_class\":\"ECONOMY\",\"passengers\":[{\"given_name\":\"{{customer.given_name}}\",\"family_name\":\"{{customer.family_name}}\"}],\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}],\"affiliate_name\":\"booking.com\"},{\"travel_type\":\"BUS\",\"departure\":{\"departure_location\":\"{{$randomCity}}\",\"departs_at\":\"{{departs_at}}\",\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"}},\"arrival\":{\"arrival_location\":\"{{$randomCity}}\",\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"}},\"carrier_name\":\"Flixbus\",\"price\":3084,\"currency\":\"{{currency}}\",\"ticket_class\":\"ECONOMY\",\"passengers\":[{\"given_name\":\"{{customer.given_name}}\",\"family_name\":\"{{customer.family_name}}\"}],\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}],\"affiliate_name\":\"booking.com\"},{\"travel_type\":\"TRAIN\",\"departure\":{\"departure_location\":\"{{$randomCity}}\",\"departs_at\":\"{{departs_at}}\",\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"}},\"arrival\":{\"arrival_location\":\"{{$randomCity}}\",\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"}},\"carrier_name\":\"Eurostar\",\"price\":3084,\"currency\":\"{{currency}}\",\"ticket_class\":\"ECONOMY\",\"passengers\":[{\"given_name\":\"{{customer.given_name}}\",\"family_name\":\"{{customer.family_name}}\"}],\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}],\"affiliate_name\":\"booking.com\"}],\"lodging_reservations\":[{\"lodging_name\":\"HotelABC\",\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"},\"starts_at\":\"{{starts_at}}\",\"ends_at\":\"{{ends_at}}\",\"number_of_spaces\":1,\"price\":3084,\"currency\":\"{{currency}}\",\"lodging_type\":\"ROOM\",\"guests\":[{\"given_name\":\"{{customer.given_name}}\",\"family_name\":\"{{customer.family_name}}\"}],\"hosts\":{\"host_reference\":\"{{$randomUUID}}\",\"host_type\":\"HOTEL\",\"country_of_domicile\":\"{{$randomCountryCode}}\",\"registered_at\":\"2024-01-01T12:00:00Z\",\"number_of_reservations\":100},\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}],\"affiliate_name\":\"booking.com\"}],\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}],\"vouchers\":[{\"voucher_name\":\"TestVoucherABC\",\"voucher_type\":\"GIFT_CARD\",\"voucher_company\":\"{{$randomCompanyName}}\",\"starts_at\":\"{{starts_at}}\",\"ends_at\":\"{{ends_at}}\",\"affiliate_name\":\"Testaffiliate\"}],\"event_reservations\":[{\"event_name\":\"ConcertABCticket\",\"event_company_name\":\"RandomCompanyevent\",\"event_type\":\"CONCERT\",\"starts_at\":\"{{starts_at}}\",\"ends_at\":\"{{ends_at}}\",\"venue_name\":\"RandomArena\",\"access_controlled_venue\":true,\"address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"},\"affiliate_name\":\"Randomaffiliatename\",\"insurances\":[{\"insurance_type\":\"CANCELATION\",\"insurance_company_name\":\"AON\",\"price\":10,\"currency\":\"{{currency}}\"}]}],\"subscriptions\":[{\"subscription_reference\":\"SUBSCRIPTION_PLAN_ABC\",\"name\":\"AwesomeSubscription\",\"free_trial\":\"INACTIVE\",\"billing_plans\":[{\"billing_amount\":1999,\"currency\":\"{{currency}}\",\"from\":\"{{subscription_start_date}}\",\"interval\":\"MONTH\",\"interval_frequency\":1},{\"billing_amount\":599,\"currency\":\"{{currency}}\",\"from\":\"{{subscription_start_date}}\",\"interval\":\"YEAR\",\"interval_frequency\":1}]}],\"ondemand_service\":{\"currency\":\"{{currency}}\",\"average_amount\":20000,\"minimum_amount\":20000,\"maximum_amount\":20000,\"purchase_interval\":\"MONTH\",\"purchase_interval_frequency\":1},\"marketplace_sellers\":[{\"marketplace_seller_reference\":\"{{$randomUUID}}\",\"marketplace_seller_name\":\"{{$randomCompanyName}}\",\"marketplace_seller_address\":{\"street_address\":\"{{$randomStreetAddress}}\",\"city\":\"{{$randomCity}}\",\"country\":\"{{$randomCountryCode}}\"},\"product_category\":\"MEN_CLOTHING\",\"line_item_references\":[\"marketplace_item_1\",\"marketplace_item_2\"],\"seller_registered_at\":\"{{last_week}}\",\"seller_updated_at\":\"{{last_week}}\",\"seller_last_login_at\":\"{{last_week}}\",\"shipping_references\":[\"shipment-recipient-e8fdc4f5\",\"shipment-recipient-33442f63\"],\"seller_rating\":\"HIGH\",\"number_of_transactions\":10,\"volume_of_transactions\":100000}]}}}}",
+    "request_payment_transaction": {
+      "amount": 12336,
+      "capture": "LATER",
+      "payment_transaction_reference": "payment-transaction-reference-{{$randomUUID}}",
+      "payment_option_id": "S0xBUk5B",
+      "payment_program_enablement_codes": [
+        "Financing_0_6M"
+      ]
+    },
+    "step_up_config": {
+      "payment_request_reference": "payment-reference-{{$randomUUID}}",
+      "payment_request_expires_at": "{{nextday}}",
+      "customer_interaction_config": {
+        "method": "HANDOVER",
+        "return_url": "https://acquiringpartner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&payment-token={klarna.payment_request.payment_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+        "app_return_url": "appName://KlarnaPayment"
+      }
+    },
+    "acquiring_config": {
+      "payment_account_id": "{{payment_account_id_standard}}"
+    }
+  }
+}
+
+script:pre-request {
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  let nextday = new Date(Date.now()+1*24*60*60*1000).toISOString().slice(0, -14);
+  let departs_at = new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let starts_at = new Date(Date.now()+8*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let ends_at = new Date(Date.now()+15*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let last_week = new Date(Date.now()-7*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  
+  bru.setVar('last_week', last_week);
+  bru.setVar('departs_at', departs_at);
+  bru.setVar('starts_at', starts_at);
+  bru.setVar('ends_at', ends_at);
+  bru.setVar('nextday', nextday);
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+  bru.setVar('subscription_start_date', starts_at);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request?.payment_request_id || null);
+}
+
+tests {
+  test("should be able to authorize a payment", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request.state_context.customer_interaction.payment_request_id).to.match(/^krn:/)
+    expect(data.payment_transaction_response.result).to.equal("STEP_UP_REQUIRED");
+  });
+  
+}

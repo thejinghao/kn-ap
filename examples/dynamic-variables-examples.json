@@ -1,0 +1,190 @@
+{
+  "examples": [
+    {
+      "name": "User Registration",
+      "description": "Create a new user with randomly generated data",
+      "request": {
+        "method": "POST",
+        "endpoint": "/api/users",
+        "body": {
+          "user_id": "{{$randomUUID}}",
+          "username": "{{$randomUserName}}",
+          "email": "{{$randomEmail}}",
+          "profile": {
+            "first_name": "{{$randomFirstName}}",
+            "last_name": "{{$randomLastName}}",
+            "phone": "{{$randomPhoneNumber}}",
+            "avatar": "{{$randomAvatarImage}}"
+          },
+          "created_at": "{{$isoTimestamp}}"
+        }
+      }
+    },
+    {
+      "name": "Partner Account Creation",
+      "description": "Klarna Network partner account with dynamic data",
+      "request": {
+        "method": "POST",
+        "endpoint": "/v2/account/partner-accounts",
+        "body": {
+          "partner_account_reference": "{{$randomUUID}}",
+          "partner_account_name": "{{$randomCompanyName}}",
+          "partner_account_contact": {
+            "given_name": "{{$randomFirstName}}",
+            "family_name": "{{$randomLastName}}",
+            "email": "{{$randomEmail}}",
+            "phone": "{{$randomPhoneNumber}}"
+          },
+          "products": [
+            {
+              "type": "PAYMENT",
+              "payment_profile_id": "{{payment_profile}}",
+              "payment_accounts": [
+                {
+                  "payment_acquiring_account_id": "{{payment_acquiring_account_id}}",
+                  "default_merchant_category_code": "0744",
+                  "payment_account_reference": "{{$randomUUID}}",
+                  "default_store_group_reference": "my-store-group-{{$randomNanoId}}"
+                }
+              ]
+            }
+          ],
+          "store_groups": [
+            {
+              "store_group_reference": "store-{{$randomNanoId}}",
+              "brand_reference": "klarna_standard_offering",
+              "stores": [
+                {
+                  "store_reference": "{{$randomDomainWord}}",
+                  "type": "WEBSITE",
+                  "url": "{{$randomUrl}}"
+                }
+              ]
+            }
+          ],
+          "partner_business_entities": [
+            {
+              "partner_business_entity_reference": "LE_{{$randomNanoId}}",
+              "legal_registered_entity_name": "{{$randomCompanyName}} {{$randomCompanySuffix}}",
+              "legal_registration_country": "{{$randomCountryCode}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "E-Commerce Order",
+      "description": "Create an order with random product and customer data",
+      "request": {
+        "method": "POST",
+        "endpoint": "/api/orders",
+        "body": {
+          "order_id": "{{$randomUUID}}",
+          "customer": {
+            "name": "{{$randomFullName}}",
+            "email": "{{$randomEmail}}",
+            "phone": "{{$randomPhoneNumber}}",
+            "address": {
+              "street": "{{$randomStreetAddress}}",
+              "city": "{{$randomCity}}",
+              "country": "{{$randomCountry}}"
+            }
+          },
+          "items": [
+            {
+              "product_id": "{{$randomUUID}}",
+              "name": "{{$randomProductName}}",
+              "price": "{{$randomPrice}}",
+              "quantity": 1
+            }
+          ],
+          "payment": {
+            "method": "card",
+            "transaction_id": "{{$randomUUID}}"
+          },
+          "created_at": "{{$isoTimestamp}}"
+        }
+      }
+    },
+    {
+      "name": "API Key Creation",
+      "description": "Generate API credentials with dynamic identifiers",
+      "request": {
+        "method": "POST",
+        "endpoint": "/v2/account/integration/credentials/api-key",
+        "body": {
+          "description": "API Key for {{$randomCompanyName}}",
+          "credential_id": "{{$randomUUID}}",
+          "created_at": "{{$isoTimestamp}}",
+          "metadata": {
+            "environment": "sandbox",
+            "ip_whitelist": [
+              "{{$randomIPV4}}",
+              "{{$randomIPV4}}"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Test User with Lorem Content",
+      "description": "Create test data with lorem ipsum content",
+      "request": {
+        "method": "POST",
+        "endpoint": "/api/content",
+        "body": {
+          "id": "{{$randomUUID}}",
+          "author": "{{$randomFullName}}",
+          "title": "{{$randomLoremSentence}}",
+          "content": "{{$randomLoremParagraph}}",
+          "tags": [
+            "{{$randomLoremWord}}",
+            "{{$randomLoremWord}}",
+            "{{$randomLoremWord}}"
+          ],
+          "published_at": "{{$isoTimestamp}}"
+        }
+      }
+    },
+    {
+      "name": "Financial Transaction",
+      "description": "Create a financial transaction with banking data",
+      "request": {
+        "method": "POST",
+        "endpoint": "/api/transactions",
+        "body": {
+          "transaction_id": "{{$randomUUID}}",
+          "from_account": "{{$randomBankAccount}}",
+          "to_account": "{{$randomBankAccount}}",
+          "amount": "{{$randomPrice}}",
+          "currency": "{{$randomCurrencyCode}}",
+          "type": "{{$randomTransactionType}}",
+          "timestamp": "{{$isoTimestamp}}"
+        }
+      }
+    },
+    {
+      "name": "Mixed Variables Example",
+      "description": "Combine dynamic variables with environment variables",
+      "request": {
+        "method": "POST",
+        "endpoint": "/api/test",
+        "headers": {
+          "Authorization": "Bearer {{api_token}}",
+          "X-Request-ID": "{{$randomUUID}}",
+          "X-User-Agent": "{{$randomUserAgent}}"
+        },
+        "body": {
+          "api_key": "{{klarna_api_key}}",
+          "merchant_id": "{{merchant_id}}",
+          "test_data": {
+            "id": "{{$randomUUID}}",
+            "name": "{{$randomFullName}}",
+            "email": "{{$randomEmail}}",
+            "company": "{{$randomCompanyName}}"
+          }
+        }
+      }
+    }
+  ]
+}

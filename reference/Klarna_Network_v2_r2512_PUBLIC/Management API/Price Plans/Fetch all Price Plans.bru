@@ -1,0 +1,16 @@
+meta {
+  name: Fetch all Price Plans
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/{{version}}/distribution/products/payment/price-plans
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.setVar('price_plan_id', res.body?.price_plans[0].price_plan_id || null);
+  bru.setVar('price_plan_version', res.body?.price_plans[0].versions[0].version || null);
+}

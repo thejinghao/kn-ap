@@ -1,0 +1,15 @@
+meta {
+  name: Get payout status
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/{{version}}/settlements/:settlement_id/payouts/status
+  body: none
+  auth: inherit
+}
+
+params:path {
+  settlement_id: {{settlement_id}}
+}

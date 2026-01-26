@@ -1,0 +1,15 @@
+meta {
+  name: Cancel payment request
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url}}/{{version}}/payment/requests/:payment_request_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  payment_request_id: {{payment_request_id}}
+}

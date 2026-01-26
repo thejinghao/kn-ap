@@ -1,0 +1,23 @@
+meta {
+  name: Disable an API Key
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/{{version}}/account/integration/credentials/api-key/:credential_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+tests {
+  test("should be able to disable an API key", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get Dispute
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+script:post-response {
+  bru.setVar('payment_dispute_customer_evidence_id', res.body?.customer_evidence[0]?.payment_dispute_customer_evidence_id || null);
+}

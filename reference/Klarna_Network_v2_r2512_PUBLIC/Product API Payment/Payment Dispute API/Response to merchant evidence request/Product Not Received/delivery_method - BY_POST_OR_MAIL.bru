@@ -1,0 +1,61 @@
+meta {
+  name: delivery_method - BY_POST_OR_MAIL
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "have_you_resolved_the_dispute_with_the_customer": "NO_DISPUTE_NOT_ACCEPTED",
+      "not_accepted_reason": "CUSTOMER_REFUSED_DELIVERY_VALID_PROOF_REQUIRED",
+      "delivery_method": "BY_POST_OR_MAIL",
+      "tracking_number": "97836529487569275",
+      "customer": {
+        "given_name": "{{shipping.given_name}}",
+        "family_name": "{{shipping.family_name}}"
+      },
+      "delivery_address": {
+        "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+        "postal_code": "{{shipping.postal_code}}",
+        "city": "{{shipping.city}}",
+        "country": "{{shipping.country}}"
+      },
+      "shipping_carrier": "DHL",
+      "estimated_delivery_date": "2025-10-20",
+      "hyperlink_to_proof_of_delivery_url": "https://example.com/proof_of_delivery.html",
+      "proof_of_delivery_attachments": [
+        {
+          "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+          "description": "attachment description"
+        }
+      ]
+    }
+  }
+}

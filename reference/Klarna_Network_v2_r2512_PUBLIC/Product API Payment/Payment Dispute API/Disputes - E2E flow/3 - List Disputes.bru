@@ -1,0 +1,56 @@
+meta {
+  name: 3 - List Disputes
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes?payment_transaction_id={{payment_transaction_id}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  payment_transaction_id: {{payment_transaction_id}}
+  ~opened_at_start: {{opened_at_start}}
+  ~opened_at_end: {{opened_at_end}}
+  ~starting_after: {{last_item}}
+  ~size: 25
+  ~purchase_references: {{purchase_reference}}
+  ~payment_product_instance_id: {{product_id}}
+  ~state: PRE_ARBITRATION
+  ~state: ARBITRATION_PENDING
+  ~state: MERCHANT_EVIDENCE_PENDING
+  ~state: CLOSED
+  ~reason: RETURN_NOT_REFUNDED
+  ~reason: PRODUCTS_NOT_RECEIVED
+  ~reason: PRODUCTS_FAULTY
+  ~reason: CAPTURE_AMOUNT_INCORRECT
+  ~reason: PURCHASE_CANCELED
+  ~reason: PURCHASE_UNAUTHORIZED
+  ~reason: PURCHASE_HIGH_RISK
+  ~sort_by: opened_at
+  ~sort_by: deadline_expires_at
+  ~sort_by: -deadline_expires_at
+  ~closed_at_start: 2025-01-01T12:00:00Z
+  ~closed_at_end: 2025-01-01T12:00:00Z
+  ~ending_before: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:pre-request {
+  let opened_at_start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('opened_at_start', opened_at_start);
+  
+  let opened_at_end = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('opened_at_end', opened_at_end);
+  
+}
+
+script:post-response {
+  bru.setVar('payment_dispute_id', res.body?.disputes[0]?.payment_dispute_id || null);
+  bru.setVar('last_item', res.body?.pagination?.last_item || null);
+}

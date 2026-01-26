@@ -1,0 +1,25 @@
+meta {
+  name: Cancel payment request
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/requests/:payment_request_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_request_id: {{payment_request_id}}
+}
+
+tests {
+  test("should be able to delete a payment request", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request_id).to.match(/^krn:payment/);
+  });
+  
+}

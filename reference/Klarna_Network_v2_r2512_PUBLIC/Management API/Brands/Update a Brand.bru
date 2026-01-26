@@ -1,0 +1,32 @@
+meta {
+  name: Update a Brand
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/brands/:brand_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  brand_id: {{brand_id}}
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "brand_reference": "{{$randomUUID}}",
+    "display_name": "{{$randomCompanyName}}",
+    "element": {
+      "feature_image_url": "{{$randomImageUrl}}",
+      "logo_url": "{{$randomImageUrl}}",
+      "icon_url": "{{$randomImageUrl}}"
+    }
+  }
+}

@@ -1,0 +1,1125 @@
+[
+  {
+    "file": "Create an API Key.bru",
+    "category": "API Keys",
+    "name": "Create an API Key",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/api-key",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} API Credentials\""
+  },
+  {
+    "file": "Disable an API Key.bru",
+    "category": "API Keys",
+    "name": "Disable an API Key",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all API Keys.bru",
+    "category": "API Keys",
+    "name": "List all API Keys",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/api-key",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read an API Key.bru",
+    "category": "API Keys",
+    "name": "Read an API Key",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update an API Key.bru",
+    "category": "API Keys",
+    "name": "Update an API Key",
+    "method": "PATCH",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} API Credentials\""
+  },
+  {
+    "file": "Create a Brand.bru",
+    "category": "Brands",
+    "name": "Create a Brand",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/brands",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"brand_reference\": \"{{$randomUUID}}\",\n\"display_name\": \"{{$randomCompanyName}}\",\n\"element\": {\n\"feature_image_url\": \"{{$randomImageUrl}}\",\n\"logo_url\": \"{{$randomImageUrl}}\",\n\"icon_url\": \"{{$randomImag"
+  },
+  {
+    "file": "Get all brands available.bru",
+    "category": "Brands",
+    "name": "Get all brands available",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/brands",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a specific brand.bru",
+    "category": "Brands",
+    "name": "Read a specific brand",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/brands/{brand_id}",
+    "pathParams": [
+      "partner_account_id",
+      "brand_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Brand.bru",
+    "category": "Brands",
+    "name": "Update a Brand",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/brands/{brand_id}",
+    "pathParams": [
+      "partner_account_id",
+      "brand_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"brand_reference\": \"{{$randomUUID}}\",\n\"display_name\": \"{{$randomCompanyName}}\",\n\"element\": {\n\"feature_image_url\": \"{{$randomImageUrl}}\",\n\"logo_url\": \"{{$randomImageUrl}}\",\n\"icon_url\": \"{{$randomImag"
+  },
+  {
+    "file": "Create a client certificate (JWT_SIGNING).bru",
+    "category": "Client Certificates",
+    "name": "Create a client certificate (JWT_SIGNING)",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/client-certificate",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} certificate for JWT sining on portal deeplinking and user access\",\n\"config\": {\n\"usage\": \"JWT_SIGNING\",\n\"certificate_signing_request\": \"-----BEGIN CERTIFICATE REQUEST-"
+  },
+  {
+    "file": "Create a client certificate (MTLS).bru",
+    "category": "Client Certificates",
+    "name": "Create a client certificate (MTLS)",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/client-certificate",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} MTLS Credentials\",\n\"config\": {\n\"usage\": \"MTLS\",\n\"certificate_signing_request\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqh"
+  },
+  {
+    "file": "Enforce MTLS authorization.bru",
+    "category": "Client Certificates",
+    "name": "Enforce MTLS authorization",
+    "method": "PUT",
+    "endpoint": "/v2/account/integration/client-certificates/enforcement",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"enforced_from\": \"NOW\""
+  },
+  {
+    "file": "List all current client certificates.bru",
+    "category": "Client Certificates",
+    "name": "List all current client certificates",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-certificate",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"Test API Credentials\",\n\"config\": {\n\"usage\": \"MTLS\",\n\"certificate_signing_request\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqhkjOPQIBBggqh"
+  },
+  {
+    "file": "Read mTLS authorization enforcement status.bru",
+    "category": "Client Certificates",
+    "name": "Read mTLS authorization enforcement status",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/client-certificates/enforcement",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read the data for a client certificate.bru",
+    "category": "Client Certificates",
+    "name": "Read the data for a client certificate",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-certificate/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"Test API Credentials\",\n\"config\": {\n\"usage\": \"MTLS\",\n\"certificate_signing_request\": \"-----BEGIN CERTIFICATE REQUEST-----\\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqhkjOPQIBBggqh"
+  },
+  {
+    "file": "Remove enforcement of MTLS authorization.bru",
+    "category": "Client Certificates",
+    "name": "Remove enforcement of MTLS authorization",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/client-certificates/enforcement",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"enforced_from\": \"NOW\""
+  },
+  {
+    "file": "Revoke a Client Certificate.bru",
+    "category": "Client Certificates",
+    "name": "Revoke a Client Certificate",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/client-certificate/{credential_id}/revoke",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"revoked_from\": \"{{revoked_from}}\""
+  },
+  {
+    "file": "Update a Client Certificate.bru",
+    "category": "Client Certificates",
+    "name": "Update a Client Certificate",
+    "method": "PATCH",
+    "endpoint": "/v2/account/integration/credentials/client-certificate/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} certificate for JWT signing on portal deeplinking and user access\""
+  },
+  {
+    "file": "Create a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Create a Client Identifier",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/client-identifier",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} Client Credentials\""
+  },
+  {
+    "file": "Disable a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Disable a Client Identifier",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all Client Identifiers.bru",
+    "category": "Client Identifiers",
+    "name": "List all Client Identifiers",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-identifier",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Read a Client Identifier",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Update a Client Identifier",
+    "method": "PATCH",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} Client Credentials\""
+  },
+  {
+    "file": "Get a decision.bru",
+    "category": "Compliance Decision",
+    "name": "Get a decision",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/compliance/decisions/{decision_id}",
+    "pathParams": [
+      "partner_account_id",
+      "decision_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get all decisions for an account.bru",
+    "category": "Compliance Decision",
+    "name": "Get all decisions for an account",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/compliance/decisions",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "size",
+      "~starting_after"
+    ],
+    "headers": [
+      "User"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get list of allowed IP ranges.bru",
+    "category": "IP Restrictions",
+    "name": "Get list of allowed IP ranges",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/ip-restrictions/allowed-ips",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_id\": \"{{store_group_id}}\",\n\"type\": \"WEBSITE\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"url\": \"https://kn-websdk-v2-authorize.glitch.me\""
+  },
+  {
+    "file": "Onboard a merchant - minimum payload.bru",
+    "category": "Onboard",
+    "name": "Onboard a merchant - minimum payload",
+    "method": "POST",
+    "endpoint": "/v2/distribution/onboard",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"partner_account_reference\": \"{{$randomUUID}}\",\n\"partner_account_name\": \"{{$randomCompanyName}}\",\n\"partner_account_contact\": {\n\"given_name\": \"John\",\n\"family_name\": \"Doe\",\n\"email\": \"john.doe+{{$rando"
+  },
+  {
+    "file": "Onboard a merchant - multiple payment accounts.bru",
+    "category": "Onboard",
+    "name": "Onboard a merchant - multiple payment accounts",
+    "method": "POST",
+    "endpoint": "/v2/distribution/onboard",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"partner_account_reference\": \"{{$randomUUID}}\",\n\"partner_account_name\": \"{{$randomCompanyName}}\",\n\"partner_account_contact\": {\n\"given_name\": \"John\",\n\"family_name\": \"Doe\",\n\"email\": \"john.doe+{{$rando"
+  },
+  {
+    "file": "Onboard a merchant - single payment account.bru",
+    "category": "Onboard",
+    "name": "Onboard a merchant - single payment account",
+    "method": "POST",
+    "endpoint": "/v2/distribution/onboard",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"partner_account_reference\": \"{{$randomUUID}}\",\n\"partner_account_name\": \"{{$randomCompanyName}}\",\n\"partner_account_contact\": {\n\"given_name\": \"John\",\n\"family_name\": \"Doe\",\n\"email\": \"john.doe+{{$rando"
+  },
+  {
+    "file": "Patch Account.bru",
+    "category": "Partner Accounts",
+    "name": "Patch Account",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"partner_account_reference\": \"{{$randomUUID}}\",\n\"partner_account_name\": \"{{$randomCompanyName}}\",\n\"partner_account_contact\": {\n\"given_name\": \"John\",\n\"family_name\": \"Doe\",\n\"email\": \"john.doe+{{$rando"
+  },
+  {
+    "file": "Read Account.bru",
+    "category": "Partner Accounts",
+    "name": "Read Account",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "expand",
+      "expand",
+      "expand",
+      "expand"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create a Partner Business Entity.bru",
+    "category": "Partner Business Entities",
+    "name": "Create a Partner Business Entity",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/partner-business-entities",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"partner_business_entity_reference\":\"{{$randomUUID}}\",\n\"legal_registered_entity_name\": \"{{$randomCompanyName}}\",\n\"legal_registration_country\": \"US\",\n\"supplementary_business_data\": {\n\"legal_registrat"
+  },
+  {
+    "file": "Get all partner business entities available.bru",
+    "category": "Partner Business Entities",
+    "name": "Get all partner business entities available",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/partner-business-entities",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a specific partner business entity.bru",
+    "category": "Partner Business Entities",
+    "name": "Read a specific partner business entity",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/partner-business-entities/{partner_business_entity_id}",
+    "pathParams": [
+      "partner_account_id",
+      "partner_business_entity_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Partner Business Entity.bru",
+    "category": "Partner Business Entities",
+    "name": "Update a Partner Business Entity",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/partner-business-entities/{partner_business_entity_id}",
+    "pathParams": [
+      "partner_account_id",
+      "partner_business_entity_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"supplementary_business_data\": {\n\"legal_registration\": {\n\"legal_registration_number\": \"HRA-{{$randomUUID}}\",\n\"legal_registration_authority\": \"Ohio Secretary of State\",\n\"legal_registration_entity_typ"
+  },
+  {
+    "file": "Create a Payment Account.bru",
+    "category": "Payment Accounts",
+    "name": "Create a Payment Account",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/{product_id}/payment-accounts",
+    "pathParams": [
+      "partner_account_id",
+      "product_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_account_reference\": \"payment_account_reference_{{$randomUUID}}\",\n\"payment_acquiring_account_id\": \"{{payment_acquiring_account_id}}\",\n\"default_merchant_category_code\":\"0742\",\n\"partner_busine"
+  },
+  {
+    "file": "Read Payment Accounts.bru",
+    "category": "Payment Accounts",
+    "name": "Read Payment Accounts",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/{product_id}/payment-accounts/{payment_account_id}",
+    "pathParams": [
+      "partner_account_id",
+      "product_id",
+      "payment_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Payment Account.bru",
+    "category": "Payment Accounts",
+    "name": "Update a Payment Account",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/{product_id}/payment-accounts/{payment_account_id}",
+    "pathParams": [
+      "partner_account_id",
+      "product_id",
+      "payment_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_account_reference\": \"payment_account_reference_{{$randomUUID}}\",\n\"default_merchant_category_code\":\"0742\""
+  },
+  {
+    "file": "Get all account payment products.bru",
+    "category": "Payment Products",
+    "name": "Get all account payment products",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Revert suspension of a Payment Product.bru",
+    "category": "Payment Products",
+    "name": "Revert suspension of a Payment Product",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/{product_id}/enable",
+    "pathParams": [
+      "partner_account_id",
+      "product_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Suspend a Payment Product.bru",
+    "category": "Payment Products",
+    "name": "Suspend a Payment Product",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/{product_id}/disable",
+    "pathParams": [
+      "partner_account_id",
+      "product_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"reason\": \"VOLUNTARY\",\n\"reason_details\": \"Fraudulent activity detected\""
+  },
+  {
+    "file": "List all Payment Profiles.bru",
+    "category": "Payment Profiles",
+    "name": "List all Payment Profiles",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/profiles",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create a Payment Program Enablement.bru",
+    "category": "Payment Programs",
+    "name": "Create a Payment Program Enablement",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs/payment-program-enablements",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_program_id\": \"krn:network:global:all:payment:payment-program:11cb810d-109e-4a5c-bf2d-0f50ccff779c\",\n\"enablement_criteria\": {\n\"customer_countries\": [\n\"{{customer.country}}\"\n],\n\"merchant_cate"
+  },
+  {
+    "file": "Delete a Payment Program Enablement.bru",
+    "category": "Payment Programs",
+    "name": "Delete a Payment Program Enablement",
+    "method": "DELETE",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs/payment-program-enablements/{payment_program_enablement_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_program_enablement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_program_id\": \"{{payment_program_id}}\",\n\"enablement_criteria\": {\n\"markets\": [\n{\n\"customer_country\": \"SE\",\n\"transaction_currency\": \"SEK\"\n{\n\"customer_country\": \"NO\",\n\"transaction_currency\": \"N"
+  },
+  {
+    "file": "List Payment Program Plans.bru",
+    "category": "Payment Programs",
+    "name": "List Payment Program Plans",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/payment-program-plans",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all Payment Program Enablements.bru",
+    "category": "Payment Programs",
+    "name": "List all Payment Program Enablements",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs/payment-program-enablements",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_program_id\": \"{{payment_program_id}}\",\n\"enablement_criteria\": {\n\"markets\": [\n{\n\"customer_country\": \"SE\",\n\"transaction_currency\": \"SEK\"\n{\n\"customer_country\": \"NO\",\n\"transaction_currency\": \"N"
+  },
+  {
+    "file": "List all Payment Programs for a Payment Product.bru",
+    "category": "Payment Programs",
+    "name": "List all Payment Programs for a Payment Product",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{{partner_account_id}}/products/payment/payment-programs",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "merchant_category_code",
+      "customer_country",
+      "enablement_type"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all Payment Programs for a Payment Program Plan.bru",
+    "category": "Payment Programs",
+    "name": "List all Payment Programs for a Payment Program Plan",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/payment-program-plans/{payment_program_plan_id}",
+    "pathParams": [
+      "payment_program_plan_id"
+    ],
+    "queryParams": [
+      "merchant_category_code",
+      "customer_country",
+      "transaction_currency",
+      "version",
+      "enablement_type",
+      "~size",
+      "~starting_after",
+      "~ending_before",
+      "~enablement_type",
+      "~enablement_type"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a Payment Program Enablement.bru",
+    "category": "Payment Programs",
+    "name": "Read a Payment Program Enablement",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs/payment-program-enablements/{payment_program_enablement_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_program_enablement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payment_program_id\": \"{{payment_program_id}}\",\n\"enablement_criteria\": {\n\"markets\": [\n{\n\"customer_country\": \"SE\",\n\"transaction_currency\": \"SEK\"\n{\n\"customer_country\": \"NO\",\n\"transaction_currency\": \"N"
+  },
+  {
+    "file": "Read a Payment Program.bru",
+    "category": "Payment Programs",
+    "name": "Read a Payment Program",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/payment-programs/{payment_program_id}",
+    "pathParams": [
+      "payment_program_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create a deep-link (JWT).bru",
+    "category": "Deep-Links",
+    "name": "Create a deep-link (JWT)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/portal/deep-links",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"jwt\": \"{{jwt_token}}\""
+  },
+  {
+    "file": "Create a deep-link.bru",
+    "category": "Deep-Links",
+    "name": "Create a deep-link",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/portal/deep-links",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"subject\": \"{{partner_email}}\",\n\"roles\": [\n\"merchant:admin\"\n],\n\"on_behalf_of\": \"{{partner_account_id}}\""
+  },
+  {
+    "file": "Delete a deep-link.bru",
+    "category": "Deep-Links",
+    "name": "Delete a deep-link",
+    "method": "DELETE",
+    "endpoint": "/v2/accounts/{partner_account_id}/portal/deep-links/{deep_link_id}",
+    "pathParams": [
+      "partner_account_id",
+      "deep_link_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create or update user access.bru",
+    "category": "User Access",
+    "name": "Create or update user access",
+    "method": "POST",
+    "endpoint": "/v2/portal/user-access",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"jwt\": \"{{jwt_token}}\""
+  },
+  {
+    "file": "Delete user access.bru",
+    "category": "User Access",
+    "name": "Delete user access",
+    "method": "DELETE",
+    "endpoint": "/v2/portal/user-access",
+    "pathParams": [],
+    "queryParams": [
+      "account_id",
+      "~principal",
+      "~on_behalf_of"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Fetch all Price Plans.bru",
+    "category": "Price Plans",
+    "name": "Fetch all Price Plans",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/price-plans",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a Price Plan.bru",
+    "category": "Price Plans",
+    "name": "Read a Price Plan",
+    "method": "GET",
+    "endpoint": "/v2/distribution/products/payment/price-plans/{price_plan_id}",
+    "pathParams": [
+      "price_plan_id"
+    ],
+    "queryParams": [
+      "merchant_category_code",
+      "currency",
+      "customer_country",
+      "version",
+      "pricing_payment_category",
+      "~partner_country",
+      "~payment_program_id",
+      "~size",
+      "~starting_after",
+      "~ending_before",
+      "~date_time"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create SFTP Credentials.bru",
+    "category": "SFTP Credentials",
+    "name": "Create SFTP Credentials",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/sftp",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} SFTP Credentials\""
+  },
+  {
+    "file": "Disable a SFTP Credential.bru",
+    "category": "SFTP Credentials",
+    "name": "Disable a SFTP Credential",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/credentials/sftp/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all SFTP credentials.bru",
+    "category": "SFTP Credentials",
+    "name": "List all SFTP credentials",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/sftp",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read an SFTP Credential.bru",
+    "category": "SFTP Credentials",
+    "name": "Read an SFTP Credential",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/sftp/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate settlement report.bru",
+    "category": "Settlements",
+    "name": "Generate settlement report",
+    "method": "POST",
+    "endpoint": "/v2/settlements",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"interval_start\": \"{{interval_start}}\",\n\"interval_end\": \"{{interval_end}}\",\n\"payment_acquiring_account_id\": \"{{payment_acquiring_account_id}}\""
+  },
+  {
+    "file": "Get payout status.bru",
+    "category": "Settlements",
+    "name": "Get payout status",
+    "method": "GET",
+    "endpoint": "/v2/settlements/{settlement_id}/payouts/status",
+    "pathParams": [
+      "settlement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get settlement details.bru",
+    "category": "Settlements",
+    "name": "Get settlement details",
+    "method": "GET",
+    "endpoint": "/v2/settlements/{settlement_id}",
+    "pathParams": [
+      "settlement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get settlement report - CSV.bru",
+    "category": "Settlements",
+    "name": "Get settlement report - CSV",
+    "method": "GET",
+    "endpoint": "/v2/settlements/{settlement_id}/csv",
+    "pathParams": [
+      "settlement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List settlement transactions.bru",
+    "category": "Settlements",
+    "name": "List settlement transactions",
+    "method": "GET",
+    "endpoint": "/v2/settlements/{settlement_id}/transactions",
+    "pathParams": [
+      "settlement_id"
+    ],
+    "queryParams": [
+      "~size",
+      "~starting_after",
+      "~ending_before"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List settlements.bru",
+    "category": "Settlements",
+    "name": "List settlements",
+    "method": "GET",
+    "endpoint": "/v2/settlements",
+    "pathParams": [],
+    "queryParams": [
+      "interval_start",
+      "interval_end",
+      "~currency",
+      "~payment_acquiring_account_id"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Set payout status.bru",
+    "category": "Settlements",
+    "name": "Set payout status",
+    "method": "POST",
+    "endpoint": "/v2/settlements/{settlement_id}/payouts/set-status",
+    "pathParams": [
+      "settlement_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"payout_bank_account_reference\": \"IBAN: **************1234\",\n\"status\": \"PROCESSED\""
+  },
+  {
+    "file": "Create a Store Group.bru",
+    "category": "Store Groups",
+    "name": "Create a Store Group",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/store-groups",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_reference\": \"{{$randomUUID}}\",\n\"brand_reference\": \"{{brand_reference}}\",\n\"support_contact\": {\n\"email\": \"john.doe+{{$randomUUID}}@example.com\",\n\"phone\": \"+18445527621\",\n\"contact_form\": \""
+  },
+  {
+    "file": "Get all store groups available.bru",
+    "category": "Store Groups",
+    "name": "Get all store groups available",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/store-groups",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "~size",
+      "~starting_after",
+      "~ending_before"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a specific Store Group.bru",
+    "category": "Store Groups",
+    "name": "Read a specific Store Group",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/store-groups/{store_group_id}",
+    "pathParams": [
+      "partner_account_id",
+      "store_group_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Store Group.bru",
+    "category": "Store Groups",
+    "name": "Update a Store Group",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/store-groups/{store_group_id}",
+    "pathParams": [
+      "partner_account_id",
+      "store_group_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_reference\": \"{{$randomUUID}}\",\n\"support_contact\": {\n\"email\": \"john.doe+{{$randomUUID}}@example.com\",\n\"phone\": \"+18445527621\",\n\"contact_form\": \"https://example.com/customer-service/conta"
+  },
+  {
+    "file": "Create a Store - MOBILE_APP.bru",
+    "category": "Stores",
+    "name": "Create a Store - MOBILE_APP",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_id\": \"{{store_group_id}}\",\n\"type\": \"MOBILE_APP\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"platform\": \"IOS\",\n\"bundle_names\": [\n\"com.JohnDoeMobile\"\n]"
+  },
+  {
+    "file": "Create a Store - PHYSICAL_STORE.bru",
+    "category": "Stores",
+    "name": "Create a Store - PHYSICAL_STORE",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_id\": \"{{store_group_id}}\",\n\"type\": \"PHYSICAL_STORE\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"address\": {\n\"street_address\": \"{{$randomStreetAddress}}\",\n\"city\": \"{{$randomCity}}\",\n\"country"
+  },
+  {
+    "file": "Create a Store - WEBSITE.bru",
+    "category": "Stores",
+    "name": "Create a Store - WEBSITE",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"store_group_id\": \"{{store_group_id}}\",\n\"type\": \"WEBSITE\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"url\": \"{{$randomUrl}}\""
+  },
+  {
+    "file": "Get all stores available.bru",
+    "category": "Stores",
+    "name": "Get all stores available",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "~size",
+      "~starting_after",
+      "~ending_before"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a specific Store.bru",
+    "category": "Stores",
+    "name": "Read a specific Store",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores/{store_id}",
+    "pathParams": [
+      "partner_account_id",
+      "store_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Store.bru",
+    "category": "Stores",
+    "name": "Update a Store",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/stores/{store_id}",
+    "pathParams": [
+      "partner_account_id",
+      "store_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"type\": \"WEBSITE\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"url\": \"{{$randomUrl}}\""
+  }
+]

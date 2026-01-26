@@ -1,0 +1,33 @@
+meta {
+  name: Upload merchant evidence attachment
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/attachments
+  body: multipartForm
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  filename: bruno.jpg
+  file: @file(/Users/charles.roland/Desktop/bruno.jpg)
+}
+
+script:post-response {
+  bru.setVar('payment_dispute_attachment_id', res.body?.payment_dispute_attachment_id || null);
+}

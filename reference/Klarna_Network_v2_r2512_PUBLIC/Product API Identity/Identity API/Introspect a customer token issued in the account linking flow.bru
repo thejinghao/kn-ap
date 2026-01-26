@@ -1,0 +1,19 @@
+meta {
+  name: Introspect a customer token issued in the account linking flow
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/identity/customer-token/introspect
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Klarna-Customer-Token: {{customer_token}}
+}

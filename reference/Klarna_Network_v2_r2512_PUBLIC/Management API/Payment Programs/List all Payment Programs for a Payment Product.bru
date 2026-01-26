@@ -1,0 +1,17 @@
+meta {
+  name: List all Payment Programs for a Payment Product
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/{{partner_account_id}}/products/payment/payment-programs?merchant_category_code=0744&customer_country={{customer.country}}&enablement_type=PRESET
+  body: none
+  auth: inherit
+}
+
+params:query {
+  merchant_category_code: 0744
+  customer_country: {{customer.country}}
+  enablement_type: PRESET
+}

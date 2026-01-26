@@ -1,0 +1,69 @@
+meta {
+  name: Capture Payment Transaction
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/transactions/:payment_transaction_id/capture
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_transaction_id: {{payment_transaction_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "capture_amount": 12336,
+    "payment_capture_reference": "partner-capture-reference-{{$randomUUID}}",
+    "remaining_authorization": "RELEASE",
+    "supplementary_capture_data": {
+      "line_items": {{line_items}},
+      "shipments": [
+        {
+          "delivery": {
+            "tracking_number": "6478365435621",
+            "tracking_url": "https://shipping.example/findmypackage?6478365435621",
+            "shipping_carrier": "DHL",
+            "shipping_type": "TO_DOOR",
+            "shipping_type_attribute": "LEAVE_AT_DOOR",
+            "estimated_delivery_date": "{{delivery_date}}"
+          },
+          "return": {
+            "tracking_number": "8659650769076",
+            "tracking_url": "https://shipping.example/findmypackage?8659650769076",
+            "shipping_carrier": "DHL",
+            "shipping_type": "TO_DOOR",
+            "shipping_type_attribute": "LEAVE_AT_DOOR",
+            "estimated_delivery_date": "{{delivery_date}}"
+          }
+        }
+      ]
+    },
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}"
+    }
+  }
+}
+
+script:pre-request {
+  let delivery_date = new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0, -14);
+  
+  
+  bru.setVar('delivery_date', delivery_date);
+}
+
+script:post-response {
+  bru.setVar('payment_capture_id', res.body?.payment_capture_id || null);
+  bru.setVar('tracking_number', res.body?.supplementary_capture_data?.shipments[0]?.delivery?.tracking_number || null);
+  bru.setVar('estimated_delivery_date', res.body?.supplementary_capture_data?.shipments[0]?.delivery?.estimated_delivery_date || null);
+  bru.setVar('shipping_carrier', res.body?.supplementary_capture_data?.shipments[0]?.delivery?.shipping_carrier || null);
+  
+}

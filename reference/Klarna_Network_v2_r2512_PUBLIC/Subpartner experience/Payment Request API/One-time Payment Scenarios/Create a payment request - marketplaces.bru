@@ -1,0 +1,242 @@
+meta {
+  name: Create a payment request - marketplaces
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/payment/requests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  ~Klarna-Customer-Token: {{customer_token}}
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "amount": 12336,
+    "payment_request_reference": "payment-reference-{{$randomUUID}}",
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 2,
+          "total_amount": 3998,
+          "total_tax_amount": 694,
+          "unit_price": 1999,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomImageUrl}}",
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "marketplace_item_1",
+          "shipping_reference": "shipment-recipient-e8fdc4f5",
+          "line_item_metadata": {
+            "categories": [
+              "MEN_CLOTHING"
+            ]
+          }
+        },
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 3,
+          "total_amount": 10797,
+          "unit_price": 3599,
+          "total_tax_amount": 1874,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomSportsImage}}",
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "marketplace_item_2",
+          "shipping_reference": "shipment-recipient-33442f63",
+          "line_item_metadata": {
+            "categories": [
+              "MEN_CLOTHING"
+            ]
+          }
+        },
+        {
+          "name": "Holiday sale 20% off",
+          "quantity": 1,
+          "total_amount": -2959
+        },
+        {
+          "name": "shipping-option-1",
+          "quantity": 1,
+          "total_amount": 500,
+          "total_tax_amount": 10
+        }
+      ],
+      "shipping": [
+        {
+          "shipping_reference": "shipment-recipient-e8fdc4f5",
+          "recipient": {
+            "given_name": "{{shipping.given_name}}",
+            "family_name": "{{shipping.family_name}}",
+            "email": "{{shipping.email}}",
+            "phone": "{{shipping.phone_country_code}}{{shipping.phone}}"
+          },
+          "address": {
+            "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+            "postal_code": "{{shipping.postal_code}}",
+            "city": "{{shipping.city}}",
+            "country": "{{shipping.country}}"
+          },
+          "shipping_option": {
+            "shipping_type": "TO_DOOR",
+            "shipping_type_attributes": [
+              "SIGNATURE_REQUIRED"
+            ],
+            "shipping_carrier": "DHL"
+          }
+        },
+        {
+          "shipping_reference": "shipment-recipient-33442f63",
+          "recipient": {
+            "given_name": "{{shipping.given_name}}",
+            "family_name": "{{shipping.family_name}}",
+            "email": "{{shipping.email}}",
+            "phone": "{{shipping.phone_country_code}}{{shipping.phone}}"
+          },
+          "address": {
+            "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+            "postal_code": "{{shipping.postal_code}}",
+            "city": "{{shipping.city}}",
+            "country": "{{shipping.country}}"
+          },
+          "shipping_option": {
+            "shipping_type": "PICKUP_STORE",
+            "shipping_type_attributes": [
+              "SIGNATURE_REQUIRED"
+            ],
+            "shipping_carrier": "DHL"
+          }
+        }
+      ],
+      "customer": {
+        "given_name": "{{customer.given_name}}",
+        "family_name": "{{customer.family_name}}",
+        "email": "{{customer.email}}",
+        "email_last_verified_at": "{{customer.email_last_verified_at}}",
+        "phone": "{{customer.phone_country_code}}{{customer.phone}}",
+        "phone_last_verified_at": "{{customer.phone_last_verified_at}}",
+        "address": {
+          "street_address": "{{customer.street_address}}{{customer.house_number}}",
+          "postal_code": "{{customer.postal_code}}",
+          "city": "{{customer.city}}",
+          "country": "{{customer.country}}"
+        },
+        "date_of_birth": "{{customer.date_of_birth}}",
+        "customer_account": {
+          "account_identifier": "{{$randomUUID}}",
+          "loyalty_level": "HIGH",
+          "created_at": "2023-05-14T11:25:53Z",
+          "updated_at": "2024-05-12T19:10:32Z",
+          "last_login": {
+            "occurred_at": "2024-01-01T12:00:00Z",
+            "login_method": "WEBAUTHN_PASSKEY"
+          },
+          "purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ],
+          "device_purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ]
+        },
+        "customer_device": {
+          "app_identifier": "{{$randomUUID}}",
+          "device_identifier": "{{$randomUUID}}",
+          "user_agent": "{{$randomUserAgent}}",
+          "ip_address": "{{$randomIPV4}}",
+          "geolocation": {
+            "country": "NL",
+            "latitude": 52.364530592679166,
+            "longitude": 4.905691191365506
+          }
+        }
+      },
+      "insurances": [
+        {
+          "insurance_type": "CANCELATION",
+          "insurance_company_name": "AON",
+          "price": 10,
+          "currency": "{{currency}}"
+        }
+      ],
+      "marketplace_sellers": [
+        {
+          "marketplace_seller_reference": "{{$randomUUID}}",
+          "marketplace_seller_name": "{{$randomCompanyName}}",
+          "marketplace_seller_address": {
+            "street_address": "{{$randomStreetAddress}}",
+            "city": "{{$randomCity}}",
+            "country": "{{$randomCountryCode}}"
+          },
+          "product_category": "MEN_CLOTHING",
+          "line_item_references": [
+            "marketplace_item_1",
+            "marketplace_item_2"
+          ],
+          "seller_registered_at": "{{last_week}}",
+          "seller_updated_at": "{{last_week}}",
+          "seller_last_login_at": "{{last_week}}",
+          "shipping_references": [
+            "shipment-recipient-e8fdc4f5",
+            "shipment-recipient-33442f63"
+          ],
+          "seller_rating": "HIGH",
+          "number_of_transactions": 10,
+          "volume_of_transactions": 100000
+        }
+      ]
+    },
+    "shipping_config": {
+      "mode": "EDITABLE",
+      "supported_countries": [
+        "{{customer.country}}"
+      ]
+    },
+    "customer_interaction_config": {
+      "method": "HANDOVER",
+      "return_url": "https://partner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&interoperability-token={klarna.payment_request.interoperability_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+      "app_return_url": "appName://KlarnaPayment"
+    }
+  }
+}
+
+script:pre-request {
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  let last_week = new Date(Date.now()-7*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  
+  bru.setVar('last_week', last_week);
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.supplementary_purchase_data?.line_items || null);
+  bru.setVar('interoperability_token', res.body?.state_context?.interoperability_token || null);
+  bru.setVar('klarna_network_session_token', res.body?.state_context?.klarna_network_session_token || null);
+}

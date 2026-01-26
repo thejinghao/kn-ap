@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "name": "Klarna_Network_v2_r2512_PUBLIC",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "clientCertificates": {
+    "enabled": true,
+    "certs": []
+  },
+  "size": 0.5265188217163086,
+  "filesCount": 314
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get settlement details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/settlements/:settlement_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  settlement_id: {{settlement_id}}
+}

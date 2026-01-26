@@ -1,0 +1,24 @@
+meta {
+  name: Get signing key
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/notification/signing-keys/:signing_key_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  signing_key_id: {{signing_key_id}}
+}
+
+tests {
+  test("should be able to get signing key", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.signing_key_id).to.exist;
+  });
+  
+}

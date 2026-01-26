@@ -1,0 +1,30 @@
+meta {
+  name: Refund Payment Transaction
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/transactions/:payment_transaction_id/refund
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_transaction_id: {{payment_transaction_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refund_amount": 12336,
+    "refund_reference": "partner-refund-reference-{{$randomUUID}}",
+    "supplementary_refund_data": {
+      "line_items": {{line_items}}
+    }
+  }
+}

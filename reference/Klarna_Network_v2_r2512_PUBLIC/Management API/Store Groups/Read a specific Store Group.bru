@@ -1,0 +1,16 @@
+meta {
+  name: Read a specific Store Group
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/store-groups/:store_group_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  store_group_id: {{store_group_id}}
+}

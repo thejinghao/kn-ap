@@ -1,0 +1,419 @@
+meta {
+  name: Customer login use case
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/{{version}}/payment/requests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "amount": 12336,
+    "payment_request_reference": "payment-reference-{{$randomUUID}}",
+    "request_customer_token": {
+      "scopes": [
+        "customer:login"
+      ],
+      "customer_token_reference": "{{$randomUUID}}"
+    },
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 2,
+          "total_amount": 3998,
+          "unit_price": 1999,
+          "total_tax_amount": 694,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomImageUrl}}",
+          "product_identifier": "{{$randomUUID}}",
+          "reference": "cart-item-1234",
+          "shipping_reference": "shipment-recipient-e8fdc4f5"
+        },
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 3,
+          "total_amount": 10797,
+          "unit_price": 3599,
+          "total_tax_amount": 1874,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomSportsImage}}",
+          "product_identifier": "{{$randomUUID}}",
+          "reference": "cart-item-2314",
+          "shipping_reference": "shipment-recipient-33442f63"
+        },
+        {
+          "name": "Holiday sale 20% off",
+          "quantity": 1,
+          "total_amount": -2959
+        },
+        {
+          "name": "shipping-option-1",
+          "quantity": 1,
+          "total_amount": 500,
+          "total_tax_amount": 10
+        }
+      ],
+      "shipping": [
+        {
+          "shipping_reference": "shipment-recipient-e8fdc4f5",
+          "recipient": {
+            "given_name": "{{shipping.given_name}}",
+            "family_name": "{{shipping.family_name}}",
+            "email": "{{shipping.email}}",
+            "phone": "{{shipping.phone_country_code}}{{shipping.phone}}"
+          },
+          "address": {
+            "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+            "postal_code": "{{shipping.postal_code}}",
+            "city": "{{shipping.city}}",
+            "country": "{{shipping.country}}"
+          },
+          "shipping_option": {
+            "shipping_type": "TO_DOOR",
+            "shipping_type_attributes": [
+              "SIGNATURE_REQUIRED"
+            ],
+            "shipping_carrier": "DHL"
+          }
+        },
+        {
+          "shipping_reference": "shipment-recipient-33442f63",
+          "recipient": {
+            "given_name": "{{shipping.given_name}}",
+            "family_name": "{{shipping.family_name}}",
+            "email": "{{shipping.email}}",
+            "phone": "{{shipping.phone_country_code}}{{shipping.phone}}"
+          },
+          "address": {
+            "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+            "postal_code": "{{shipping.postal_code}}",
+            "city": "{{shipping.city}}",
+            "country": "{{shipping.country}}"
+          },
+          "shipping_option": {
+            "shipping_type": "PICKUP_STORE",
+            "shipping_type_attributes": [
+              "SIGNATURE_REQUIRED"
+            ],
+            "shipping_carrier": "DHL"
+          }
+        }
+      ],
+      "customer": {
+        "given_name": "{{customer.given_name}}",
+        "family_name": "{{customer.family_name}}",
+        "email": "{{customer.email}}",
+        "email_last_verified_at": "{{customer.email_last_verified_at}}",
+        "phone": "{{customer.phone_country_code}}{{customer.phone}}",
+        "phone_last_verified_at": "{{customer.phone_last_verified_at}}",
+        "address": {
+          "street_address": "{{customer.street_address}}{{customer.house_number}}",
+          "postal_code": "{{customer.postal_code}}",
+          "city": "{{customer.city}}",
+          "country": "{{customer.country}}"
+        },
+        "date_of_birth": "{{customer.date_of_birth}}",
+        "customer_account": {
+          "account_identifier": "{{$randomUUID}}",
+          "loyalty_level": "HIGH",
+          "created_at": "2023-05-14T11:25:53Z",
+          "updated_at": "2024-05-12T19:10:32Z",
+          "last_login": {
+            "occurred_at": "2024-01-01T12:00:00Z",
+            "login_method": "WEBAUTHN_PASSKEY"
+          },
+          "purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ],
+          "device_purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ]
+        },
+        "customer_device": {
+          "app_identifier": "{{$randomUUID}}",
+          "device_identifier": "{{$randomUUID}}",
+          "user_agent": "{{$randomUserAgent}}",
+          "ip_address": "{{$randomIPV4}}",
+          "geolocation": {
+            "country": "{{customer.country}}",
+            "latitude": 52.364530592679166,
+            "longitude": 4.905691191365506
+          }
+        }
+      },
+      "travel_reservations": [
+        {
+          "travel_type": "AIR",
+          "reservation_reference": "{{$randomUUID}}",
+          "departure": {
+            "departure_airport": "AMS",
+            "departs_at": "2024-01-01T12:00:00Z",
+            "city": "Amsterdam",
+            "country": "NL"
+          },
+          "arrival": {
+            "arrival_airport": "CDG",
+            "city": "Paris",
+            "country": "FR"
+          },
+          "carrier_name": "KL",
+          "price": 11836,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        },
+        {
+          "travel_type": "BUS",
+          "departure": {
+            "departure_location": "Amsterdam",
+            "departs_at": "2024-01-01T12:00:00Z",
+            "address": {
+              "street_address": "{{customer.street_address}} {{customer.house_number}}",
+              "postal_code": "{{customer.postal_code}}",
+              "city": "{{customer.city}}",
+              "country": "{{customer.country}}"
+            }
+          },
+          "arrival": {
+            "arrival_location": "Paris",
+            "address": {
+              "street_address": "33 rue lafayette",
+              "postal_code": "75009",
+              "city": "Paris",
+              "country": "FR"
+            }
+          },
+          "carrier_name": "Flixbus",
+          "price": 11836,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        },
+        {
+          "travel_type": "TRAIN",
+          "departure": {
+            "departure_location": "Amsterdam",
+            "departs_at": "2024-01-01T12:00:00Z",
+            "address": {
+              "street_address": "{{customer.street_address}} {{customer.house_number}}",
+              "postal_code": "{{customer.postal_code}}",
+              "city": "{{customer.city}}",
+              "country": "{{customer.country}}"
+            }
+          },
+          "arrival": {
+            "arrival_location": "Paris",
+            "address": {
+              "street_address": "33 rue lafayette",
+              "postal_code": "75009",
+              "city": "Paris",
+              "country": "FR"
+            }
+          },
+          "carrier_name": "Eurostar",
+          "price": 11836,
+          "currency": "{{currency}}",
+          "ticket_class": "ECONOMY",
+          "passengers": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        }
+      ],
+      "lodging_reservations": [
+        {
+          "lodging_name": "Hotel ABC",
+          "address": {
+            "street_address": "33 rue lafayette",
+            "postal_code": "75009",
+            "city": "Paris",
+            "country": "FR"
+          },
+          "starts_at": "2025-01-31T12:00:00Z",
+          "ends_at": "2025-01-31T19:00:00Z",
+          "number_of_spaces": 1,
+          "price": 11836,
+          "currency": "{{currency}}",
+          "lodging_type": "ROOM",
+          "guests": [
+            {
+              "given_name": "{{customer.given_name}}",
+              "family_name": "{{customer.family_name}}"
+            }
+          ],
+          "hosts": {
+            "host_reference": "{{$randomUUID}}",
+            "host_type": "HOTEL",
+            "country_of_domicile": "FR",
+            "registered_at": "2024-01-01T12:00:00Z",
+            "number_of_reservations": 100
+          },
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ],
+          "affiliate_name": "booking.com"
+        }
+      ],
+      "insurances": [
+        {
+          "insurance_type": "CANCELATION",
+          "insurance_company_name": "AON",
+          "price": 10,
+          "currency": "{{currency}}"
+        }
+      ],
+      "event_reservations": [
+        {
+          "event_name": "Random Event",
+          "event_company_name": "Random Company event",
+          "event_type": "CONCERT",
+          "starts_at": "2025-01-31T12:00:00Z",
+          "ends_at": "2025-01-31T19:00:00Z",
+          "venue_name": "Random Arena",
+          "access_controlled_venue": true,
+          "address": {
+            "street_address": "{{customer.street_address}} {{customer.house_number}}",
+            "postal_code": "{{customer.postal_code}}",
+            "city": "{{customer.city}}",
+            "country": "{{customer.country}}"
+          },
+          "affiliate_name": "Random affiliate name",
+          "insurances": [
+            {
+              "insurance_type": "CANCELATION",
+              "insurance_company_name": "AON",
+              "price": 10,
+              "currency": "{{currency}}"
+            }
+          ]
+        }
+      ],
+      "ondemand_service": {
+        "average_amount": 20000,
+        "minimum_amount": 20000,
+        "maximum_amount": 20000,
+        "purchase_interval": "MONTH",
+        "purchase_interval_frequency": 1
+      },
+      "vouchers": [
+        {
+          "voucher_name": "Test Voucher",
+          "voucher_type": "GIFT_CARD",
+          "voucher_company": "Voucher Company",
+          "starts_at": "2025-01-31T12:00:00Z",
+          "ends_at": "2025-01-31T19:00:00Z",
+          "affiliate_name": "Test affiliate"
+        }
+      ],
+      "additional_data": "{\"content_type\": \"application/vnd.klarna.internal.emd-v2+json\",\"content\": {\"marketplace_seller_info\": [{\"unique_account_identifier_seller\": {\"pno\": \"+33836656565\",\"email\": \"markeplace_merchant@email.com\",\"other\": \"passthrough data\"},\"sub_merchant_id\": \"1234567890qwertyuiopasdfg\",\"sub_merchant_name\": \"Marketbrick Ltd.\",\"sub_merchant_postal_code\": \"11010\",\"product_category\": \"Computers\",\"product_name\": \"Acer 5400\",\"account_registration_date\": \"2020-06-10T12:02:21Z\",\"account_last_modified\": {\"password\": \"2020-06-10T12:02:21Z\",\"email\": \"2020-06-10T12:02:21Z\",\"listing\": \"2020-06-10T12:02:21Z\",\"login\": \"2020-06-10T12:02:21Z\",\"address\": \"2020-06-10T12:02:21Z\"},\"seller_rating\": 4.5,\"number_of_trades\": 34,\"volume_of_trades\": 4500}],\"marketplace_winner_info\": [{\"unique_account_identifier_winner\": {\"pno\": \"{{customer.phone_country_code}}{{customer.phone}}\",\"email\": \"{{customer.email}}\",\"other\": \"passthrough data\"},\"account_registration_date\": \"2020-06-10T12:02:21Z\",\"account_last_modified\": {\"password\": \"2020-06-10T12:02:21Z\",\"email\": \"2020-06-10T12:02:21Z\",\"listing\": \"2020-06-10T12:02:21Z\",\"login\": \"2020-06-10T12:02:21Z\",\"address\": \"2020-06-10T12:02:21Z\"},\"number_of_trades\": 34,\"volume_of_trades\": 4500}],\"other_delivery_address\": [{\"shipping_method\": \"pick-up point\",\"shipping_type\": \"normal\",\"first_name\": \"{{customer.given_name}}\",\"last_name\": \"{{customer.family_name}}\",\"street_address\": \"{{customer.street_address}} {{customer.house_number}}\",\"postal_code\": \"{{customer.postal_code}}\",\"city\": \"{{customer.city}}\",\"country\": \"{{customer.country}}\"},{\"shipping_method\": \"pick-up point\",\"shipping_type\": \"express\",\"first_name\": \"Test\",\"last_name\": \"Person-fr\",\"street_address\": \"Rue de Chateaudun\",\"street_number\": \"6\",\"postal_code\": \"75009\",\"city\": \"Paris\",\"country\": \"FR\"}],\"customer_account_info\": [{\"unique_account_identifier\": \"1234567890qwertyuiopasdfg\",\"account_registration_date\": \"2021-06-10T12:02:21Z\",\"account_last_modified\": \"2021-07-10T12:02:21Z\"}],\"payment_history_full\": [{\"unique_account_identifier\": \"1234567890qwertyuiopasdfg\",\"number_paid_purchases\": 5,\"payment_option\": \"card\",\"total_amount_paid_purchases\": 4121.34,\"date_of_first_paid_purchase\": \"2021-06-10T12:10:43Z\",\"date_of_last_paid_purchase\": \"2022-05-11T12:43:56Z\"},{\"unique_account_identifier\": \"1234567890qwertyuiopasdfg\",\"number_paid_purchases\": 10,\"payment_option\": \"other\",\"total_amount_paid_purchases\": 1000.10,\"date_of_first_paid_purchase\": \"2021-08-12T15:45:34Z\",\"date_of_last_paid_purchase\": \"2022-06-10T10:02:11Z\"},{\"unique_account_identifier\": \"1234567890qwertyuiopasdfg\",\"number_paid_purchases\": 30,\"payment_option\": \"non klarna credit\",\"total_amount_paid_purchases\": 1232.10,\"date_of_first_paid_purchase\": \"2022-01-02T10:23:10Z\",\"date_of_last_paid_purchase\": \"2022-11-09T16:52:41Z\"}]}}"
+    },
+    "customer_interaction_config": {
+      "method": "HANDOVER",
+      "return_url": "https://partner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&interoperability-token={klarna.payment_request.interoperability_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+      "app_return_url": "appName://KlarnaPayment"
+    }
+  }
+}
+
+script:pre-request {
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  let departs_at = new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let starts_at = new Date(Date.now()+8*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  let ends_at = new Date(Date.now()+15*24*60*60*1000).toISOString().slice(0, -5) + 'Z';
+  
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+  bru.setVar('date_now', date_now);
+  bru.setVar('departs_at', departs_at);
+  bru.setVar('starts_at', starts_at);
+  bru.setVar('ends_at', ends_at);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.supplementary_purchase_data?.line_items || null);
+}
+
+tests {
+  test("should be able to authorize a payment", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request.state_context.customer_interaction.payment_request_id).to.match(/^krn:/)
+    expect(data.payment_transaction_response.result).to.equal("STEP_UP_REQUIRED");
+  });
+  
+}

@@ -1,0 +1,82 @@
+meta {
+  name: Create or update user access
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/portal/user-access
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "jwt": "{{jwt_token}}"
+  }
+}
+
+script:pre-request {
+  const axios = require("axios");
+  const { v4: uuidv4 } = require('uuid');
+  const rs = require("jsrsasign");
+  
+  const now = Math.floor(Date.now() / 1000);
+  if (now < bru.getVar("expiresAt")) {
+      return;
+  }
+  
+  //retrieve parameters from environment variables
+  const partnerAccountId = bru.getEnvVar("partner_account_id");
+  const credentialGroupOwnerId = bru.getEnvVar("credential_group_owner_id");
+  const partnerEmail = bru.getEnvVar("partner_email");
+  const escapedX5c = bru.getEnvVar("x5c");
+  const escapedKey = bru.getEnvVar("secret_key");
+  
+  const key = escapedKey.replace(/\\n/g, '\n');
+  const x5c = escapedX5c.replace('-----BEGIN CERTIFICATE-----','').replace('-----END CERTIFICATE-----','').replace(/\\n/g, '');
+  
+  console.log(x5c);
+  
+  const jwtToSign = {
+    iss: credentialGroupOwnerId,   // Your credential group ID
+    amr: ["pwd"],
+    sub: partnerEmail, // Random email
+    jti: uuidv4(),
+    iat: Math.floor(Date.now() / 1000),                  // Issued at
+    exp: Math.floor(Date.now() / 1000) + 60 * 60,       // Expiration time (1 hour)
+    account_id: partnerAccountId, // Your partner account ID
+    on_behalf_of: partnerAccountId,
+    roles: ['merchant:developer'], // Example roles
+  };
+  
+  console.log('jwtToSign:', jwtToSign); 
+  
+  const options = {
+      algorithm: "ES256",
+      header: {
+        alg: 'ES256', // Specify the algorithm for signing
+        typ: 'JWT',
+        x5c: [ x5c ] // Add your Base64-encoded certificate here
+     }
+  };
+  
+  const prvKey = rs.KEYUTIL.getKey(key);
+  const assertion = rs.jws.JWS.sign(options.algorithm, options.header, jwtToSign, prvKey);
+  
+  
+  // Store the JWT token in a Bruno variable for use in the request body
+  bru.setVar("jwt_token", assertion);
+  
+  console.log('Generated JWT:', assertion); // Output the JWT for debugging purposes
+}
+
+tests {
+  test("should be able to create or update user access", () => {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

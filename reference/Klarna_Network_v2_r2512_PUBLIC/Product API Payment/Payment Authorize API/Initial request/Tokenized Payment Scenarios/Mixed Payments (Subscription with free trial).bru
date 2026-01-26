@@ -1,0 +1,195 @@
+meta {
+  name: Mixed Payments (Subscription with free trial)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/authorize
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "request_payment_transaction": {
+      "amount": 12336,
+      "capture": "LATER",
+      "payment_transaction_reference": "payment-transaction-reference-{{$randomUUID}}",
+      "payment_option_id": "S0xBUk5B",
+      "payment_program_enablement_codes": [
+        "Financing_0_6M"
+      ]
+    },
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "Video Game Console",
+          "quantity": 1,
+          "total_amount": 12336,
+          "unit_price": 12336,
+          "product_url": "https://merchant.example/product/black-fountain-pen-1234567890",
+          "image_url": "https://merchant.example/image/1234567890.png",
+          "product_identifier": "1234567890",
+          "reference": "cart-item-1234",
+          "shipping_reference": "shipment-recipient-e8fdc4f5"
+        }
+      ],
+      "subscriptions": [
+        {
+          "subscription_reference": "GAME_PASS_USER_XYZ",
+          "name": "Game Pass",
+          "free_trial": "ACTIVE",
+          "billing_plans": [
+            {
+              "billing_amount": 1000,
+              "currency": "{{currency}}",
+              "from": "{{subscription_start_date}}",
+              "interval": "MONTH",
+              "interval_frequency": 1
+            }
+          ]
+        }
+      ],
+      "shipping": [
+        {
+          "shipping_reference": "shipment-recipient-e8fdc4f5",
+          "recipient": {
+            "given_name": "{{shipping.given_name}}",
+            "family_name": "{{shipping.family_name}}",
+            "email": "{{shipping.email}}",
+            "phone": "{{shipping.phone_country_code}}{{shipping.phone}}"
+          },
+          "address": {
+            "street_address": "{{shipping.street_address}} {{shipping.house_number}}",
+            "postal_code": "{{shipping.postal_code}}",
+            "city": "{{shipping.city}}",
+            "country": "{{shipping.country}}"
+          },
+          "shipping_option": {
+            "shipping_type": "TO_DOOR",
+            "shipping_type_attributes": [
+              "SIGNATURE_REQUIRED"
+            ],
+            "shipping_carrier": "DHL"
+          }
+        }
+      ],
+      "customer": {
+        "given_name": "{{customer.given_name}}",
+        "family_name": "{{customer.family_name}}",
+        "email": "{{customer.email}}",
+        "email_last_verified_at": "{{customer.email_last_verified_at}}",
+        "phone": "{{customer.phone_country_code}}{{customer.phone}}",
+        "phone_last_verified_at": "{{customer.phone_last_verified_at}}",
+        "address": {
+          "street_address": "{{customer.street_address}}{{customer.house_number}}",
+          "postal_code": "{{customer.postal_code}}",
+          "city": "{{customer.city}}",
+          "country": "{{customer.country}}"
+        },
+        "date_of_birth": "{{customer.date_of_birth}}",
+        "customer_account": {
+          "account_identifier": "{{$randomUUID}}",
+          "loyalty_level": "HIGH",
+          "created_at": "2023-05-14T11:25:53Z",
+          "updated_at": "2024-05-12T19:10:32Z",
+          "last_login": {
+            "occurred_at": "2024-01-01T12:00:00Z",
+            "login_method": "WEBAUTHN_PASSKEY"
+          },
+          "purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ],
+          "device_purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ]
+        },
+        "customer_device": {
+          "app_identifier": "{{$randomUUID}}",
+          "device_identifier": "{{$randomUUID}}",
+          "user_agent": "{{$randomUserAgent}}",
+          "ip_address": "{{$randomIPV4}}",
+          "geolocation": {
+            "country": "{{customer.country}}",
+            "latitude": 52.364530592679166,
+            "longitude": 4.905691191365506
+          }
+        }
+      }
+    },
+    "request_customer_token": {
+      "scopes": [
+        "payment:customer_not_present"
+      ],
+      "customer_token_reference": "{{$randomUUID}}"
+    },
+    "step_up_config": {
+      "payment_request_reference": "payment-reference-{{$randomUUID}}",
+      "payment_request_expires_at": "{{nextday}}",
+      "customer_interaction_config": {
+        "method": "HANDOVER",
+        "return_url": "https://acquiringpartner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&payment-token={klarna.payment_request.payment_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+        "app_return_url": "appName://KlarnaPayment"
+      }
+    },
+    "acquiring_config": {
+      "payment_account_id": "{{payment_account_id_standard}}"
+    }
+  }
+}
+
+script:pre-request {
+  let subscription_start_date = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, -5) + 'Z';
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  let nextday = new Date(Date.now()+1*24*60*60*1000).toISOString().slice(0, -14);
+  
+  bru.setVar('nextday', nextday);
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+  bru.setVar('subscription_start_date', subscription_start_date);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.payment_request?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.payment_request?.supplementary_purchase_data?.line_items || null);
+}
+
+tests {
+  test("should be able to authorize a payment", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request.state_context.customer_interaction.payment_request_id).to.match(/^krn:payment:/)
+    expect(data.payment_transaction_response.result).to.equal("STEP_UP_REQUIRED");
+  });
+  
+}

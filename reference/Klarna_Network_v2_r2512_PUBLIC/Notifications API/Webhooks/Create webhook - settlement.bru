@@ -1,0 +1,35 @@
+meta {
+  name: Create webhook - settlement
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/{{version}}/notification/webhooks
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "{{webhook_url}}",
+    "event_types": [
+      "settlement.report.created",
+      "settlement.report.uploaded-to-sftp",
+      "settlement.payout.processed",
+      "settlement.payout.confirmed",
+      "settlement.payout.failed"
+    ],
+    "event_version": "v2",
+    "signing_key_id": "{{signing_key_id}}",
+    "status": "ENABLED"
+  }
+}
+
+script:post-response {
+  bru.setVar('webhook_id', res.body?.webhook_id || null);
+}

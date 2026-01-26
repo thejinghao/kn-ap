@@ -1,0 +1,32 @@
+meta {
+  name: Patch Account
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "partner_account_reference": "{{$randomUUID}}",
+    "partner_account_name": "{{$randomCompanyName}}",
+    "partner_account_contact": {
+      "given_name": "John",
+      "family_name": "Doe",
+      "email": "john.doe+{{$randomUUID}}@example.com",
+      "phone": "+18445527621"
+    }
+  }
+}

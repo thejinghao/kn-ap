@@ -1,0 +1,22 @@
+meta {
+  name: Delete a deep-link
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/portal/deep-links/:deep_link_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  deep_link_id: {{deep_link_id}}
+}
+
+tests {
+  test("should be able to delete deep link", () => {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

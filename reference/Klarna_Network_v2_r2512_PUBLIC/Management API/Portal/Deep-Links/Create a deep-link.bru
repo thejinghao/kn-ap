@@ -1,0 +1,41 @@
+meta {
+  name: Create a deep-link
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/portal/deep-links
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "subject": "{{partner_email}}",
+    "roles": [
+      "merchant:admin"
+    ],
+    "on_behalf_of": "{{partner_account_id}}"
+  }
+}
+
+script:post-response {
+  bru.setVar('deep_link_id', res.body?.deep_link_id || null);
+}
+
+tests {
+  test("should be able to create unsigned deep link", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.deep_link_id).to.match(/^krn:/);
+  });
+}

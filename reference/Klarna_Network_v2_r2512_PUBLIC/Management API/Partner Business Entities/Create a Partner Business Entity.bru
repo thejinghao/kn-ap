@@ -1,0 +1,94 @@
+meta {
+  name: Create a Partner Business Entity
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/partner-business-entities
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "partner_business_entity_reference":"{{$randomUUID}}",
+    "legal_registered_entity_name": "{{$randomCompanyName}}",
+    "legal_registration_country": "US",
+    "supplementary_business_data": {
+      "legal_registration": {
+        "legal_registration_number": "HRA-{{$randomUUID}}",
+        "legal_registration_authority": "Ohio Secretary of State",
+        "legal_registration_entity_type": "its_complicated",
+        "tax_registration_number": "123-456-789",
+        "financial_conduct_authority_number": "987-654-321",
+        "legal_registration_address": {
+          "street_address": "800 N. High St",
+          "street_address2": "Ste. 400",
+          "postal_code": "43215",
+          "city": "Columbus",
+          "region": "US-OH",
+          "country": "US"
+        }
+      },
+      "operating_addresses": [
+        {
+          "street_address": "800 N. High St",
+          "street_address2": "Ste. 400",
+          "postal_code": "43215",
+          "city": "Columbus",
+          "region": "US-OH",
+          "country": "US"
+        }
+      ],
+      "stakeholders": [
+        {
+          "given_name": "John",
+          "family_name": "Doe",
+          "address": {
+            "street_address": "800 N. High St",
+            "street_address2": "Ste. 400",
+            "postal_code": "43215",
+            "city": "Columbus",
+            "region": "US-OH",
+            "country": "US"
+          },
+          "date_of_birth": "1970-01-01",
+          "national_identification": {
+            "number": "123-456-7890",
+            "country": "US"
+          },
+          "roles": [
+            "OWNER"
+          ]
+        }
+      ],
+      "partner_payouts_state": {
+        "payouts_status": "ENABLED",
+        "payouts_enabled_at": "2024-01-01T12:00:00Z",
+        "payouts_delay_days": 1,
+        "bank_accounts": [
+          {
+            "bank_account_type": "IBAN",
+            "account_holder": "John Doe Stakehouse",
+            "bic": "NDEASEGGXXX",
+            "iban": "SE4550000000058398257466"
+          }
+        ]
+      }
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar('partner_business_entity_id', res.body?.partner_business_entity_id || null);
+  bru.setVar('partner_business_entity_reference', res.body?.partner_business_entity_reference || null);
+}

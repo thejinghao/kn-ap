@@ -1,0 +1,121 @@
+meta {
+  name: Authorize - QR_CODE
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/authorize
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "request_payment_transaction": {
+      "amount": 12336,
+      "capture": "NOW",
+      "payment_transaction_reference": "payment-transaction-reference-{{$randomUUID}}",
+      "payment_program_enablement_codes": [
+        "Financing_0_6M"
+      ],
+      "payment_capture_reference": "partner-capture-reference-{{$randomUUID}}"
+    },
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 2,
+          "total_amount": 3998,
+          "total_tax_amount": 694,
+          "unit_price": 1999,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomImageUrl}}",
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        },
+        {
+          "name": "{{$randomProductName}}",
+          "quantity": 3,
+          "total_amount": 10797,
+          "unit_price": 3599,
+          "total_tax_amount": 1874,
+          "product_url": "{{$randomUrl}}",
+          "image_url": "{{$randomSportsImage}}",
+          "product_identifier": "{{$randomUUID}}",
+          "line_item_reference": "{{$randomUUID}}",
+          "shipping_reference": "shipment-recipient-33442f63",
+          "line_item_metadata": {
+            "categories": [
+              "{{$randomProduct}}"
+            ]
+          }
+        },
+        {
+          "name": "Holiday sale 20% off",
+          "quantity": 1,
+          "total_amount": -2959
+        },
+        {
+          "name": "shipping-option-1",
+          "quantity": 1,
+          "total_amount": 500,
+          "total_tax_amount": 10
+        }
+      ]
+    },
+    "step_up_config": {
+      "payment_request_reference": "payment-reference-{{$randomUUID}}",
+      "payment_request_expires_at": "{{nextday}}",
+      "customer_interaction_config": {
+        "method": "QR_CODE"
+      }
+    },
+    "acquiring_config": {
+      "payment_account_id": "{{payment_account_id_standard}}"
+    },
+    "point_of_checkout": {
+      "store_id": "{{store_id_in_store}}"
+    },
+    "point_of_transaction": {
+      "type": "TERMINAL",
+      "terminal_reference": "{{$randomUUID}}"
+    }
+  }
+}
+
+script:pre-request {
+  let nextday = new Date(Date.now()+1*24*60*60*1000).toISOString().slice(0, -14);
+  bru.setVar('nextday', nextday);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.payment_request?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.payment_request?.supplementary_purchase_data?.line_items || null);
+}
+
+tests {
+  test("should be able to authorize a payment", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request.state_context.customer_interaction.payment_request_id).to.match(/^krn:payment:/)
+    expect(data.payment_transaction_response.result).to.equal("STEP_UP_REQUIRED");
+  });
+  
+}

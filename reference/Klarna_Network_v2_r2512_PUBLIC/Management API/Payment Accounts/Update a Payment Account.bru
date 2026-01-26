@@ -1,0 +1,32 @@
+meta {
+  name: Update a Payment Account
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/products/payment/:product_id/payment-accounts/:payment_account_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  payment_account_id: {{payment_account_id}}
+  product_id: {{product_id}}
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "payment_account_reference": "payment_account_reference_{{$randomUUID}}",
+    "default_merchant_category_code":"0742"
+  }
+}
+
+vars:post-response {
+  payment_account_id: res.body.payment_account_id
+}

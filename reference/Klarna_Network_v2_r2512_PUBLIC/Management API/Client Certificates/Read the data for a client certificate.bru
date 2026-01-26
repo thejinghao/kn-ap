@@ -1,0 +1,29 @@
+meta {
+  name: Read the data for a client certificate
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate/:credential_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "Test API Credentials",
+    "config": {
+      "usage": "MTLS",
+      "certificate_signing_request": "-----BEGIN CERTIFICATE REQUEST-----\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqhkjOPQIBBggqhkjO\nPQMBBwNCAARuv+z/6rvib8WO21DmfKmJ/6fR9PQa80vVRc8uVPJ4RTfbYXDKC0TU\nKsnX1ao8us23lGQya3AwUVeQj/PVgzNVoAAwCgYIKoZIzj0EAwIDSAAwRQIgSVJQ\nx6I1YCndg2sewldN+os/HRVDodK08tAcaBbvklwCIQDzyD8yv9TBHOcXm1pPPE9n\nBRHoiLtSVv8Syo2UG9CR7Q==\n-----END CERTIFICATE REQUEST-----"
+    }
+  }
+}

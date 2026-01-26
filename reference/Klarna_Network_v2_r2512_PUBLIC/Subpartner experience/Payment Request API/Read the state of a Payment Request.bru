@@ -1,0 +1,21 @@
+meta {
+  name: Read the state of a Payment Request
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/payment/requests/:payment_request_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  payment_request_id: {{payment_request_id}}
+}
+
+script:post-response {
+  bru.setVar('klarna_network_session_token', res.body?.state_context?.klarna_network_session_token || null);
+  bru.setVar('interoperability_token', res.body?.state_context?.interoperability_token || null);
+  bru.setVar('customer_token', res.body?.state_context?.klarna_customer?.customer_token || null);
+}

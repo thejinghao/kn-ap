@@ -1,0 +1,19 @@
+meta {
+  name: Get all partner business entities available
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/partner-business-entities
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('partner_business_entity_id', res.body?.partner_business_entities[0].partner_business_entity_id || null);
+}

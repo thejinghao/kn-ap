@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+ * Klarna Network API Demo - Design System
+ * Based on minimal, utilitarian design principles
+ */
+
+@layer base {
+  :root {
+    /* Color Palette - Grayscale */
+    --color-gray-50: #F9FAFB;
+    --color-gray-100: #F3F4F6;
+    --color-gray-200: #E5E7EB;
+    --color-gray-300: #D1D5DB;
+    --color-gray-400: #9CA3AF;
+    --color-gray-500: #6B7280;
+    --color-gray-600: #4B5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1F2937;
+    --color-gray-900: #111827;
+
+    /* HTTP Method Colors */
+    --color-method-get: #2563EB;
+    --color-method-get-bg: #DBEAFE;
+    --color-method-post: #16A34A;
+    --color-method-post-bg: #DCFCE7;
+    --color-method-patch: #CA8A04;
+    --color-method-patch-bg: #FEF9C3;
+    --color-method-put: #CA8A04;
+    --color-method-put-bg: #FEF9C3;
+    --color-method-delete: #DC2626;
+    --color-method-delete-bg: #FEE2E2;
+
+    /* Status Colors */
+    --color-status-2xx: #16A34A;
+    --color-status-2xx-bg: #DCFCE7;
+    --color-status-2xx-border: #86EFAC;
+    --color-status-3xx: #2563EB;
+    --color-status-3xx-bg: #DBEAFE;
+    --color-status-3xx-border: #93C5FD;
+    --color-status-4xx: #EA580C;
+    --color-status-4xx-bg: #FFEDD5;
+    --color-status-4xx-border: #FDBA74;
+    --color-status-5xx: #DC2626;
+    --color-status-5xx-bg: #FEE2E2;
+    --color-status-5xx-border: #FCA5A5;
+
+    /* JSON Viewer Colors */
+    --json-string: #16A34A;
+    --json-number: #2563EB;
+    --json-boolean: #2563EB;
+    --json-null: #6B7280;
+    --json-key: #9333EA;
+    --json-bracket: #6B7280;
+  }
+
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  /* Monospace font for code/paths */
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+}
+
+@layer components {
+  /* HTTP Method Badges */
+  .method-badge {
+    @apply inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium rounded;
+  }
+
+  .method-badge-get {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .method-badge-post {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .method-badge-patch,
+  .method-badge-put {
+    @apply bg-yellow-100 text-yellow-700;
+  }
+
+  .method-badge-delete {
+    @apply bg-red-100 text-red-700;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded border;
+  }
+
+  .status-badge-2xx {
+    @apply bg-green-100 text-green-700 border-green-300;
+  }
+
+  .status-badge-3xx {
+    @apply bg-blue-100 text-blue-700 border-blue-300;
+  }
+
+  .status-badge-4xx {
+    @apply bg-orange-100 text-orange-700 border-orange-300;
+  }
+
+  .status-badge-5xx {
+    @apply bg-red-100 text-red-700 border-red-300;
+  }
+
+  /* Category Filter Pills */
+  .category-pill {
+    @apply px-2 py-1 text-xs rounded transition-colors;
+  }
+
+  .category-pill-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+  }
+
+  .category-pill-active {
+    @apply bg-gray-800 text-white;
+  }
+
+  /* Input Styles */
+  .input-base {
+    @apply w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white;
+    @apply focus:outline-none focus:ring-1 focus:ring-gray-400;
+    @apply disabled:bg-gray-100 disabled:cursor-not-allowed;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500;
+  }
+
+  /* Collapsible Panel */
+  .collapsible-panel {
+    @apply border border-gray-300 rounded;
+  }
+
+  .collapsible-header {
+    @apply w-full flex items-center justify-between px-3 py-1.5 bg-gray-50 hover:bg-gray-100 transition-colors;
+  }
+
+  .collapsible-content {
+    @apply p-2 bg-white;
+  }
+
+  /* Button Styles */
+  .btn-primary {
+    @apply w-full py-2 px-3 bg-gray-900 text-white text-sm font-medium rounded;
+    @apply hover:bg-gray-800 transition-colors;
+    @apply disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply py-1.5 px-3 bg-gray-100 text-gray-700 text-sm font-medium rounded;
+    @apply hover:bg-gray-200 transition-colors;
+  }
+
+  .btn-icon {
+    @apply p-1.5 rounded transition-colors;
+    @apply text-gray-600 hover:bg-gray-100;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-white border border-gray-300 rounded;
+  }
+
+  .card-header {
+    @apply px-3 py-4 bg-gray-50 border-b border-gray-300;
+  }
+
+  .card-body {
+    @apply p-3;
+  }
+
+  /* JSON Viewer custom styling */
+  .json-viewer {
+    @apply font-mono text-sm;
+  }
+
+  .json-viewer-key {
+    color: var(--json-key);
+  }
+
+  .json-viewer-string {
+    color: var(--json-string);
+  }
+
+  .json-viewer-number,
+  .json-viewer-boolean {
+    color: var(--json-number);
+  }
+
+  .json-viewer-null {
+    color: var(--json-null);
+  }
+
+  .json-viewer-bracket {
+    color: var(--json-bracket);
+  }
+
+  /* Scrollbar Styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+}
+
+@layer utilities {
+  /* Spinner animation */
+  .spinner {
+    @apply animate-spin border-2 border-gray-300 border-t-gray-900 rounded-full;
+  }
+
+  /* Text utilities */
+  .text-mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  /* Max width container */
+  .container-main {
+    @apply max-w-5xl mx-auto px-4;
+  }
+}

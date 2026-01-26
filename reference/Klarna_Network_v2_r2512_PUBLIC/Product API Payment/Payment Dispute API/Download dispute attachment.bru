@@ -1,0 +1,30 @@
+meta {
+  name: Download dispute attachment
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/attachments/:payment_dispute_attachment_id/download
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  payment_dispute_id: {{payment_dispute_id}}
+  payment_dispute_attachment_id: {{payment_dispute_customer_evidence_id}}
+  partner_account_id: {{partner_account_id}}
+}
+
+body:multipart-form {
+  filename: bruno.jpg
+  file: @file(/Users/charles.roland/Desktop/bruno.jpg)
+}
+
+script:post-response {
+  bru.setVar('payment_dispute_attachment_id', res.body.payment_dispute_attachment_id || null);
+}

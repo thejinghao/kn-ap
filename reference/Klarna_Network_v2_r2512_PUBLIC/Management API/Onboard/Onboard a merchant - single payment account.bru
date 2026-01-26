@@ -1,0 +1,161 @@
+meta {
+  name: Onboard a merchant - single payment account
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/distribution/onboard
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "partner_account_reference": "{{$randomUUID}}",
+    "partner_account_name": "{{$randomCompanyName}}",
+    "partner_account_contact": {
+      "given_name": "John",
+      "family_name": "Doe",
+      "email": "john.doe+{{$randomUUID}}@example.com",
+      "phone": "+18445527621"
+    },
+    "products": [
+      {
+        "type": "PAYMENT",
+        "payment_profile_id": "{{payment_profile}}",
+        "payment_accounts": [
+          {
+            "payment_account_reference": "{{$randomUUID}}",
+            "payment_acquiring_account_id": "{{payment_acquiring_account_id}}",
+            "default_merchant_category_code": "0744",
+            "partner_business_entity_reference": "LE_US024345",
+            "default_store_group_reference": "my-store-group-reference-xyz"
+          }
+        ]
+      }
+    ],
+    "brands": [
+      {
+        "brand_reference": "klarna_standard_offering",
+        "display_name": "Klarna Standard Offering",
+        "element": {
+          "logo_url": "{{$randomImageUrl}}",
+          "icon_url": "{{$randomImageUrl}}",
+          "feature_image_url": "{{$randomImageUrl}}"
+        }
+      }
+    ],
+    "store_groups": [
+      {
+        "store_group_reference": "my-store-group-reference-xyz",
+        "support_contact": {
+          "email": "john.doe@example.com",
+          "phone": "+18445527621",
+          "contact_form": "https://example.com/customer-service/contact-form"
+        },
+        "social_media_links": [
+          {
+            "provider": "FACEBOOK",
+            "url": "https://facebook.com/johndoe"
+          },
+          {
+            "provider": "INSTAGRAM",
+            "url": "https://instagram.com/johndoe"
+          }
+        ],
+        "brand_reference": "klarna_standard_offering",
+        "stores": [
+          {
+            "store_reference": "codepen",
+            "type": "WEBSITE",
+            "url": "https://cdpn.io"
+          }
+        ]
+      }
+    ],
+    "supplementary_account_data": {
+      "account_creation": {
+        "account_created_from_ip": "192.168.2.1",
+        "account_created_at": "2025-01-01T12:00:00Z"
+      }
+    },
+    "partner_business_entities": [
+      {
+        "partner_business_entity_reference": "LE_US024345",
+        "legal_registered_entity_name": "Legal Entity LLC",
+        "legal_registration_country": "US",
+        "supplementary_business_data": {
+          "legal_registration": {
+            "legal_registration_number": "HRA_{{$randomAlphaNumeric}}",
+            "legal_registration_authority": "Ohio Secretary of State",
+            "legal_registration_entity_type": "LIMITED_LIABILITY_COMPANY",
+            "tax_registration_number": "999-999-999",
+            "financial_conduct_authority_number": "123-456-789",
+            "legal_registration_address": {
+              "street_address": "800 N. High St",
+              "street_address2": "Ste. 400",
+              "postal_code": "43215",
+              "city": "Columbus",
+              "region": "OH",
+              "country": "US"
+            }
+          },
+          "operating_addresses": [
+            {
+              "street_address": "800 N. High St",
+              "street_address2": "Ste. 400",
+              "postal_code": "43215",
+              "city": "Columbus",
+              "region": "OH",
+              "country": "US"
+            }
+          ],
+          "stakeholders": [
+            {
+              "given_name": "John",
+              "family_name": "Doe",
+              "address": {
+                "street_address": "800 N. High St",
+                "street_address2": "Ste. 400",
+                "postal_code": "43215",
+                "city": "Columbus",
+                "region": "OH",
+                "country": "US"
+              },
+              "date_of_birth": "1970-01-01",
+              "national_identification": {
+                "number": "999-999-9999",
+                "country": "US"
+              },
+              "roles": [
+                "OWNER"
+              ]
+            }
+          ],
+          "partner_payouts_state": {
+            "payouts_status": "ENABLED",
+            "payouts_enabled_at": "2024-01-01T12:00:00Z",
+            "payouts_delay_days": 1,
+            "bank_accounts": [
+              {
+                "bank_account_type": "IBAN",
+                "account_holder": "John Doe Stakehouse",
+                "bic": "NDEASEGGXXX",
+                "iban": "SE4550000000058398257466"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar('partner_account_id', res.body?.partner_account_id || null);
+}

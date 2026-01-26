@@ -1,0 +1,16 @@
+meta {
+  name: Generate SDK token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/interoperability/sdk-tokens
+  body: none
+  auth: inherit
+}
+
+headers {
+  Klarna-Interoperability-Token: {{interoperability_token}}
+  ~Klarna-Network-Session-Token: {{klarna_network_session_token}}
+}

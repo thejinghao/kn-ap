@@ -1,0 +1,42 @@
+meta {
+  name: product type - SERVICES
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "product_type": "SERVICES",
+      "service_already_used": "YES_THE_SERVICE_HAS_BEEN_USED",
+      "service_delivered_by": "EMAIL",
+      "customer_contacted": "YES_WE_HAVE_BEEN_IN_CONTACT"
+    }
+  }
+}

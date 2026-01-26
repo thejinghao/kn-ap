@@ -1,0 +1,20 @@
+meta {
+  name: Get all account payment products
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/products/payment
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('product_id', res.body[0]?.product_id || null);
+  bru.setVar('payment_account_id', res.body[0]?.payment_accounts[0].payment_account_id || null);
+}

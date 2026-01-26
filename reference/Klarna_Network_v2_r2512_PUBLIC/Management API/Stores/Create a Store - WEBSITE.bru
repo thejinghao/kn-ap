@@ -1,0 +1,32 @@
+meta {
+  name: Create a Store - WEBSITE
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/stores
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "store_group_id": "{{store_group_id}}",
+    "type": "WEBSITE",
+    "store_reference": "{{$randomUUID}}",
+    "url": "{{$randomUrl}}"
+  }
+}
+
+script:post-response {
+  bru.setVar('store_id', res.body?.store_id || null);
+}

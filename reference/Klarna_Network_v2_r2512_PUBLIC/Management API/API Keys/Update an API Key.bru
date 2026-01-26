@@ -1,0 +1,34 @@
+meta {
+  name: Update an API Key
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{base_url}}/{{version}}/account/integration/credentials/api-key/:credential_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "{{environment}} API Credentials"
+  }
+}
+
+tests {
+  test("should be able to update an API key", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.credential_id).to.match(/^krn:/)
+  });
+  
+}

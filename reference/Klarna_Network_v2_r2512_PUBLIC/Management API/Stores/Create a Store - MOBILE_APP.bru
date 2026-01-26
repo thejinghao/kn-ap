@@ -1,0 +1,35 @@
+meta {
+  name: Create a Store - MOBILE_APP
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/stores
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "store_group_id": "{{store_group_id}}",
+    "type": "MOBILE_APP",
+    "store_reference": "{{$randomUUID}}",
+    "platform": "IOS",
+    "bundle_names": [
+      "com.JohnDoeMobile"
+    ]
+  }
+}
+
+script:post-response {
+  bru.setVar('store_id', res.body?.store_id || null);
+}

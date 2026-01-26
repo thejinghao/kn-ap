@@ -1,0 +1,39 @@
+meta {
+  name: Get credit promotion messaging for auto-size placement
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/messaging/credit-promotion-auto-size?locale={{locale}}&amount=12336&currency={{currency}}&app_return_url={{app_return_url}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  locale: {{locale}}
+  amount: 12336
+  currency: {{currency}}
+  app_return_url: {{app_return_url}}
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  ~Klarna-Customer-Token: {{customer_token}}
+  ~Klarna-Interoperability-Token: {{interoperability_token}}
+  ~Klarna-Network-Session-Token: {{klarna_network_session_token}}
+}
+
+script:pre-request {
+  // Value you want to encode
+  const base64appReturnUrl = "appName://KlarnaPayment";   // or any string you need
+  
+  // Encode to Base64
+  const encoded = Buffer.from(base64appReturnUrl, "utf8").toString("base64");
+  
+  // Save as a variable so you can use it in headers
+  bru.setVar("app_return_url", encoded);
+}

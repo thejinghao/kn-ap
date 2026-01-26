@@ -1,0 +1,16 @@
+meta {
+  name: Read Payment Transaction
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/transactions/:payment_transaction_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_transaction_id: {{payment_transaction_id}}
+}

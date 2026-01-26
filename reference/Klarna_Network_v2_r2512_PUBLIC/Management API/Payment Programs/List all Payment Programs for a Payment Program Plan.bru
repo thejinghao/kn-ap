@@ -1,0 +1,32 @@
+meta {
+  name: List all Payment Programs for a Payment Program Plan
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/distribution/products/payment/payment-program-plans/:payment_program_plan_id?merchant_category_code=0744&customer_country={{customer.country}}&transaction_currency={{currency}}&version={{payment_program_plan_version}}&enablement_type=OPTIONAL
+  body: none
+  auth: inherit
+}
+
+params:query {
+  merchant_category_code: 0744
+  customer_country: {{customer.country}}
+  transaction_currency: {{currency}}
+  version: {{payment_program_plan_version}}
+  enablement_type: OPTIONAL
+  ~size: 5
+  ~starting_after: 
+  ~ending_before: 
+  ~enablement_type: PRESET
+  ~enablement_type: RESTRICTED
+}
+
+params:path {
+  payment_program_plan_id: {{payment_program_plan_id}}
+}
+
+script:post-response {
+  bru.setVar('payment_program_id', res.body?.payment_programs[0]?.payment_program_id || null);
+}

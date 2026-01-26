@@ -1,0 +1,33 @@
+meta {
+  name: Generate settlement report
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/settlements
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "interval_start": "{{interval_start}}",
+    "interval_end": "{{interval_end}}",
+    "payment_acquiring_account_id": "{{payment_acquiring_account_id}}"
+  }
+}
+
+script:pre-request {
+  let interval_start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('interval_start', interval_start);
+  
+  let interval_end = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('interval_end', interval_end);
+  
+  
+}
+
+script:post-response {
+  bru.setVar('settlement_id', res.body?.settlement_reports[0]?.settlement_id || null);
+}

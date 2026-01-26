@@ -1,0 +1,25 @@
+meta {
+  name: Update a Client Certificate
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate/:credential_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "{{environment}} certificate for JWT signing on portal deeplinking and user access"
+  }
+}

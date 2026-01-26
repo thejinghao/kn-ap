@@ -1,0 +1,16 @@
+meta {
+  name: Read Payment Chargeback
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/chargebacks/:payment_chargeback_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_chargeback_id: {{payment_chargeback_id}}
+}

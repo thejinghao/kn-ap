@@ -1,0 +1,160 @@
+meta {
+  name: Subscription without free trial
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/requests
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "currency": "{{currency}}",
+    "amount": 12336,
+    "payment_request_reference": "payment-reference-{{$randomUUID}}",
+    "supplementary_purchase_data": {
+      "purchase_reference": "merchant-purchase-reference-{{$randomUUID}}",
+      "line_items": [
+        {
+          "name": "Game Pass",
+          "quantity": 1,
+          "total_amount": 12336,
+          "subscription_reference": "GAME_PASS_USER_XYZ"
+        }
+      ],
+      "subscriptions": [
+        {
+          "subscription_reference": "GAME_PASS_USER_XYZ",
+          "name": "Game Pass",
+          "free_trial": "INACTIVE",
+          "billing_plans": [
+            {
+              "billing_amount": 12336,
+              "currency": "{{currency}}",
+              "from": "{{subscription_start_date}}",
+              "interval": "YEAR",
+              "interval_frequency": 1
+            }
+          ]
+        }
+      ],
+      "customer": {
+        "given_name": "{{customer.given_name}}",
+        "family_name": "{{customer.family_name}}",
+        "email": "{{customer.email}}",
+        "email_last_verified_at": "{{customer.email_last_verified_at}}",
+        "phone": "{{customer.phone_country_code}}{{customer.phone}}",
+        "phone_last_verified_at": "{{customer.phone_last_verified_at}}",
+        "address": {
+          "street_address": "{{customer.street_address}}{{customer.house_number}}",
+          "postal_code": "{{customer.postal_code}}",
+          "city": "{{customer.city}}",
+          "country": "{{customer.country}}"
+        },
+        "date_of_birth": "{{customer.date_of_birth}}",
+        "customer_account": {
+          "account_identifier": "{{$randomUUID}}",
+          "loyalty_level": "HIGH",
+          "created_at": "2023-05-14T11:25:53Z",
+          "updated_at": "2024-05-12T19:10:32Z",
+          "last_login": {
+            "occurred_at": "2024-01-01T12:00:00Z",
+            "login_method": "WEBAUTHN_PASSKEY"
+          },
+          "purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ],
+          "device_purchase_history": [
+            {
+              "number_of_purchases": 10,
+              "number_of_paid_purchases": 10,
+              "number_of_disputed_purchases": 2,
+              "total_amount": 100000,
+              "currency": "{{currency}}",
+              "payment_method": "CREDIT_CARD",
+              "first_purchase_at": "2023-05-14T11:32:51Z",
+              "last_purchase_at": "2024-05-12T19:15:21Z"
+            }
+          ]
+        },
+        "customer_device": {
+          "app_identifier": "{{$randomUUID}}",
+          "device_identifier": "{{$randomUUID}}",
+          "user_agent": "{{$randomUserAgent}}",
+          "ip_address": "{{$randomIPV4}}",
+          "geolocation": {
+            "country": "{{customer.country}}",
+            "latitude": 52.364530592679166,
+            "longitude": 4.905691191365506
+          }
+        }
+      }
+    },
+    "request_customer_token": {
+      "scopes": [
+        "payment:customer_not_present"
+      ],
+      "customer_token_reference": "{{$randomUUID}}"
+    },
+    "customer_interaction_config": {
+      "method": "HANDOVER",
+      "return_url": "https://acquiringpartner.example/klarna-redirect?payment-request-id={klarna.payment_request.id}&state={klarna.payment_request.state}&payment-token={klarna.payment_request.payment_token}&payment-request-reference={klarna.payment_request.payment_request_reference}",
+      "app_return_url": "appName://KlarnaPayment"
+    },
+    "collect_customer_profile": [
+      "profile:name",
+      "profile:email",
+      "profile:phone",
+      "profile:locale",
+      "profile:billing_address",
+      "profile:country"
+    ],
+    "acquiring_config": {
+      "payment_account_id": "{{payment_account_id_standard}}"
+    }
+  }
+}
+
+script:pre-request {
+  let date_now = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  
+  bru.setVar('customer.phone_last_verified_at', date_now);
+  bru.setVar('customer.email_last_verified_at', date_now);
+  bru.setVar('subscription_start_date', date_now);
+}
+
+script:post-response {
+  bru.setVar('payment_request_id', res.body?.payment_request_id || null);
+  bru.setVar('purchase_reference', res.body?.supplementary_purchase_data?.purchase_reference || null);
+  bru.setVar('line_items', res.body?.supplementary_purchase_data?.line_items || null);
+}
+
+tests {
+  test("should be able to create a payment request", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(data.payment_request_id).to.match(/^krn:payment/);
+    expect(data.state).to.equal("SUBMITTED");
+  });
+  
+}

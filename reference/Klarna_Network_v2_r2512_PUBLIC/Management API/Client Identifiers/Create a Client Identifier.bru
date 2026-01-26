@@ -1,0 +1,35 @@
+meta {
+  name: Create a Client Identifier
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-identifier
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "{{environment}} Client Credentials"
+  }
+}
+
+script:post-response {
+  bru.setVar('credential_id', res.body?.credential_id || null);
+}
+
+tests {
+  test("should be able to create client identifier", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(201);
+    expect(data.identity.client_id).to.match(/^klarna_test_client_/)
+    expect(data.credential_id).to.match(/^krn:/)
+  });
+  
+}

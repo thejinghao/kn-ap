@@ -1,0 +1,15 @@
+meta {
+  name: Get settlement report - CSV
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/settlements/:settlement_id/csv
+  body: none
+  auth: inherit
+}
+
+params:path {
+  settlement_id: {{settlement_id}}
+}

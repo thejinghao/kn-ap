@@ -1,0 +1,39 @@
+meta {
+  name: RETURN_NOT_RECEIVED
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "did_you_receive_the_return": "RETURN_NOT_RECEIVED"
+    }
+  }
+}

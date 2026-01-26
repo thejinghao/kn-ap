@@ -1,0 +1,25 @@
+meta {
+  name: Get all store groups available
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/store-groups
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~size: 
+  ~starting_after: 
+  ~ending_before: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('store_group_id', res.body?.store_groups[0].store_group_id || null);
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Update a Store
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/stores/:store_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  store_id: {{store_id}}
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "type": "WEBSITE",
+    "store_reference": "{{$randomUUID}}",
+    "url": "{{$randomUrl}}"
+  }
+}

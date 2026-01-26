@@ -1,0 +1,45 @@
+meta {
+  name: product type - TICKETS_TRAVEL
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "product_type": "TICKETS_TRAVEL",
+      "purchase_cancelable": "YES_WE_WILL_CANCEL_THE_PURCHASE",
+      "purchase_refundable": "YES_THE_PURCHASE_CAN_BE_FULLY_REFUNDED",
+      "service_delivered_by": "EMAIL",
+      "products_already_used": "NO_THE_PRODUCTS_HAVE_NOT_BEEN_USED_YET",
+      "travel_purchase": "YES_THIS_PURCHASE_IS_FOR_TRAVEL",
+      "customer_contacted": "YES_WE_HAVE_BEEN_IN_CONTACT"
+    }
+  }
+}

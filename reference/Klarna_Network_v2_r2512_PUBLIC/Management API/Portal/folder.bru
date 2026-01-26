@@ -1,0 +1,96 @@
+meta {
+  name: Portal
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  
+  # Install dependencies
+  
+  Install the `jsrsasign` package in the folder where the bruno collection will be stored on your machine once imported. This is for the execution of the script added to the requests which generates the JWT token necessary for signed deep linking / user access
+   
+  ```shell
+  npm install jsrsasign
+  ```
+  
+  # Create a certificate private key
+  
+  Create and Store Your Private Key using elliptic curve cryptography with the prime256v1 specification.
+  
+  ```shell
+  openssl ecparam -genkey -name prime256v1 -out my-key-file.pem
+  ```
+  
+  If you open the file you will see something like this:
+  ```
+  -----BEGIN EC PARAMETERS-----
+  BggqhkjOPQMBBw==
+  -----END EC PARAMETERS-----
+  -----BEGIN EC PRIVATE KEY-----
+  MHcCAQEEIHP1+B6WJNy1Vn4RZNH1k5D0mwzzjXMDLeXJ4XyFqbK6oAoGCCqGSM49
+  AwEHoUQDQgAEfawk9MMmxm45tQ/+bkeKzcRllWzTND/E2zHoWZp7zUuWVs3PZxU9
+  oW/Jdpft8O7ij/rkouDWqSuCXJIboYKmdg==
+  -----END EC PRIVATE KEY-----
+  ```
+  
+  Convert this as a single line string and escape it with new line characters (`\n`) 
+  
+  It should now look like this:
+  
+  ```
+  -----BEGIN EC PARAMETERS-----\nBggqhkjOPQMBBw==\n-----END EC PARAMETERS-----\n-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIHP1+B6WJNy1Vn4RZNH1k5D0mwzzjXMDLeXJ4XyFqbK6oAoGCCqGSM49\nAwEHoUQDQgAEfawk9MMmxm45tQ/+bkeKzcRllWzTND/E2zHoWZp7zUuWVs3PZxU9\noW/Jdpft8O7ij/rkouDWqSuCXJIboYKmdg==\n-----END EC PRIVATE KEY-----
+  ```
+  
+  Store this value as is in the `.env` file in the `{{process.env.secret_key_jwt}}` parameter.
+  
+  # Create a certificate signing request (CSR)
+  
+  * The Common Name (CN) in the CSR should be the last part of your account ID.
+  * For example, if the `credential_group_id` for the Acquiring Partner account is krn:partner:global:account:live:LYABCDEI, the CN should be LYABCDEI.
+  
+  ```shell
+  openssl req -new -key my-key-file.pem -out csr.pem -subj "/CN=LYABCDEI"
+  ```
+  
+  If you open the file generated you will see something like this:
+  ```
+  -----BEGIN CERTIFICATE REQUEST-----
+  MIHpMIGRAgEAMC8xLTArBgNVBAMMJGQ2MzEyOTAxLTEwNTYtNDIzMS04YWRiLWQ1
+  YWJlYTdmM2Y4YzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABH2sJPTDJsZuObUP
+  /m5His3EZZVs0zQ/xNsx6Fmae81LllbNz2cVPaFvyXaX7fDu4o/65KLg1qkrglyS
+  G6GCpnagADAKBggqhkjOPQQDAgNHADBEAiBCgrdVKIb1nSwgdvtVsz8/4B2SuDH8
+  /u4TL40lTc6SHAIgD81MxNymMC/T6XsRGxlpYttEITD5MLVQ7CU63uMTsaI=
+  -----END CERTIFICATE REQUEST-----
+  ```
+  
+  # Create a client certificate (only available with API v2)
+  
+  Convert the certificate signing request (CSR) as a single line string and escape it with new line characters (`\n`) 
+  
+  It should now look like this:
+  ```
+  -----BEGIN CERTIFICATE REQUEST-----\nMIHpMIGRAgEAMC8xLTArBgNVBAMMJGQ2MzEyOTAxLTEwNTYtNDIzMS04YWRiLWQ1\nYWJlYTdmM2Y4YzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABH2sJPTDJsZuObUP\n/m5His3EZZVs0zQ/xNsx6Fmae81LllbNz2cVPaFvyXaX7fDu4o/65KLg1qkrglyS\nG6GCpnagADAKBggqhkjOPQQDAgNHADBEAiBCgrdVKIb1nSwgdvtVsz8/4B2SuDH8\n/u4TL40lTc6SHAIgD81MxNymMC/T6XsRGxlpYttEITD5MLVQ7CU63uMTsaI=\n-----END CERTIFICATE REQUEST-----
+  ```
+  
+  This is the `config.certificate_signing_request` you will need to use whenever calling the `POST /account/integration/credentials/client-certificate` endpoint to request a certificate.
+  
+  
+  In the response to this API call, Klarna returns the certificate for JWT signing in the `secret.certificate` parameter. The certificate value is also escaped using new line (`\n`) characters.
+  
+  ```
+  -----BEGIN CERTIFICATE-----\nMIICTTCCAfKgAwIBAgIQQVqKgBi0CVe3Ipgsy+8LaDAKBggqhkjOPQQDAjBUMQsw\nCQYDVQQGEwJTRTEXMBUGA1UECgwOS2xhcm5hIEJhbmsgQUIxLDAqBgNVBAMMI0ts\nYXJuYS1OZXR3b3JrLUNsaWVudHMtVGVzdC1DQS0yMDI0MB4XDTI1MDYxODEyMDU0\nMFoXDTI4MDYxNzEzMDU0MFowLzEtMCsGA1UEAwwkZDYzMTI5MDEtMTA1Ni00MjMx\nLThhZGItZDVhYmVhN2YzZjhjMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfawk\n9MMmxm45tQ/+bkeKzcRllWzTND/E2zHoWZp7zUuWVs3PZxU9oW/Jdpft8O7ij/rk\nouDWqSuCXJIboYKmdqOByjCBxzAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFLSz\nPdm3IWzm4fWXyzNcSoAda140MB0GA1UdDgQWBBRY/ynnMBJtpasEhAqIx5wEtu5P\nNjAPBgNVHQ8BAf8EBQMDB4AAME8GA1UdEQRIMEaGRGtybjpwYXJ0bmVyOmdsb2Jh\nbDphY2NvdW50OnRlc3Q6ZDYzMTI5MDEtMTA1Ni00MjMxLThhZGItZDVhYmVhN2Yz\nZjhjMBUGCysGAQQBgoMqAQECAQH/BAMCAQEwCgYIKoZIzj0EAwIDSQAwRgIhAIZT\nmuh9lSO4FfzxG5nZTf0wEfPWApao+ZUE8It5KZMHAiEA1JnunvGNwbgCaBZR5L2A\nAZvQG7f8LJ6Y+3CLPbyONTY=\n-----END CERTIFICATE-----
+  ```
+  
+  Store the value as is in your `.env` file using the `{{process.env.x5c_mtls}}` parameter.
+  
+  # Configure the other parameters of the JWT payload
+  
+  Make sure the following are defined in your collection environment:
+  - `partner_account_id`
+  - `credential_group_id`
+  - `partner_email`
+  
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Enforce MTLS authorization
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{base_url}}/{{version}}/account/integration/client-certificates/enforcement
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "enforced_from": "NOW"
+  }
+}
+
+tests {
+  test("should be able to disable a client identifier", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(204);
+  });
+  
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Generate interoperability token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/{{version}}/interoperability/tokens
+  body: none
+  auth: inherit
+}
+
+headers {
+  Klarna-Customer-Token: {{customer_token}}
+}

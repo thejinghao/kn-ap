@@ -1,0 +1,16 @@
+meta {
+  name: Read Payment Refund
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/refunds/:payment_refund_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_refund_id: {{payment_refund_id}}
+}

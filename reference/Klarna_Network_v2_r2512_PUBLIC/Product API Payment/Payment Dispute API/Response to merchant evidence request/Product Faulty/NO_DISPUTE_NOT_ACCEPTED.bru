@@ -1,0 +1,40 @@
+meta {
+  name: NO_DISPUTE_NOT_ACCEPTED
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/disputes/:payment_dispute_id/respond
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~payment_product_instance_id: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_dispute_id: {{payment_dispute_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "additional_information": "additional information about the dispute response",
+    "attachments": [
+      {
+        "payment_dispute_attachment_id": "{{payment_dispute_attachment_id}}",
+        "description": "attachment description"
+      }
+    ],
+    "details": {
+      "have_you_resolved_the_dispute_with_the_customer": "NO_DISPUTE_NOT_ACCEPTED",
+      "not_accepted_reason": "ITEM_NOT_FAULTY_AS_DESCRIBED"
+    }
+  }
+}

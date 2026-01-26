@@ -1,0 +1,24 @@
+meta {
+  name: Read a Client Identifier
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-identifier/:credential_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+tests {
+  test("should be able to read a client identifier", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.credential_id).to.match(/^krn:/)
+  });
+  
+}

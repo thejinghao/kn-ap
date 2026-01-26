@@ -1,0 +1,26 @@
+meta {
+  name: Simulate a webhook
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/{{version}}/notification/webhooks/:webhook_id/simulate
+  body: json
+  auth: inherit
+}
+
+params:path {
+  webhook_id: {{webhook_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "event_type": "payment.request.state-change.completed",
+    "event_version": "v2"
+  }
+}

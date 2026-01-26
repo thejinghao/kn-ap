@@ -1,0 +1,36 @@
+meta {
+  name: Create webhook - Payment Disputes
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/{{version}}/notification/webhooks
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "{{webhook_url}}",
+    "event_types": [
+      "payment.dispute.state-change.pre-arbitration",
+      "payment.dispute.state-change.arbitration-pending",
+      "payment.dispute.state-change.merchant-evidence-pending",
+      "payment.dispute.state-change.closed",
+      "payment.dispute.updated.arbitration-deadline-extended",
+      "payment.dispute.state-change.arbitration-appeal-window-open"
+    ],
+    "event_version": "v2",
+    "signing_key_id": "{{signing_key_id}}",
+    "status": "ENABLED"
+  }
+}
+
+script:post-response {
+  bru.setVar('webhook_id', res.body?.webhook_id || null);
+}

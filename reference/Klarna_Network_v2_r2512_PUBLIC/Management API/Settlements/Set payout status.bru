@@ -1,0 +1,22 @@
+meta {
+  name: Set payout status
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/{{version}}/settlements/:settlement_id/payouts/set-status
+  body: json
+  auth: inherit
+}
+
+params:path {
+  settlement_id: {{settlement_id}}
+}
+
+body:json {
+  {
+    "payout_bank_account_reference": "IBAN: **************1234",
+    "status": "PROCESSED"
+  }
+}

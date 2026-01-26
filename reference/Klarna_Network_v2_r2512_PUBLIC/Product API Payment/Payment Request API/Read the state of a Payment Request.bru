@@ -1,0 +1,31 @@
+meta {
+  name: Read the state of a Payment Request
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/payment/requests/:payment_request_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+  payment_request_id: {{payment_request_id}}
+}
+
+script:post-response {
+  bru.setVar('klarna_network_session_token', res.body?.state_context?.klarna_network_session_token || null);
+  bru.setVar('payment_token', res.body?.state_context?.payment_token || null);
+  bru.setVar('customer_token', res.body?.state_context?.klarna_customer?.customer_token || null);
+}
+
+tests {
+  test("should be able to read a payment request", () => {
+    const data = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(data.payment_request_id).to.match(/^krn:payment/);
+  });
+  
+}

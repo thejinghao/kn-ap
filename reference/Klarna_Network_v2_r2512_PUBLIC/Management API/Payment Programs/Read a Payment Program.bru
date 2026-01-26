@@ -1,0 +1,15 @@
+meta {
+  name: Read a Payment Program
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/distribution/products/payment/payment-programs/:payment_program_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  payment_program_id: {{payment_program_id}}
+}

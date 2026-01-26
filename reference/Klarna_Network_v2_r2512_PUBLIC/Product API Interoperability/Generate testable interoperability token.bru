@@ -1,0 +1,31 @@
+meta {
+  name: Generate testable interoperability token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/interoperability/test-tokens
+  body: json
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  Content-Type: application/json
+  Klarna-Customer-Token: {{customer_token}}
+  Klarna-Customer-Region: krn:test:us1:test
+}
+
+body:json {
+  {
+    "customer_journey": "KLARNA_EXPRESS_CHECKOUT"
+  }
+}
+
+script:post-response {
+  bru.setVar('interoperability_token', res.body?.interoperability_token || null);
+}

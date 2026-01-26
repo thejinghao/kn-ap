@@ -1,0 +1,30 @@
+meta {
+  name: Revoke a Client Certificate
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate/:credential_id/revoke
+  body: json
+  auth: inherit
+}
+
+params:path {
+  credential_id: {{credential_id}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "revoked_from": "{{revoked_from}}"
+  }
+}
+
+script:pre-request {
+  let revoked_from = new Date(Date.now()).toISOString().slice(0, -5) + 'Z';
+  bru.setVar('revoked_from', revoked_from);
+}

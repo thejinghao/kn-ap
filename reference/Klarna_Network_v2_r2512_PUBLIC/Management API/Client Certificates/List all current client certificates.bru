@@ -1,0 +1,29 @@
+meta {
+  name: List all current client certificates
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/account/integration/credentials/client-certificate
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "description": "Test API Credentials",
+    "config": {
+      "usage": "MTLS",
+      "certificate_signing_request": "-----BEGIN CERTIFICATE REQUEST-----\nMIHNMHUCAQAwEzERMA8GA1UEAwwITTQ4SldaRjgwWTATBgcqhkjOPQIBBggqhkjO\nPQMBBwNCAARuv+z/6rvib8WO21DmfKmJ/6fR9PQa80vVRc8uVPJ4RTfbYXDKC0TU\nKsnX1ao8us23lGQya3AwUVeQj/PVgzNVoAAwCgYIKoZIzj0EAwIDSAAwRQIgSVJQ\nx6I1YCndg2sewldN+os/HRVDodK08tAcaBbvklwCIQDzyD8yv9TBHOcXm1pPPE9n\nBRHoiLtSVv8Syo2UG9CR7Q==\n-----END CERTIFICATE REQUEST-----"
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar('credential_id', res.body?.credentials[0].credential_id || null);
+}

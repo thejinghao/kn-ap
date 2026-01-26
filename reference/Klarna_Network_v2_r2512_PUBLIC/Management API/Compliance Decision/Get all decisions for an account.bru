@@ -1,0 +1,28 @@
+meta {
+  name: Get all decisions for an account
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/compliance/decisions?size=20
+  body: none
+  auth: inherit
+}
+
+params:query {
+  size: 20
+  ~starting_after: 
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+headers {
+  User: Test
+}
+
+script:post-response {
+  bru.setVar('decision_id', res.body[0]?.decisions[0]?.decision_id || null);
+}

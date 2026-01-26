@@ -1,0 +1,19 @@
+meta {
+  name: Get all brands available
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/{{version}}/accounts/:partner_account_id/brands
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partner_account_id: {{partner_account_id}}
+}
+
+script:post-response {
+  bru.setVar('brand_id', res.body?.brands[0].brand_id || null);
+}

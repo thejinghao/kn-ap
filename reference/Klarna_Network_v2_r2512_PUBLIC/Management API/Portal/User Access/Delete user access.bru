@@ -1,0 +1,23 @@
+meta {
+  name: Delete user access
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{base_url}}/{{version}}/portal/user-access?account_id={{partner_account_id}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  account_id: {{partner_account_id}}
+  ~principal: {{partner_email}}
+  ~on_behalf_of: {{partner_account_id}}
+}
+
+tests {
+  test("should be able to delete user access", () => {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
