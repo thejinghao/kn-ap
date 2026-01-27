@@ -159,7 +159,7 @@ export default function PayloadDetailPanel({
                     style={{
                       backgroundColor: targetColors.bg,
                       borderColor: targetColors.border,
-                      ringColor: isHighlighted ? ref.color : undefined,
+                      ...(isHighlighted && { '--tw-ring-color': ref.color } as React.CSSProperties),
                     }}
                   >
                     <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function PayloadDetailPanel({
                     style={{
                       backgroundColor: sourceColors.bg,
                       borderColor: sourceColors.border,
-                      ringColor: isHighlighted ? ref.color : undefined,
+                      ...(isHighlighted && { '--tw-ring-color': ref.color } as React.CSSProperties),
                     }}
                   >
                     <div className="flex items-center gap-2">

@@ -368,7 +368,7 @@ export const payloadSections: PayloadSection[] = [
         targetFieldPath: 'store_groups[1].store_group_reference',
       },
     ],
-    referenceBy: ['partner-business-entities', 'store-groups'],
+    referencedBy: ['partner-business-entities', 'store-groups'],
     relatedEndpoints: ['list-payment-accounts', 'create-payment-account', 'update-payment-account'],
     documentation: 'https://docs.klarna.com/klarna-network-distribution/onboard-and-manage-your-partners/payment-acquiring-resources/payment-accounts/',
   },
