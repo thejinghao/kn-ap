@@ -72,7 +72,10 @@ const DEFAULT_CONFIG = {
 };
 
 // Default Client ID for testing (replace with your own)
-const DEFAULT_CLIENT_ID = 'klarna_test_client_d3RNYU5lcjVaTnloIzhMTEFDUldEWktWUi9ULz9YODcsNjA1M2EzMjgtNmY5MS00NjU3LWE1ODEtNGRiNmM0NzQ0NDNmLDEsOWh5YU9vcXU2dmpGaklGOU9wa3hpcitjY3Z5cnIxY0ZrY21XQUVFSHNKcz0';
+const DEFAULT_CLIENT_ID = 'klarna_test_client_SyVDdUcvcTQhQjUkVEhyRFgzWFhxRU4xRHdjZVE4UTUsMmVkZGVlNzMtNGIyMy00MzQyLTgxZmItYWEzMzFkYWM1OTU2LDEsVXhrQ3N5UzNQbVJ5UkdJS1VKeHV0MDg5RDUyOUVCTE94ck8yaVpjVXRPWT0';
+
+// Default Partner Account ID for testing
+const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -97,7 +100,7 @@ export default function PaymentButtonPage() {
   
   // Configuration State
   const [clientId, setClientId] = useState(DEFAULT_CLIENT_ID);
-  const [partnerAccountId, setPartnerAccountId] = useState('');
+  const [partnerAccountId, setPartnerAccountId] = useState(DEFAULT_PARTNER_ACCOUNT_ID);
   
   // Flow State
   const [flowState, setFlowState] = useState<FlowState>('IDLE');
@@ -170,64 +173,73 @@ export default function PaymentButtonPage() {
     });
 
     return response.json();
-  }, [partnerAccountId]);
+  }, [partnerAccountId, currentOrigin]);
 
   // ============================================================================
   // INITIATE CALLBACK (called when button is clicked)
   // ============================================================================
 
-  const handleInitiate = useCallback(async (
-    klarnaNetworkSessionToken: string | undefined,
-    paymentOptionId: string | undefined
-  ) => {
+  const handleInitiate = useCallback(async (): Promise<
+    | { paymentRequestId: string }
+    | { returnUrl?: string }
+  > => {
+    // Get paymentOptionId from the stored presentation
+    const paymentOptionId = presentationRef.current?.paymentOption?.paymentOptionId;
+    
     logEvent('Button Clicked - Initiating Payment', 'info', { paymentOptionId });
     setFlowState('AUTHORIZING');
     setErrorMessage(null);
 
-    try {
-      // Call authorize API
-      const result = await authorizePayment(paymentOptionId);
-      
-      logEvent('Authorization Response', result.success ? 'success' : 'error', result);
+    // Call authorize API
+    const result = await authorizePayment(paymentOptionId);
+    
+    logEvent('Authorization Response', result.success ? 'success' : 'error', result);
 
-      if (!result.success || !result.data) {
-        throw new Error(result.error || 'Authorization failed');
-      }
-
-      const { result: authResult, paymentRequest, paymentTransaction: tx } = result.data;
-
-      switch (authResult) {
-        case 'APPROVED':
-          // Direct approval (rare for hosted checkout)
-          setFlowState('SUCCESS');
-          setPaymentTransaction(result.data);
-          logEvent('Payment Approved', 'success', tx);
-          return { returnUrl: `${currentOrigin}/payment-button?status=approved` };
-
-        case 'STEP_UP_REQUIRED':
-          // Customer needs to complete Klarna journey
-          if (!paymentRequest?.paymentRequestId) {
-            throw new Error('No payment request ID returned');
-          }
-          setFlowState('STEP_UP');
-          logEvent('Step-up Required - Launching Klarna Journey', 'info', paymentRequest);
-          // Return paymentRequestId to SDK - it will handle the Klarna journey
-          return { paymentRequestId: paymentRequest.paymentRequestId };
-
-        case 'DECLINED':
-          throw new Error(result.data.resultReason || 'Payment declined');
-
-        default:
-          throw new Error(`Unknown result: ${authResult}`);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    if (!result.success || !result.data) {
+      const errorMsg = result.error || 'Authorization failed';
       setFlowState('ERROR');
-      setErrorMessage(message);
-      logEvent('Initiation Error', 'error', { error: message });
-      throw error;
+      setErrorMessage(errorMsg);
+      logEvent('Authorization Error', 'error', { error: errorMsg });
+      // Throw with clear message - SDK will catch this
+      throw new Error(errorMsg);
     }
-  }, [authorizePayment, logEvent]);
+
+    const { result: authResult, paymentRequest, paymentTransaction: tx } = result.data;
+
+    switch (authResult) {
+      case 'APPROVED':
+        // Direct approval (rare for hosted checkout)
+        setFlowState('SUCCESS');
+        setPaymentTransaction(result.data);
+        logEvent('Payment Approved', 'success', tx);
+        return { returnUrl: `${currentOrigin}/payment-button?status=approved` };
+
+      case 'STEP_UP_REQUIRED':
+        // Customer needs to complete Klarna journey
+        if (!paymentRequest?.paymentRequestId) {
+          const errorMsg = 'No payment request ID returned';
+          setFlowState('ERROR');
+          setErrorMessage(errorMsg);
+          throw new Error(errorMsg);
+        }
+        setFlowState('STEP_UP');
+        logEvent('Step-up Required - Launching Klarna Journey', 'info', paymentRequest);
+        // Return paymentRequestId to SDK - it will handle the Klarna journey
+        return { paymentRequestId: paymentRequest.paymentRequestId };
+
+      case 'DECLINED':
+        const declineMsg = result.data.resultReason || 'Payment declined';
+        setFlowState('ERROR');
+        setErrorMessage(declineMsg);
+        throw new Error(declineMsg);
+
+      default:
+        const unknownMsg = `Unknown result: ${authResult}`;
+        setFlowState('ERROR');
+        setErrorMessage(unknownMsg);
+        throw new Error(unknownMsg);
+    }
+  }, [authorizePayment, logEvent, currentOrigin]);
 
   // ============================================================================
   // SDK EVENT HANDLERS

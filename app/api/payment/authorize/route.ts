@@ -341,11 +341,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       });
     } else {
-      // Error response
+      // Error response - extract detailed error message from Klarna
+      let errorMessage = `HTTP ${response.status}`;
+      
+      if (responseData?.error_messages && Array.isArray(responseData.error_messages)) {
+        // Klarna API v2 error format
+        errorMessage = responseData.error_messages.map((e: { text?: string; field?: string }) => 
+          e.field ? `${e.field}: ${e.text}` : e.text
+        ).join('; ');
+      } else if (responseData?.message) {
+        errorMessage = responseData.message;
+      } else if (responseData?.error) {
+        errorMessage = typeof responseData.error === 'string' 
+          ? responseData.error 
+          : JSON.stringify(responseData.error);
+      } else if (typeof responseData === 'string') {
+        errorMessage = responseData;
+      }
+
+      console.error(`[Payment Authorize] Klarna API error: ${errorMessage}`);
+      console.error(`[Payment Authorize] Full error response:`, JSON.stringify(responseData, null, 2));
+      
       return NextResponse.json({
         success: false,
         data: null,
-        error: responseData?.error_messages?.[0]?.text || responseData?.message || `HTTP ${response.status}`,
+        error: errorMessage,
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       }, { status: response.status });
     }
