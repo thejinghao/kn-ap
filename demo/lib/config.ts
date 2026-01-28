@@ -2,7 +2,7 @@
 
 export const config = {
   klarna: {
-    apiKey: process.env.KLARNA_API_KEY || '',
+    apiKey: process.env.acquiring_partner_api_key || '',
     baseUrl: process.env.KLARNA_BASE_URL || 'https://api-global.test.klarna.com',
     apiVersion: process.env.KLARNA_API_VERSION || 'v2',
     certPath: process.env.KLARNA_CERT_PATH || './certs/client-cert.pem',
@@ -25,7 +25,7 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
   if (!config.klarna.apiKey) {
-    errors.push('KLARNA_API_KEY is not set');
+    errors.push('acquiring_partner_api_key is not set');
   }
   
   return {

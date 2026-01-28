@@ -202,12 +202,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
       }, { status: 400 });
     }
 
-    const apiKey = process.env.KLARNA_API_KEY;
+    const apiKey = process.env.acquiring_partner_api_key;
     if (!apiKey) {
       return NextResponse.json({
         success: false,
         data: null,
-        error: 'KLARNA_API_KEY not configured',
+        error: 'acquiring_partner_api_key not configured',
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       }, { status: 500 });
     }

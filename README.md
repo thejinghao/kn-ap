@@ -29,7 +29,7 @@ cp .env.local.example .env.local
 Edit `.env.local` with your Klarna API credentials:
 
 ```env
-KLARNA_API_KEY=klarna_test_api_your_api_key_here
+acquiring_partner_api_key=klarna_test_api_your_api_key_here
 KLARNA_BASE_URL=https://api-global.test.klarna.com
 KLARNA_CERT_PATH=./certs/client-cert.pem
 KLARNA_KEY_PATH=./certs/client-key.pem

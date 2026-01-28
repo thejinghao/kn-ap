@@ -86,10 +86,10 @@ function generateKlarnaHeaders(
   method: string,
   customHeaders?: Record<string, string>
 ): { headers: Record<string, string>; correlationId: string; idempotencyKey?: string } {
-  const apiKey = process.env.KLARNA_API_KEY;
+  const apiKey = process.env.acquiring_partner_api_key;
   
   if (!apiKey) {
-    throw new Error('KLARNA_API_KEY is not configured');
+    throw new Error('acquiring_partner_api_key is not configured');
   }
 
   const correlationId = uuidv4();
