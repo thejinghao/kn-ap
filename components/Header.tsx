@@ -10,6 +10,7 @@ import {
   ChevronDownIcon,
   RectangleGroupIcon,
   DocumentTextIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import EnvironmentPanel from './EnvironmentPanel';
 import { useEnvironment } from '@/lib/env-context';
@@ -17,15 +18,20 @@ import { useEnvironment } from '@/lib/env-context';
 export default function Header() {
   const [showEnvPanel, setShowEnvPanel] = useState(false);
   const [showStructureMenu, setShowStructureMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [showPaymentsMenu, setShowPaymentsMenu] = useState(false);
+  const structureMenuRef = useRef<HTMLDivElement>(null);
+  const paymentsMenuRef = useRef<HTMLDivElement>(null);
   const { variables } = useEnvironment();
   const pathname = usePathname();
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (structureMenuRef.current && !structureMenuRef.current.contains(event.target as Node)) {
         setShowStructureMenu(false);
+      }
+      if (paymentsMenuRef.current && !paymentsMenuRef.current.contains(event.target as Node)) {
+        setShowPaymentsMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -33,6 +39,7 @@ export default function Header() {
   }, []);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
+  const isPaymentsPage = pathname?.startsWith('/payment-button');
 
   return (
     <>
@@ -61,7 +68,7 @@ export default function Header() {
                 </Link>
                 
                 {/* Account Structure Dropdown */}
-                <div className="relative" ref={menuRef}>
+                <div className="relative" ref={structureMenuRef}>
                   <button
                     onClick={() => setShowStructureMenu(!showStructureMenu)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors ${
@@ -105,6 +112,42 @@ export default function Header() {
                         <div>
                           <div className="font-medium">Onboarding Payload</div>
                           <div className="text-xs text-gray-500">Explore the payload structure</div>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payments Dropdown */}
+                <div className="relative" ref={paymentsMenuRef}>
+                  <button
+                    onClick={() => setShowPaymentsMenu(!showPaymentsMenu)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors ${
+                      isPaymentsPage
+                        ? 'text-gray-900 font-semibold'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <CreditCardIcon className="w-4 h-4" />
+                    <span>Payments</span>
+                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${showPaymentsMenu ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showPaymentsMenu && (
+                    <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <Link
+                        href="/payment-button"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/payment-button'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <CreditCardIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Payment Button (SDK)</div>
+                          <div className="text-xs text-gray-500">Klarna payment button integration</div>
                         </div>
                       </Link>
                     </div>

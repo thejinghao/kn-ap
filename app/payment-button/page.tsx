@@ -4,788 +4,576 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './page.module.css';
 
 // ============================================================================
-// TYPES & INTERFACES
+// TYPES
 // ============================================================================
 
-interface CountryConfig {
-  currency: string;
-  locales: string[];
-}
+type FlowState = 
+  | 'IDLE' 
+  | 'INITIALIZING' 
+  | 'READY' 
+  | 'AUTHORIZING' 
+  | 'STEP_UP' 
+  | 'COMPLETING' 
+  | 'SUCCESS' 
+  | 'ERROR';
 
 interface EventLogItem {
   id: string;
   title: string;
   timestamp: Date;
-  data: unknown;
+  type: 'info' | 'success' | 'error' | 'warning';
+  data?: unknown;
+}
+
+interface AuthorizeResponse {
+  success: boolean;
+  data: {
+    result: 'APPROVED' | 'DECLINED' | 'STEP_UP_REQUIRED';
+    resultReason?: string;
+    paymentTransaction?: {
+      paymentTransactionId: string;
+      paymentTransactionReference: string;
+      amount: number;
+      currency: string;
+    };
+    paymentRequest?: {
+      paymentRequestId: string;
+      paymentRequestReference: string;
+      state: string;
+    };
+  } | null;
+  error?: string;
+  requestMetadata: {
+    correlationId: string;
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type KlarnaSDKInstance = any;
+type KlarnaSDK = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type KlarnaButton = any;
+type PaymentPresentation = any;
+
+// Serializable presentation info for display
+interface PresentationInfo {
+  instruction: string;
+  paymentOptionId: string | null;
+}
 
 // ============================================================================
-// CONSTANTS & MAPPINGS
+// CONSTANTS
 // ============================================================================
 
-const COUNTRY_MAPPING: Record<string, CountryConfig> = {
-  AU: { currency: "AUD", locales: ["en-AU"] },
-  AT: { currency: "EUR", locales: ["de-AT", "en-AT"] },
-  BE: { currency: "EUR", locales: ["nl-BE", "fr-BE", "en-BE"] },
-  CA: { currency: "CAD", locales: ["en-CA", "fr-CA"] },
-  CZ: { currency: "CZK", locales: ["cs-CZ", "en-CZ"] },
-  DK: { currency: "DKK", locales: ["da-DK", "en-DK"] },
-  FI: { currency: "EUR", locales: ["fi-FI", "sv-FI", "en-FI"] },
-  FR: { currency: "EUR", locales: ["fr-FR", "en-FR"] },
-  DE: { currency: "EUR", locales: ["de-DE", "en-DE"] },
-  GR: { currency: "EUR", locales: ["el-GR", "en-GR"] },
-  HU: { currency: "HUF", locales: ["hu-HU", "en-HU"] },
-  IE: { currency: "EUR", locales: ["en-IE"] },
-  IT: { currency: "EUR", locales: ["it-IT", "en-IT"] },
-  MX: { currency: "MXN", locales: ["en-MX", "es-MX"] },
-  NL: { currency: "EUR", locales: ["nl-NL", "en-NL"] },
-  NZ: { currency: "NZD", locales: ["en-NZ"] },
-  NO: { currency: "NOK", locales: ["nb-NO", "en-NO"] },
-  PL: { currency: "PLN", locales: ["pl-PL", "en-PL"] },
-  PT: { currency: "EUR", locales: ["pt-PT", "en-PT"] },
-  RO: { currency: "RON", locales: ["ro-RO", "en-RO"] },
-  SK: { currency: "EUR", locales: ["sk-SK", "en-SK"] },
-  ES: { currency: "EUR", locales: ["es-ES", "en-ES"] },
-  SE: { currency: "SEK", locales: ["sv-SE", "en-SE"] },
-  CH: { currency: "CHF", locales: ["de-CH", "fr-CH", "it-CH", "en-CH"] },
-  GB: { currency: "GBP", locales: ["en-GB"] },
-  US: { currency: "USD", locales: ["en-US", "es-US"] }
+// Default configuration - US market
+const DEFAULT_CONFIG = {
+  locale: 'en-US',
+  currency: 'USD',
+  country: 'US',
+  amount: 11836, // $118.36 in cents
 };
 
-const VALID_INTENT_COMBINATIONS = [
-  "PAY",
-  "DONATE",
-  "SUBSCRIBE",
-  "SIGNUP",
-  "SIGNIN",
-  "ADD_TO_WALLET",
-  "ADD_TO_WALLET,PAY",
-  "PAY,SIGNIN",
-  "PAY,SUBSCRIBE",
-  "DONATE,SIGNIN"
-];
-
-const DEFAULT_CLIENT_ID = "klarna_test_client_d3RNYU5lcjVaTnloIzhMTEFDUldEWktWUi9ULz9YODcsNjA1M2EzMjgtNmY5MS00NjU3LWE1ODEtNGRiNmM0NzQ0NDNmLDEsOWh5YU9vcXU2dmpGaklGOU9wa3hpcitjY3Z5cnIxY0ZrY21XQUVFSHNKcz0";
+// Default Client ID for testing (replace with your own)
+const DEFAULT_CLIENT_ID = 'klarna_test_client_d3RNYU5lcjVaTnloIzhMTEFDUldEWktWUi9ULz9YODcsNjA1M2EzMjgtNmY5MS00NjU3LWE1ODEtNGRiNmM0NzQ0NDNmLDEsOWh5YU9vcXU2dmpGaklGOU9wa3hpcitjY3Z5cnIxY0ZrY21XQUVFSHNKcz0';
 
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
-function generateReference(prefix: string): string {
-  return `${prefix}${new Date().toISOString()}`;
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 11);
 }
 
-function generateUUID(): string {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-function validateIntents(intents: string[] | undefined): boolean {
-  if (!intents || intents.length === 0) return true;
-  const sorted = [...intents].sort().join(",");
-  return VALID_INTENT_COMBINATIONS.includes(sorted);
-}
-
-// ============================================================================
-// COLLAPSIBLE SECTION COMPONENT
-// ============================================================================
-
-interface CollapsibleSectionProps {
-  title: string;
-  isCollapsed: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-  titleAs?: 'h3' | 'label';
-}
-
-function CollapsibleSection({ title, isCollapsed, onToggle, children, titleAs = 'h3' }: CollapsibleSectionProps) {
-  const TitleElement = titleAs;
-  return (
-    <>
-      <div className={styles.collapsibleHeader} onClick={onToggle}>
-        <TitleElement style={{ margin: 0, cursor: 'pointer' }}>{title}</TitleElement>
-        <span className={`${styles.collapseIcon} ${isCollapsed ? styles.collapsed : ''}`}>▼</span>
-      </div>
-      <div className={`${styles.collapsibleContent} ${isCollapsed ? styles.collapsed : ''}`}>
-        {children}
-      </div>
-    </>
-  );
-}
-
-// ============================================================================
-// TOGGLE SWITCH COMPONENT
-// ============================================================================
-
-interface ToggleSwitchProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-  id: string;
-}
-
-function ToggleSwitch({ checked, onChange, label, id }: ToggleSwitchProps) {
-  return (
-    <div className={styles.toggleContainer}>
-      <label className={styles.toggleSwitch}>
-        <input
-          type="checkbox"
-          id={id}
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className={styles.toggleSlider}></span>
-      </label>
-      <span style={{ fontSize: '14px', color: '#0b051d', fontWeight: 500 }}>{label}</span>
-    </div>
-  );
+function formatAmount(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
-export default function KlarnaPaymentButtonDemo() {
-  // SDK & Button State
-  const [klarna, setKlarna] = useState<KlarnaSDKInstance | null>(null);
-  const currentButtonRef = useRef<KlarnaButton | null>(null);
-  const mountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const buttonMountRef = useRef<HTMLDivElement>(null);
-
-  // SDK Configuration State
-  const [partnerMode, setPartnerMode] = useState(false);
-  const [partnerAccountId, setPartnerAccountId] = useState('');
-  const [clientId, setClientId] = useState(DEFAULT_CLIENT_ID);
-  const [sdkToken, setSdkToken] = useState('');
-  const [sdkStatus, setSdkStatus] = useState({ text: 'Ready to initialize', color: '#6f6b7a' });
-
-  // Button Parameters State
-  const [buttonId, setButtonId] = useState('');
-  const [country, setCountry] = useState('IT');
-  const [locale, setLocale] = useState('it-IT');
-  const [shape, setShape] = useState('pill');
-  const [theme, setTheme] = useState('default');
-  const [logoAlignment, setLogoAlignment] = useState('default');
-  const [initiationMode, setInitiationMode] = useState('DEVICE_BEST');
-  const [intents, setIntents] = useState<Record<string, boolean>>({
-    PAY: true,
-    SUBSCRIBE: false,
-    SIGNUP: false,
-    SIGNIN: false,
-    DONATE: false,
-    ADD_TO_WALLET: false
-  });
-  const [disabled, setDisabled] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Initiation Data State
-  const [scenario, setScenario] = useState('STEP_UP_REQUIRED');
-  const [usePaymentRequestData, setUsePaymentRequestData] = useState(true);
-  const [paymentRequestDataJson, setPaymentRequestDataJson] = useState('');
-  const [paymentRequestId, setPaymentRequestId] = useState('');
-  const [returnUrl, setReturnUrl] = useState('https://partner.example/payment-complete');
-
-  // UI State
-  const [buttonStatus, setButtonStatus] = useState({ text: 'Button will auto-mount when SDK is ready', color: '#6f6b7a' });
-  const [eventLog, setEventLog] = useState<EventLogItem[]>([]);
-  const [currentOrigin, setCurrentOrigin] = useState('http://localhost:3000');
+export default function PaymentButtonPage() {
+  // Client-side mount tracking (for hydration safety)
+  const [isMounted, setIsMounted] = useState(false);
+  const [currentOrigin, setCurrentOrigin] = useState('');
   
-  // Collapsible States
-  const [sdkConfigCollapsed, setSdkConfigCollapsed] = useState(true);
-  const [buttonParamsCollapsed, setButtonParamsCollapsed] = useState(true);
-  const [intentsCollapsed, setIntentsCollapsed] = useState(true);
-  const [initiationDataCollapsed, setInitiationDataCollapsed] = useState(true);
-  const [codeDisplayCollapsed, setCodeDisplayCollapsed] = useState(false);
-
-  // ============================================================================
-  // DERIVED VALUES
-  // ============================================================================
-
-  const currency = COUNTRY_MAPPING[country]?.currency || 'EUR';
-  const locales = COUNTRY_MAPPING[country]?.locales || ['en-US'];
-
-  const selectedIntents = Object.entries(intents)
-    .filter(([, checked]) => checked)
-    .map(([intent]) => intent);
-
-  const isIntentValid = validateIntents(selectedIntents.length > 0 ? selectedIntents : undefined);
+  // Configuration State
+  const [clientId, setClientId] = useState(DEFAULT_CLIENT_ID);
+  const [partnerAccountId, setPartnerAccountId] = useState('');
+  
+  // Flow State
+  const [flowState, setFlowState] = useState<FlowState>('IDLE');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // SDK State
+  const [klarna, setKlarna] = useState<KlarnaSDK | null>(null);
+  const [presentationInfo, setPresentationInfo] = useState<PresentationInfo | null>(null);
+  const [paymentTransaction, setPaymentTransaction] = useState<AuthorizeResponse['data'] | null>(null);
+  
+  // Event Log
+  const [eventLog, setEventLog] = useState<EventLogItem[]>([]);
+  
+  // Refs
+  const buttonWrapperRef = useRef<HTMLDivElement>(null);
+  const sdkInitializedRef = useRef(false);
+  const presentationRef = useRef<PaymentPresentation | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mountedButtonRef = useRef<any>(null);
+  const sdkMountIdRef = useRef<string>('klarna-sdk-mount');
 
   // ============================================================================
   // EVENT LOGGING
   // ============================================================================
 
-  const logEvent = useCallback((title: string, data: unknown) => {
-    setEventLog((prev) => [{
-      id: generateUUID(),
+  const logEvent = useCallback((title: string, type: EventLogItem['type'], data?: unknown) => {
+    setEventLog(prev => [{
+      id: generateId(),
       title,
       timestamp: new Date(),
-      data
+      type,
+      data,
     }, ...prev]);
   }, []);
 
-  const clearEventLog = useCallback(() => {
+  const clearLog = useCallback(() => {
     setEventLog([]);
   }, []);
 
   // ============================================================================
-  // PAYMENT REQUEST DATA BUILDER
+  // AUTHORIZE PAYMENT API CALL
   // ============================================================================
 
-  const buildPaymentRequestDataStructure = useCallback(() => {
-    const selectedIntentsList = Object.entries(intents)
-      .filter(([, checked]) => checked)
-      .map(([intent]) => intent);
-    
-    const intentList = selectedIntentsList.length > 0 ? selectedIntentsList : ['PAY'];
-    const currentCurrency = COUNTRY_MAPPING[country]?.currency || 'EUR';
-
-    const isOnlyPay = intentList.length === 1 && intentList[0] === 'PAY';
-    const isOnlyDonate = intentList.length === 1 && intentList[0] === 'DONATE';
-    const isOnlySubscribe = intentList.length === 1 && intentList[0] === 'SUBSCRIBE';
-    const isOnlyAddToWallet = intentList.length === 1 && intentList[0] === 'ADD_TO_WALLET';
-    const isPayPlusSubscribe = intentList.length === 2 && intentList.includes('PAY') && intentList.includes('SUBSCRIBE');
-    const isPayPlusAddToWallet = intentList.length === 2 && intentList.includes('PAY') && intentList.includes('ADD_TO_WALLET');
-
-    const amount = 3000;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = {
-      currency: currentCurrency,
-      paymentRequestReference: "Auto-generated on mount",
-      supplementaryPurchaseData: {
-        purchaseReference: "Auto-generated on mount"
-      }
-    };
-
-    const subscriptionStartDate = new Date();
-    subscriptionStartDate.setDate(subscriptionStartDate.getDate() + 1);
-    const subscriptionStartDateStr = subscriptionStartDate.toISOString().split('T')[0];
-
-    if (isOnlyAddToWallet) {
-      data.supplementaryPurchaseData.ondemandService = {
-        averageAmount: 2000,
-        minimumAmount: 2000,
-        maximumAmount: 6000,
-        purchaseInterval: "MONTH",
-        purchaseInterval_frequency: 1
-      };
-    } else if (isPayPlusAddToWallet) {
-      data.amount = amount;
-      data.supplementaryPurchaseData.lineItems = [
-        { name: "Taxi ride", quantity: 1, totalAmount: amount, unitPrice: amount }
-      ];
-      data.supplementaryPurchaseData.ondemandService = {
-        averageAmount: 2000,
-        minimumAmount: 2000,
-        maximumAmount: 6000,
-        purchaseInterval: "MONTH",
-        purchaseInterval_frequency: 1
-      };
-    } else if (isOnlySubscribe) {
-      data.amount = amount;
-      data.supplementaryPurchaseData.lineItems = [
-        { name: "Game Pass", quantity: 1, totalAmount: amount, unitPrice: amount, subscriptionReference: "GAME_PASS_USER_XYZ" }
-      ];
-      data.supplementaryPurchaseData.subscriptions = [{
-        subscriptionReference: "GAME_PASS_USER_XYZ",
-        name: "Game Pass",
-        freeTrial: "INACTIVE",
-        billingPlans: [{
-          billingAmount: amount,
-          currency: currentCurrency,
-          from: subscriptionStartDateStr,
-          interval: "MONTH",
-          intervalFrequency: 1
-        }]
-      }];
-    } else if (isPayPlusSubscribe) {
-      const goodsAmount = Math.floor(amount * 0.85);
-      const subscriptionAmount = amount - goodsAmount;
-      data.amount = amount;
-      data.supplementaryPurchaseData.lineItems = [
-        { name: "Video Game Console", quantity: 1, totalAmount: goodsAmount, unitPrice: goodsAmount, lineItemReference: "AWESOME_CONSOLE" },
-        { name: "Game Pass", quantity: 1, totalAmount: subscriptionAmount, unitPrice: subscriptionAmount, subscriptionReference: "GAME_PASS_USER_XYZ" }
-      ];
-      data.supplementaryPurchaseData.subscriptions = [{
-        subscriptionReference: "GAME_PASS_USER_XYZ",
-        name: "Game Pass",
-        freeTrial: "INACTIVE",
-        billingPlans: [{
-          billingAmount: subscriptionAmount,
-          currency: currentCurrency,
-          from: subscriptionStartDateStr,
-          interval: "MONTH",
-          intervalFrequency: 1
-        }]
-      }];
-    } else if (isOnlyPay || isOnlyDonate) {
-      data.amount = amount;
-      data.supplementaryPurchaseData.lineItems = [
-        { name: "Test Item", quantity: 1, totalAmount: amount, unitPrice: amount }
-      ];
-    }
-
-    data.customerInteractionConfig = {
-      returnUrl: partnerMode
-        ? "https://acquiringpartner.example/klarna-redirect?payment_request_id={klarna.payment_request.id}&state={klarna.payment_request.state}&payment_token={klarna.payment_request.payment_token}&payment_request_reference={klarna.payment_request.payment_request_reference}"
-        : "https://partner.example/klarna-redirect?payment_request_id={klarna.payment_request.id}&state={klarna.payment_request.state}&interoperability_token={klarna.payment_request.interoperability_token}&payment_request_reference={klarna.payment_request.payment_request_reference}"
-    };
-
-    data.shippingConfig = {
-      mode: "EDITABLE",
-      supportedCountries: [country]
-    };
-
-    if (isOnlySubscribe || isPayPlusSubscribe) {
-      data.requestCustomerToken = {
-        scopes: ["payment:customer_not_present"],
-        customerTokenReference: "Auto-generated on mount"
-      };
-    } else if (isOnlyAddToWallet || isPayPlusAddToWallet) {
-      data.requestCustomerToken = {
-        scopes: ["payment:customer_present"],
-        customerTokenReference: "Auto-generated on mount"
-      };
-    }
-
-    return JSON.stringify(data, null, 2);
-  }, [intents, country, partnerMode]);
-
-  // ============================================================================
-  // BUILD FINAL PAYMENT REQUEST DATA
-  // ============================================================================
-
-  const buildPaymentRequestData = useCallback(() => {
-    try {
-      const jsonText = paymentRequestDataJson.trim();
-      if (!jsonText) throw new Error("Payment request data is required");
-
-      const data = JSON.parse(jsonText);
-      data.currency = currency;
-
-      if (data.shippingConfig) {
-        data.shippingConfig.supportedCountries = [country];
-      }
-
-      const needsCustomerToken = selectedIntents.includes('SUBSCRIBE') || selectedIntents.includes('ADD_TO_WALLET');
-
-      if (needsCustomerToken) {
-        const scope = selectedIntents.includes('SUBSCRIBE') ? 'payment:customer_not_present' : 'payment:customer_present';
-        if (!data.requestCustomerToken) {
-          data.requestCustomerToken = {
-            scopes: [scope],
-            customerTokenReference: `customer_token_${generateUUID()}`
-          };
-        } else {
-          data.requestCustomerToken.scopes = [scope];
-          if (!data.requestCustomerToken.customerTokenReference || data.requestCustomerToken.customerTokenReference.includes('Auto-generated')) {
-            data.requestCustomerToken.customerTokenReference = `customer_token_${generateUUID()}`;
-          }
-        }
-      } else {
-        delete data.requestCustomerToken;
-      }
-
-      if (!data.paymentRequestReference || data.paymentRequestReference.includes('Auto-generated')) {
-        data.paymentRequestReference = generateReference('pay_req_ref_WebSDK_');
-      }
-
-      if (data.supplementaryPurchaseData && (!data.supplementaryPurchaseData.purchaseReference || data.supplementaryPurchaseData.purchaseReference.includes('Auto-generated'))) {
-        data.supplementaryPurchaseData.purchaseReference = generateReference('purchase_ref_WebSDK_');
-      }
-
-      return data;
-    } catch (error) {
-      throw new Error(`Invalid payment request data JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [paymentRequestDataJson, currency, country, selectedIntents]);
-
-  // ============================================================================
-  // SDK EVENT LISTENERS
-  // ============================================================================
-
-  const attachSDKEventListeners = useCallback((klarnaInstance: KlarnaSDKInstance) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    klarnaInstance.Payment.on('error', (error: any, paymentRequest: any) => {
-      logEvent('Payment Error', { error, paymentRequest });
+  const authorizePayment = useCallback(async (
+    paymentOptionId?: string,
+    klarnaNetworkSessionToken?: string
+  ): Promise<AuthorizeResponse> => {
+    const response = await fetch('/api/payment/authorize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        partnerAccountId,
+        currency: DEFAULT_CONFIG.currency,
+        amount: DEFAULT_CONFIG.amount,
+        paymentOptionId,
+        paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
+        paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
+        returnUrl: `${currentOrigin}/payment-button?status=complete`,
+        klarnaNetworkSessionToken,
+        supplementaryPurchaseData: {
+          purchaseReference: `purchase_${Date.now()}`,
+          lineItems: [{
+            name: 'Test Product',
+            quantity: 1,
+            totalAmount: DEFAULT_CONFIG.amount,
+            unitPrice: DEFAULT_CONFIG.amount,
+          }],
+        },
+      }),
     });
 
+    return response.json();
+  }, [partnerAccountId]);
+
+  // ============================================================================
+  // INITIATE CALLBACK (called when button is clicked)
+  // ============================================================================
+
+  const handleInitiate = useCallback(async (
+    klarnaNetworkSessionToken: string | undefined,
+    paymentOptionId: string | undefined
+  ) => {
+    logEvent('Button Clicked - Initiating Payment', 'info', { paymentOptionId });
+    setFlowState('AUTHORIZING');
+    setErrorMessage(null);
+
+    try {
+      // Call authorize API
+      const result = await authorizePayment(paymentOptionId);
+      
+      logEvent('Authorization Response', result.success ? 'success' : 'error', result);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Authorization failed');
+      }
+
+      const { result: authResult, paymentRequest, paymentTransaction: tx } = result.data;
+
+      switch (authResult) {
+        case 'APPROVED':
+          // Direct approval (rare for hosted checkout)
+          setFlowState('SUCCESS');
+          setPaymentTransaction(result.data);
+          logEvent('Payment Approved', 'success', tx);
+          return { returnUrl: `${currentOrigin}/payment-button?status=approved` };
+
+        case 'STEP_UP_REQUIRED':
+          // Customer needs to complete Klarna journey
+          if (!paymentRequest?.paymentRequestId) {
+            throw new Error('No payment request ID returned');
+          }
+          setFlowState('STEP_UP');
+          logEvent('Step-up Required - Launching Klarna Journey', 'info', paymentRequest);
+          // Return paymentRequestId to SDK - it will handle the Klarna journey
+          return { paymentRequestId: paymentRequest.paymentRequestId };
+
+        case 'DECLINED':
+          throw new Error(result.data.resultReason || 'Payment declined');
+
+        default:
+          throw new Error(`Unknown result: ${authResult}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setFlowState('ERROR');
+      setErrorMessage(message);
+      logEvent('Initiation Error', 'error', { error: message });
+      throw error;
+    }
+  }, [authorizePayment, logEvent]);
+
+  // ============================================================================
+  // SDK EVENT HANDLERS
+  // ============================================================================
+
+  const attachSDKEventHandlers = useCallback((klarnaInstance: KlarnaSDK) => {
+    // Handle payment completion
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
+      logEvent('Payment Complete Event', 'success', {
+        paymentRequestId: paymentRequest.paymentRequestId,
+        state: paymentRequest.state,
+        stateContext: paymentRequest.stateContext,
+      });
+
+      // Get the klarna_network_session_token from stateContext
+      const sessionToken = paymentRequest.stateContext?.klarna_network_session_token ||
+                          paymentRequest.stateContext?.klarnaNetworkSessionToken;
+
+      if (sessionToken) {
+        setFlowState('COMPLETING');
+        logEvent('Performing Final Authorization', 'info', { hasSessionToken: true });
+
+        try {
+          // Final authorization with the session token
+          const finalResult = await authorizePayment(undefined, sessionToken);
+          
+          logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult);
+
+          if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+            setFlowState('SUCCESS');
+            setPaymentTransaction(finalResult.data);
+            logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction);
+          } else {
+            throw new Error(finalResult.error || 'Final authorization failed');
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          setFlowState('ERROR');
+          setErrorMessage(message);
+          logEvent('Final Authorization Error', 'error', { error: message });
+        }
+      } else {
+        // If no session token, the payment is complete
+        setFlowState('SUCCESS');
+        logEvent('Payment Completed (No Final Auth Needed)', 'success');
+      }
+
+      // Return true to allow default redirect behavior
+      return true;
+    });
+
+    // Handle abort
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     klarnaInstance.Payment.on('abort', (paymentRequest: any) => {
-      logEvent('Payment Aborted', {
+      logEvent('Payment Aborted', 'warning', {
         state: paymentRequest.state,
-        stateReason: paymentRequest.stateReason
+        stateReason: paymentRequest.stateReason,
       });
-      if (paymentRequest.state === 'SUBMITTED') {
+      
+      setFlowState('READY');
+      setErrorMessage('Payment was cancelled');
+      
+      // Cancel the payment request if it's in SUBMITTED state
+      if (paymentRequest.state === 'SUBMITTED' && paymentRequest.paymentRequestId) {
         klarnaInstance.Payment.cancel(paymentRequest.paymentRequestId);
       }
     });
 
+    // Handle errors
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
-      logEvent('Payment Complete', paymentRequest);
-      return scenario === 'APPROVED' || scenario === 'DECLINED';
+    klarnaInstance.Payment.on('error', (error: any, paymentRequest: any) => {
+      logEvent('Payment Error', 'error', { error, paymentRequest });
+      setFlowState('ERROR');
+      setErrorMessage(error?.message || 'An error occurred');
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    klarnaInstance.Interoperability.on('tokenupdate', (interoperabilityToken: any) => {
-      logEvent('Interoperability Token Update', { token: interoperabilityToken });
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    klarnaInstance.Payment.on('shippingaddresschange', async (paymentRequest: any, shippingAddressChange: any) => {
-      logEvent('Shipping Address Changed', shippingAddressChange);
-      const originalLineItems = paymentRequest.supplementaryPurchaseData?.lineItems || [];
-      const originalAmount = originalLineItems.reduce((sum: number, item: { totalAmount: number }) => sum + item.totalAmount, 0);
-      const defaultShippingAmount = 1000;
-
-      return {
-        amount: originalAmount + defaultShippingAmount,
-        lineItems: [
-          ...originalLineItems,
-          { name: "Express shipping", quantity: 1, totalAmount: defaultShippingAmount, totalTaxAmount: 10 }
-        ],
-        selectedShippingOptionReference: "shipping-option-2",
-        shippingOptions: [
-          { shippingOptionReference: "shipping-option-1", amount: 500, displayName: "Standard shipping", description: "1 - 3 working days", shippingType: "TO_DOOR" },
-          { shippingOptionReference: "shipping-option-2", amount: 1000, displayName: "Express shipping", description: "1 working day", shippingType: "TO_DOOR" }
-        ]
-      };
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    klarnaInstance.Payment.on('shippingoptionselect', async (paymentRequest: any, shippingOptionSelect: any) => {
-      logEvent('Shipping Option Selected', shippingOptionSelect);
-      const originalLineItems = paymentRequest.supplementaryPurchaseData?.lineItems || [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const productLineItems = originalLineItems.filter((item: any) => !item.name.toLowerCase().includes('shipping'));
-      const originalAmount = productLineItems.reduce((sum: number, item: { totalAmount: number }) => sum + item.totalAmount, 0);
-
-      const shippingOptions: Record<string, { name: string; amount: number }> = {
-        "shipping-option-1": { name: "Standard shipping", amount: 500 },
-        "shipping-option-2": { name: "Express shipping", amount: 1000 }
-      };
-
-      const selected = shippingOptions[shippingOptionSelect.shippingOptionReference];
-      if (selected) {
-        return {
-          amount: originalAmount + selected.amount,
-          lineItems: [
-            ...productLineItems,
-            { name: selected.name, quantity: 1, totalAmount: selected.amount, totalTaxAmount: 10 }
-          ]
-        };
-      }
-    });
-  }, [logEvent, scenario]);
+  }, [authorizePayment, logEvent]);
 
   // ============================================================================
-  // BUTTON MOUNTING
+  // GET PAYMENT PRESENTATION & MOUNT BUTTON
   // ============================================================================
 
-  const mountButton = useCallback(() => {
+  const getPresentation = useCallback(async (klarnaInstance: KlarnaSDK) => {
     try {
-      if (!klarna) throw new Error('SDK not initialized');
+      logEvent('Getting Payment Presentation', 'info', {
+        amount: DEFAULT_CONFIG.amount,
+        currency: DEFAULT_CONFIG.currency,
+        locale: DEFAULT_CONFIG.locale,
+      });
 
-      if (currentButtonRef.current) {
-        currentButtonRef.current.unmount();
-        currentButtonRef.current = null;
-      }
+      const presentationResult = await klarnaInstance.Payment.presentation({
+        amount: DEFAULT_CONFIG.amount,
+        currency: DEFAULT_CONFIG.currency,
+        locale: DEFAULT_CONFIG.locale,
+        intents: ['PAY'],
+      });
 
-      if (buttonMountRef.current) {
-        buttonMountRef.current.innerHTML = '';
-      }
+      logEvent('Payment Presentation Received', 'success', {
+        instruction: String(presentationResult.instruction || 'N/A'),
+        hasPaymentOption: !!presentationResult.paymentOption,
+      });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const buttonConfig: any = {
-        locale,
-        shape,
-        theme,
-        logoAlignment,
-        initiationMode
-      };
-
-      if (buttonId) buttonConfig.id = buttonId;
-      if (selectedIntents.length > 0) buttonConfig.intents = selectedIntents;
-      if (disabled) buttonConfig.disabled = true;
-      if (loading) buttonConfig.loading = true;
-
-      if (scenario === 'STEP_UP_REQUIRED') {
-        if (usePaymentRequestData) {
-          buttonConfig.initiate = () => buildPaymentRequestData();
-        } else {
-          buttonConfig.initiate = () => {
-            const prId = paymentRequestId.trim();
-            if (!prId) throw new Error('Payment Request ID is required');
-            return { paymentRequestId: prId };
-          };
-        }
-      } else {
-        buttonConfig.initiate = () => ({
-          returnUrl: returnUrl.trim() || undefined
-        });
-      }
-
-      currentButtonRef.current = klarna.Payment.button(buttonConfig).mount('#button-mount');
-      setButtonStatus({ text: `Button mounted successfully (${scenario})`, color: '#28a745' });
+      // Store full presentation in ref (for button mounting)
+      presentationRef.current = presentationResult;
+      
+      // Store only serializable data in state (for display)
+      setPresentationInfo({
+        instruction: String(presentationResult.instruction || 'N/A'),
+        paymentOptionId: presentationResult.paymentOption?.paymentOptionId 
+          ? String(presentationResult.paymentOption.paymentOptionId) 
+          : null,
+      });
+      
+      return presentationResult;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      setButtonStatus({ text: `Error: ${errorMsg}`, color: '#dc3545' });
-      console.error('Button mount error:', error);
-      logEvent('Button Mount Error', { error: errorMsg });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logEvent('Presentation Error', 'error', { error: message });
+      throw error;
     }
-  }, [klarna, locale, shape, theme, logoAlignment, initiationMode, buttonId, selectedIntents, disabled, loading, scenario, usePaymentRequestData, buildPaymentRequestData, paymentRequestId, returnUrl, logEvent]);
+  }, [logEvent]);
+
+  // Helper to safely clear the SDK mount point (outside React's control)
+  const clearSdkMount = useCallback(() => {
+    // Try to unmount the existing button if it has an unmount method
+    if (mountedButtonRef.current) {
+      try {
+        if (typeof mountedButtonRef.current.unmount === 'function') {
+          mountedButtonRef.current.unmount();
+        }
+      } catch (e) {
+        // Ignore unmount errors
+      }
+      mountedButtonRef.current = null;
+    }
+    
+    // Remove the SDK mount container from the DOM entirely
+    const existingMount = document.getElementById(sdkMountIdRef.current);
+    if (existingMount && existingMount.parentNode) {
+      existingMount.parentNode.removeChild(existingMount);
+    }
+  }, []);
+
+  const mountPaymentButton = useCallback((presentationResult: PaymentPresentation) => {
+    if (!buttonWrapperRef.current || !presentationResult?.paymentOption) {
+      return;
+    }
+
+    // Clear any existing SDK mount
+    clearSdkMount();
+
+    const paymentOption = presentationResult.paymentOption;
+
+    logEvent('Mounting Payment Button', 'info', {
+      paymentOptionId: paymentOption.paymentOptionId,
+      instruction: String(presentationResult.instruction || 'N/A'),
+    });
+
+    try {
+      // Generate a new unique ID for this mount
+      sdkMountIdRef.current = `klarna-sdk-mount-${Date.now()}`;
+      
+      // Create a completely new container element outside React's control
+      const mountTarget = document.createElement('div');
+      mountTarget.id = sdkMountIdRef.current;
+      mountTarget.style.cssText = 'width: 100%;';
+      
+      // Append to the wrapper (React won't track this child)
+      buttonWrapperRef.current.appendChild(mountTarget);
+
+      // Mount the button from the presentation
+      const buttonInstance = paymentOption.paymentButton
+        .component({
+          shape: 'pill',
+          theme: 'default',
+          locale: DEFAULT_CONFIG.locale,
+          intents: ['PAY'],
+          initiationMode: 'DEVICE_BEST',
+          initiate: handleInitiate,
+        })
+        .mount(mountTarget);
+
+      // Store reference to the mounted button
+      mountedButtonRef.current = buttonInstance;
+
+      logEvent('Payment Button Mounted', 'success');
+      setFlowState('READY');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logEvent('Button Mount Error', 'error', { error: message });
+      setErrorMessage(`Failed to mount button: ${message}`);
+      setFlowState('ERROR');
+    }
+  }, [handleInitiate, logEvent, clearSdkMount]);
 
   // ============================================================================
   // SDK INITIALIZATION
   // ============================================================================
 
-  const initializeAndMountButton = useCallback(async () => {
+  const initializeSDK = useCallback(async () => {
+    if (!clientId.trim()) {
+      setErrorMessage('Client ID is required');
+      setFlowState('ERROR');
+      return;
+    }
+
+    if (!partnerAccountId.trim()) {
+      setErrorMessage('Partner Account ID is required');
+      setFlowState('ERROR');
+      return;
+    }
+
+    setFlowState('INITIALIZING');
+    setErrorMessage(null);
+    logEvent('Initializing Klarna SDK', 'info', { clientId: clientId.substring(0, 30) + '...' });
+
     try {
-      setSdkStatus({ text: 'Initializing SDK...', color: '#6f6b7a' });
-      setButtonStatus({ text: 'Initializing...', color: '#6f6b7a' });
-
-      const currentClientId = clientId.trim();
-      const currentSdkToken = sdkToken.trim();
-      const currentPartnerAccountId = partnerAccountId.trim();
-
-      if (!currentClientId) {
-        const errorMsg = 'Client ID is required';
-        setSdkStatus({ text: errorMsg, color: '#dc3545' });
-        setButtonStatus({ text: errorMsg, color: '#dc3545' });
-        return;
+      // Patch customElements.define for React Strict Mode
+      if (typeof window !== 'undefined' && window.customElements) {
+        const originalDefine = window.customElements.define.bind(window.customElements);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        window.customElements.define = function(name: string, constructor: any, options?: any) {
+          if (!window.customElements.get(name)) {
+            originalDefine(name, constructor, options);
+          }
+        };
       }
 
-      // Dynamically import Klarna SDK using eval to avoid Next.js static analysis
+      // Import Klarna SDK
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const KlarnaModule = await (Function('return import("https://js.klarna.com/web-sdk/v2/klarna.mjs")')() as Promise<any>);
       const { KlarnaSDK } = KlarnaModule;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sdkConfig: any = { clientId: currentClientId, products: ['PAYMENT'] };
-      if (currentSdkToken) sdkConfig.sdkToken = currentSdkToken;
-      if (partnerMode && currentPartnerAccountId) sdkConfig.partnerAccountId = currentPartnerAccountId;
+      // Initialize SDK
+      const klarnaInstance = await KlarnaSDK({
+        clientId: clientId.trim(),
+        partnerAccountId: partnerAccountId.trim(),
+        products: ['PAYMENT'],
+      });
 
-      const klarnaInstance = await KlarnaSDK(sdkConfig);
-      attachSDKEventListeners(klarnaInstance);
+      logEvent('SDK Initialized Successfully', 'success');
+
+      // Attach event handlers
+      attachSDKEventHandlers(klarnaInstance);
+
+      // Store SDK instance
       setKlarna(klarnaInstance);
-
-      setSdkStatus({ text: 'SDK initialized', color: '#28a745' });
 
       // Expose to window for debugging
       if (typeof window !== 'undefined') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).klarna = klarnaInstance;
       }
+
+      // Get presentation and mount button
+      const presentationResult = await getPresentation(klarnaInstance);
+      mountPaymentButton(presentationResult);
+
     } catch (error) {
-      const errorMsg = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      setSdkStatus({ text: errorMsg, color: '#dc3545' });
-      setButtonStatus({ text: errorMsg, color: '#dc3545' });
-      console.error('SDK initialization error:', error);
-      logEvent('SDK Initialization Error', { error: error instanceof Error ? error.message : 'Unknown error' });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setFlowState('ERROR');
+      setErrorMessage(`SDK initialization failed: ${message}`);
+      logEvent('SDK Initialization Error', 'error', { error: message });
     }
-  }, [clientId, sdkToken, partnerMode, partnerAccountId, attachSDKEventListeners, logEvent]);
+  }, [clientId, partnerAccountId, attachSDKEventHandlers, getPresentation, mountPaymentButton, logEvent]);
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  // Track if SDK has been initialized
-  const sdkInitializedRef = useRef(false);
-  
-  // Initialize SDK once on mount
+  // Initialize client-side state after mount (hydration safety)
   useEffect(() => {
-    if (!sdkInitializedRef.current) {
-      sdkInitializedRef.current = true;
-      initializeAndMountButton();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setIsMounted(true);
+    setCurrentOrigin(window.location.origin);
+    // Generate unique mount ID on client only
+    sdkMountIdRef.current = `klarna-sdk-mount-${Date.now()}`;
   }, []);
 
-  // Initialize payment request data structure once on mount
-  const dataInitializedRef = useRef(false);
-  useEffect(() => {
-    if (!dataInitializedRef.current) {
-      dataInitializedRef.current = true;
-      setPaymentRequestDataJson(buildPaymentRequestDataStructure());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Set current origin on client side only
+  // Handle URL parameters (for return from Klarna journey)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setCurrentOrigin(window.location.origin);
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('status');
+      
+      if (status) {
+        logEvent('Returned from Klarna Journey', 'info', { status });
+        // Clear URL parameters
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
+  }, [logEvent]);
+
+  // Cleanup SDK mount on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up SDK mount when component unmounts
+      if (mountedButtonRef.current) {
+        try {
+          if (typeof mountedButtonRef.current.unmount === 'function') {
+            mountedButtonRef.current.unmount();
+          }
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+      const existingMount = document.getElementById(sdkMountIdRef.current);
+      if (existingMount && existingMount.parentNode) {
+        existingMount.parentNode.removeChild(existingMount);
+      }
+    };
   }, []);
 
-  // Update locale when country changes
-  useEffect(() => {
-    const countryLocales = COUNTRY_MAPPING[country]?.locales || ['en-US'];
-    if (!countryLocales.includes(locale)) {
-      setLocale(countryLocales[0]);
-    }
-  }, [country, locale]);
-
-  // Mount button when SDK becomes ready (only once)
-  const buttonMountedRef = useRef(false);
-  useEffect(() => {
-    if (klarna && !buttonMountedRef.current) {
-      buttonMountedRef.current = true;
-      mountButton();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [klarna]);
-
   // ============================================================================
-  // REMOUNT BUTTON HANDLER
-  // ============================================================================
-  
-  const remountButton = useCallback(() => {
-    if (mountTimeoutRef.current) clearTimeout(mountTimeoutRef.current);
-    mountTimeoutRef.current = setTimeout(() => {
-      if (klarna) {
-        mountButton();
-      }
-    }, 300);
-  }, [klarna, mountButton]);
-
-  // ============================================================================
-  // INTENT HANDLERS
+  // RESET FLOW
   // ============================================================================
 
-  const handleIntentChange = (intent: string, checked: boolean) => {
-    setIntents(prev => ({ ...prev, [intent]: checked }));
-  };
-  
-  // Update payment request data and remount when intents change
-  useEffect(() => {
-    if (dataInitializedRef.current) {
-      setPaymentRequestDataJson(buildPaymentRequestDataStructure());
-      if (klarna) {
-        remountButton();
-      }
-    }
-    // Only depend on intents changes, not on the functions
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intents]);
+  const resetFlow = useCallback(() => {
+    setFlowState('IDLE');
+    setErrorMessage(null);
+    setPaymentTransaction(null);
+    setPresentationInfo(null);
+    presentationRef.current = null;
+    setKlarna(null);
+    sdkInitializedRef.current = false;
+    clearSdkMount();
+    logEvent('Flow Reset', 'info');
+  }, [logEvent, clearSdkMount]);
 
   // ============================================================================
-  // GENERATED CODE DISPLAY
+  // RENDER HELPERS
   // ============================================================================
 
-  const getSDKInitCode = () => {
-    const configLines = [
-      `  clientId: "${clientId}"`,
-      `  products: ["PAYMENT"]`
-    ];
-    if (sdkToken) {
-      configLines.push(`  sdkToken: "${sdkToken}"`);
-    }
-    if (partnerMode && partnerAccountId) {
-      configLines.push(`  partnerAccountId: "${partnerAccountId}"`);
-    }
-    
-    return `// Import SDK
-const { KlarnaSDK } = await import("https://js.klarna.com/web-sdk/v2/klarna.mjs");
-
-// Initialize SDK
-const klarna = await KlarnaSDK({
-${configLines.join(',\n')}
-});`;
+  const getFlowStateDisplay = () => {
+    const states: Record<FlowState, { label: string; color: string }> = {
+      IDLE: { label: 'Ready to Initialize', color: '#6f6b7a' },
+      INITIALIZING: { label: 'Initializing SDK...', color: '#2196f3' },
+      READY: { label: 'Ready for Payment', color: '#4caf50' },
+      AUTHORIZING: { label: 'Authorizing Payment...', color: '#ff9800' },
+      STEP_UP: { label: 'Customer in Klarna Journey', color: '#9c27b0' },
+      COMPLETING: { label: 'Completing Authorization...', color: '#ff9800' },
+      SUCCESS: { label: 'Payment Successful!', color: '#4caf50' },
+      ERROR: { label: 'Error Occurred', color: '#f44336' },
+    };
+    return states[flowState];
   };
 
-  const getButtonMountCode = () => {
-    const configLines = [
-      `  locale: "${locale}"`,
-      `  shape: "${shape}"`,
-      `  theme: "${theme}"`,
-      `  logoAlignment: "${logoAlignment}"`,
-      `  initiationMode: "${initiationMode}"`
-    ];
-    
-    if (buttonId) {
-      configLines.push(`  id: "${buttonId}"`);
-    }
-    
-    if (selectedIntents.length > 0) {
-      configLines.push(`  intents: [${selectedIntents.map(i => `"${i}"`).join(', ')}]`);
-    }
-    
-    if (disabled) {
-      configLines.push(`  disabled: true`);
-    }
-    
-    if (loading) {
-      configLines.push(`  loading: true`);
-    }
-
-    let initiateCode = '';
-    if (scenario === 'STEP_UP_REQUIRED') {
-      if (usePaymentRequestData) {
-        let formattedJson = '{}';
-        try {
-          formattedJson = JSON.stringify(JSON.parse(paymentRequestDataJson || '{}'), null, 4)
-            .split('\n')
-            .map((line, i) => i === 0 ? line : '    ' + line)
-            .join('\n');
-        } catch {
-          formattedJson = '// Invalid JSON - please fix the payment request data';
-        }
-        initiateCode = `  initiate: () => {
-    // Return payment request data (client-side creation)
-    return ${formattedJson};
-  }`;
-      } else {
-        initiateCode = `  initiate: () => {
-    // Return payment request ID (server-side creation)
-    return { paymentRequestId: "${paymentRequestId}" };
-  }`;
-      }
-    } else {
-      initiateCode = `  initiate: () => {
-    // Direct flow with return URL
-    return { returnUrl: "${returnUrl}" };
-  }`;
-    }
-    
-    configLines.push(initiateCode);
-
-    return `// Mount Payment Button
-const button = klarna.Payment.button({
-${configLines.join(',\n')}
-}).mount("#button-mount");`;
-  };
-
-  // ============================================================================
-  // INFO BANNER CONTENT
-  // ============================================================================
-
-  const getInfoBannerContent = () => {
-    if (partnerMode) {
-      return (
-        <>
-          <strong>Acquiring Partner:</strong> To use this demo, the partner account must be onboarded with{' '}
-          <code>store_groups[].stores[].type = WEBSITE</code> and <code>store_groups[].stores[].url</code> set to{' '}
-          <code>{currentOrigin}</code>
-        </>
-      );
-    }
-    return (
-      <>
-        <strong>Sub Partner:</strong> To use this demo, <code>{currentOrigin}</code>{' '}
-        must be registered as an allowed origin in the Klarna Partner Portal. Navigate to Settings → Client Identifier → Allowed Origins.
-      </>
-    );
-  };
+  const stateDisplay = getFlowStateDisplay();
 
   // ============================================================================
   // RENDER
@@ -793,484 +581,209 @@ ${configLines.join(',\n')}
 
   return (
     <div className={styles.container}>
+      {/* Header */}
+      <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>Klarna Payment Button Demo</h1>
+      <p style={{ color: '#6f6b7a', marginBottom: '20px' }}>
+        Hosted Checkout Integration - One-time Payment Flow
+      </p>
+
       {/* Info Banner */}
       <div className={styles.infoBanner}>
         <div className={styles.infoIcon}>ℹ️</div>
-        <div className={styles.infoContent}>{getInfoBannerContent()}</div>
+        <div className={styles.infoContent}>
+          <strong>Acquiring Partner Mode:</strong> Enter your Partner Account ID and Client ID to test the payment flow.
+          The origin <code>{currentOrigin || 'loading...'}</code> must be registered in the store configuration.
+        </div>
       </div>
 
-      {/* Configuration Panels Row */}
+      {/* Main Layout */}
       <div className={styles.configRow}>
-        {/* SDK Configuration */}
+        {/* Configuration Panel */}
         <div className={styles.configPanel}>
           <div className={styles.config}>
-            <CollapsibleSection
-              title="SDK Configuration"
-              isCollapsed={sdkConfigCollapsed}
-              onToggle={() => setSdkConfigCollapsed(!sdkConfigCollapsed)}
-            >
-              <div className={styles.field}>
-                <ToggleSwitch
-                  id="partner-mode-toggle"
-                  checked={partnerMode}
-                  onChange={(checked) => {
-                    setPartnerMode(checked);
-                    remountButton();
-                  }}
-                  label="Acquiring Partner Mode"
-                />
-              </div>
-
-              {partnerMode && (
-                <div className={styles.field}>
-                  <label htmlFor="partner-account-id">Partner Account ID</label>
-                  <input
-                    id="partner-account-id"
-                    type="text"
-                    placeholder="krn:partner:global:account:..."
-                    value={partnerAccountId}
-                    onChange={(e) => {
-                      setPartnerAccountId(e.target.value);
-                      remountButton();
-                    }}
-                  />
-                </div>
-              )}
-
-              <div className={styles.field}>
-                <label htmlFor="client-id">Client ID *</label>
-                <input
-                  id="client-id"
-                  type="text"
-                  placeholder="Enter your Klarna client ID..."
-                  value={clientId}
-                  onChange={(e) => {
-                    setClientId(e.target.value);
-                    remountButton();
-                  }}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="sdk-token">SDK Token (optional)</label>
-                <input
-                  id="sdk-token"
-                  type="text"
-                  placeholder="Enter SDK token or leave empty..."
-                  value={sdkToken}
-                  onChange={(e) => {
-                    setSdkToken(e.target.value);
-                    remountButton();
-                  }}
-                />
-              </div>
-
-              <div className={styles.status} style={{ marginTop: '8px', color: sdkStatus.color }}>
-                {sdkStatus.text}
-              </div>
-            </CollapsibleSection>
-          </div>
-        </div>
-
-        {/* Button Parameters */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
-            <CollapsibleSection
-              title="Button Parameters"
-              isCollapsed={buttonParamsCollapsed}
-              onToggle={() => setButtonParamsCollapsed(!buttonParamsCollapsed)}
-            >
-              {/* Intents */}
-              <div className={styles.field}>
-                <CollapsibleSection
-                  title="Intents (optional)"
-                  titleAs="label"
-                  isCollapsed={intentsCollapsed}
-                  onToggle={() => setIntentsCollapsed(!intentsCollapsed)}
-                >
-                  <div className={styles.checkboxGroup}>
-                    {[
-                      { value: 'PAY', label: 'PAY', disabled: false },
-                      { value: 'SUBSCRIBE', label: 'SUBSCRIBE', disabled: false },
-                      { value: 'SIGNUP', label: 'SIGNUP (not supported)', disabled: true },
-                      { value: 'SIGNIN', label: 'SIGNIN (not supported)', disabled: true },
-                      { value: 'DONATE', label: 'DONATE', disabled: false },
-                      { value: 'ADD_TO_WALLET', label: 'ADD_TO_WALLET', disabled: false }
-                    ].map((intent) => (
-                      <label
-                        key={intent.value}
-                        className={`${styles.checkboxItem} ${intent.disabled ? styles.disabled : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={intents[intent.value] || false}
-                          disabled={intent.disabled}
-                          onChange={(e) => handleIntentChange(intent.value, e.target.checked)}
-                        />
-                        <span>{intent.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {!isIntentValid && (
-                    <div className={`${styles.intentWarning} ${styles.show}`}>
-                      ⚠️ Invalid intent combination. Valid: PAY, DONATE, SUBSCRIBE, SIGNUP, SIGNIN, ADD_TO_WALLET, PAY+ADD_TO_WALLET, PAY+SIGNIN, PAY+SUBSCRIBE, DONATE+SIGNIN.
-                    </div>
-                  )}
-                </CollapsibleSection>
-              </div>
-
-              {/* Country */}
-              <div className={styles.field}>
-                <label htmlFor="country">Purchase Country</label>
-                <select
-                  id="country"
-                  value={country}
-                  onChange={(e) => {
-                    setCountry(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  {Object.keys(COUNTRY_MAPPING).map((cc) => (
-                    <option key={cc} value={cc}>{cc}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Locale */}
-              <div className={styles.field}>
-                <label htmlFor="locale">Locale</label>
-                <select
-                  id="locale"
-                  value={locale}
-                  onChange={(e) => {
-                    setLocale(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  {locales.map((loc) => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-                <div className={styles.status}>
-                  Currency: <span className={styles.pill}>{currency}</span>
-                </div>
-              </div>
-
-              {/* Shape */}
-              <div className={styles.field}>
-                <label htmlFor="shape">Shape</label>
-                <select
-                  id="shape"
-                  value={shape}
-                  onChange={(e) => {
-                    setShape(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  <option value="default">default</option>
-                  <option value="pill">pill</option>
-                  <option value="rect">rect</option>
-                </select>
-              </div>
-
-              {/* Theme */}
-              <div className={styles.field}>
-                <label htmlFor="theme">Theme</label>
-                <select
-                  id="theme"
-                  value={theme}
-                  onChange={(e) => {
-                    setTheme(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  <option value="default">default</option>
-                  <option value="light">light</option>
-                  <option value="dark">dark</option>
-                  <option value="outlined">outlined</option>
-                </select>
-              </div>
-
-              {/* Logo Alignment */}
-              <div className={styles.field}>
-                <label htmlFor="logo-alignment">Logo Alignment</label>
-                <select
-                  id="logo-alignment"
-                  value={logoAlignment}
-                  onChange={(e) => {
-                    setLogoAlignment(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  <option value="default">default</option>
-                  <option value="left">left</option>
-                  <option value="center">center</option>
-                </select>
-              </div>
-
-              {/* Initiation Mode */}
-              <div className={styles.field}>
-                <label htmlFor="initiation-mode">Initiation Mode</label>
-                <select
-                  id="initiation-mode"
-                  value={initiationMode}
-                  onChange={(e) => {
-                    setInitiationMode(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  <option value="DEVICE_BEST">DEVICE_BEST</option>
-                  <option value="REDIRECT">REDIRECT</option>
-                  <option value="ON_PAGE">ON_PAGE</option>
-                  <option value="POPUP">POPUP</option>
-                </select>
-                <div className={styles.status}>Recommended: &quot;DEVICE_BEST&quot;</div>
-              </div>
-
-              {/* Disabled Toggle */}
-              <div className={styles.field}>
-                <ToggleSwitch
-                  id="disabled-toggle"
-                  checked={disabled}
-                  onChange={(checked) => {
-                    setDisabled(checked);
-                    remountButton();
-                  }}
-                  label="Disabled"
-                />
-                <div className={styles.status} style={{ marginTop: '4px' }}>Sets the initial disabled state</div>
-              </div>
-
-              {/* Loading Toggle */}
-              <div className={styles.field}>
-                <ToggleSwitch
-                  id="loading-toggle"
-                  checked={loading}
-                  onChange={(checked) => {
-                    setLoading(checked);
-                    remountButton();
-                  }}
-                  label="Loading"
-                />
-                <div className={styles.status} style={{ marginTop: '4px' }}>Sets the initial loading state</div>
-              </div>
-
-              {/* Button ID */}
-              <div className={styles.field}>
-                <label htmlFor="button-id">ID (optional)</label>
-                <input
-                  id="button-id"
-                  type="text"
-                  placeholder="Unique identifier for the button"
-                  value={buttonId}
-                  onChange={(e) => {
-                    setButtonId(e.target.value);
-                    remountButton();
-                  }}
-                />
-              </div>
-            </CollapsibleSection>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Button Initiation Data Configuration */}
-      <div className={styles.configRow}>
-        <div className={styles.configPanel} style={{ flex: 1 }}>
-          <div className={styles.config}>
-            <CollapsibleSection
-              title="Payment Button Initiation Data"
-              isCollapsed={initiationDataCollapsed}
-              onToggle={() => setInitiationDataCollapsed(!initiationDataCollapsed)}
-            >
-              <div className={styles.infoBox}>
-                <strong>ℹ️ About the initiate function:</strong><br />
-                The <code>initiate</code> function is triggered when the user clicks the payment button. It returns a Promise that can resolve to:<br />
-                • <strong>paymentRequestData</strong> - Client-side payment request creation<br />
-                • <strong>paymentRequestId</strong> - Server-side payment request creation (created via Klarna Payment API when button is clicked)<br />
-                • <strong>returnUrl</strong> - For direct success/failure flows (e.g., with payment/authorize)<br /><br />
-                <a href="https://docs.klarna.com/websdk/v2/interfaces/payment.KlarnaPaymentButtonConfig.html#initiate" target="_blank" rel="noopener noreferrer" style={{ color: '#0b051d', textDecoration: 'underline' }}>
-                  View official documentation →
-                </a>
-              </div>
-
-              {/* Scenario Select */}
-              <div className={styles.field}>
-                <label htmlFor="scenario-select">Payment transaction response</label>
-                <select
-                  id="scenario-select"
-                  value={scenario}
-                  onChange={(e) => {
-                    setScenario(e.target.value);
-                    remountButton();
-                  }}
-                >
-                  <option value="STEP_UP_REQUIRED">STEP_UP_REQUIRED (normal payment flow)</option>
-                  <option value="APPROVED">APPROVED (direct success)</option>
-                  <option value="DECLINED">DECLINED (direct failure)</option>
-                </select>
-                <div className={styles.status}>Select a scenario to test different payment flows</div>
-              </div>
-
-              {/* STEP_UP_REQUIRED Section */}
-              {scenario === 'STEP_UP_REQUIRED' && (
-                <div>
-                  <ToggleSwitch
-                    id="initiation-mode-toggle"
-                    checked={usePaymentRequestData}
-                    onChange={(checked) => {
-                      setUsePaymentRequestData(checked);
-                      remountButton();
-                    }}
-                    label="Use Payment Request Data (off = use Payment Request ID)"
-                  />
-
-                  {/* Payment Request Data Section */}
-                  {usePaymentRequestData && (
-                    <div className={styles.field}>
-                      <label htmlFor="payment-request-data-json">Payment Request Data (JSON)</label>
-                      <textarea
-                        id="payment-request-data-json"
-                        placeholder="Enter payment request data as JSON..."
-                        value={paymentRequestDataJson}
-                        onChange={(e) => {
-                          setPaymentRequestDataJson(e.target.value);
-                          remountButton();
-                        }}
-                      />
-                      <div className={styles.status}>Edit the JSON directly. References will be auto-generated on mount.</div>
-                    </div>
-                  )}
-
-                  {/* Payment Request ID Section */}
-                  {!usePaymentRequestData && (
-                    <div className={styles.field}>
-                      <label htmlFor="payment-request-id">Payment Request ID</label>
-                      <input
-                        id="payment-request-id"
-                        type="text"
-                        placeholder="Enter payment request ID from server"
-                        value={paymentRequestId}
-                        onChange={(e) => {
-                          setPaymentRequestId(e.target.value);
-                          remountButton();
-                        }}
-                      />
-                      <div className={styles.status} style={{ marginTop: '6px', lineHeight: 1.5 }}>
-                        <strong>Note:</strong> The paymentRequestId should be created via the <strong>Klarna Payment API</strong> (server-side) when the user clicks the payment button.
-                        The <code>initiate</code> function will be triggered on button click, and your backend should then create the payment request and return the ID.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* APPROVED/DECLINED Section */}
-              {scenario !== 'STEP_UP_REQUIRED' && (
-                <div className={styles.field}>
-                  <label htmlFor="return-url-input">Return URL</label>
-                  <input
-                    id="return-url-input"
-                    type="text"
-                    value={returnUrl}
-                    placeholder="URL to redirect after payment"
-                    onChange={(e) => {
-                      setReturnUrl(e.target.value);
-                      remountButton();
-                    }}
-                  />
-                  <div className={styles.status}>The customer will be redirected to this URL</div>
-                </div>
-              )}
-
-              <div className={styles.status} style={{ marginTop: '8px', color: buttonStatus.color }}>
-                {buttonStatus.text}
-              </div>
-            </CollapsibleSection>
-          </div>
-        </div>
-      </div>
-
-      {/* Generated Code Display */}
-      <div className={styles.configRow}>
-        <div className={styles.configPanel} style={{ flex: 1 }}>
-          <div className={styles.config}>
-            <CollapsibleSection
-              title="Generated SDK Code"
-              isCollapsed={codeDisplayCollapsed}
-              onToggle={() => setCodeDisplayCollapsed(!codeDisplayCollapsed)}
-            >
-              <div className={styles.field}>
-                <label>SDK Initialization</label>
-                <pre style={{ 
-                  background: '#1e1e1e', 
-                  color: '#d4d4d4', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  fontSize: '12px',
-                  overflow: 'auto',
-                  maxHeight: '200px',
-                  margin: 0
-                }}>
-                  {getSDKInitCode()}
-                </pre>
-              </div>
-              <div className={styles.field}>
-                <label>Button Mount</label>
-                <pre style={{ 
-                  background: '#1e1e1e', 
-                  color: '#d4d4d4', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  fontSize: '12px',
-                  overflow: 'auto',
-                  maxHeight: '400px',
-                  margin: 0
-                }}>
-                  {getButtonMountCode()}
-                </pre>
-              </div>
-            </CollapsibleSection>
-          </div>
-        </div>
-      </div>
-
-      {/* Button Display and Event Log */}
-      <div className={styles.mainRow}>
-        <div className={styles.buttonContainer}>
-          <div className={styles.config}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0 }}>Payment Button</h3>
-              <button 
-                onClick={() => remountButton()} 
-                className={styles.clearButton}
-                disabled={!klarna}
-              >
-                Remount
-              </button>
+            <h3 style={{ marginTop: 0 }}>Configuration</h3>
+            
+            <div className={styles.field}>
+              <label htmlFor="partner-account-id">Partner Account ID *</label>
+              <input
+                id="partner-account-id"
+                type="text"
+                placeholder="krn:partner:global:account:live:XXXXXXXX"
+                value={partnerAccountId}
+                onChange={(e) => setPartnerAccountId(e.target.value)}
+                disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
+              />
             </div>
-            <div id="button-mount" ref={buttonMountRef} className={styles.buttonMount}></div>
+
+            <div className={styles.field}>
+              <label htmlFor="client-id">Client ID *</label>
+              <input
+                id="client-id"
+                type="text"
+                placeholder="klarna_test_client_..."
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label>Payment Details (Hardcoded)</label>
+              <div className={styles.infoBox}>
+                <div><strong>Amount:</strong> {formatAmount(DEFAULT_CONFIG.amount)}</div>
+                <div><strong>Currency:</strong> {DEFAULT_CONFIG.currency}</div>
+                <div><strong>Locale:</strong> {DEFAULT_CONFIG.locale}</div>
+                <div><strong>Country:</strong> {DEFAULT_CONFIG.country}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              {flowState === 'IDLE' || flowState === 'ERROR' ? (
+                <button onClick={initializeSDK}>
+                  Initialize & Show Button
+                </button>
+              ) : flowState === 'SUCCESS' ? (
+                <button onClick={resetFlow}>
+                  Start New Payment
+                </button>
+              ) : (
+                <button disabled>
+                  {flowState === 'INITIALIZING' ? 'Initializing...' : 'Processing...'}
+                </button>
+              )}
+              
+              {flowState !== 'IDLE' && flowState !== 'INITIALIZING' && (
+                <button 
+                  onClick={resetFlow}
+                  style={{ background: '#6f6b7a' }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className={styles.eventLog}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ margin: 0 }}>SDK Payment Events</h3>
-            <button onClick={clearEventLog} className={styles.clearButton}>Clear Log</button>
-          </div>
-          <div className={styles.eventLogContent}>
-            {eventLog.length === 0 ? (
-              <p style={{ color: '#6f6b7a', fontSize: '12px' }}>Payment events will appear here...</p>
-            ) : (
-              eventLog.map((event) => (
-                <div key={event.id} className={styles.eventItem}>
-                  <div className={styles.eventTitle}>{event.title}</div>
-                  <div className={styles.eventTime}>{event.timestamp.toLocaleTimeString()}</div>
-                  <pre>{JSON.stringify(event.data, null, 2)}</pre>
+        {/* Payment Button Panel */}
+        <div className={styles.configPanel}>
+          <div className={styles.config}>
+            <h3 style={{ marginTop: 0 }}>Payment Button</h3>
+            
+            {/* Flow State Indicator */}
+            <div style={{ 
+              padding: '12px', 
+              background: '#fcfbf8', 
+              borderRadius: '8px', 
+              marginBottom: '16px',
+              border: `2px solid ${stateDisplay.color}`,
+            }}>
+              <div style={{ 
+                fontWeight: 700, 
+                color: stateDisplay.color,
+                marginBottom: '4px',
+              }}>
+                {stateDisplay.label}
+              </div>
+              {errorMessage && (
+                <div style={{ color: '#f44336', fontSize: '13px' }}>
+                  {errorMessage}
                 </div>
-              ))
+              )}
+            </div>
+
+            {/* Presentation Info */}
+            {presentationInfo && (
+              <div className={styles.infoBox} style={{ marginBottom: '16px' }}>
+                <div><strong>Instruction:</strong> {presentationInfo.instruction}</div>
+                {presentationInfo.paymentOptionId && (
+                  <div><strong>Payment Option ID:</strong> {presentationInfo.paymentOptionId}</div>
+                )}
+              </div>
+            )}
+
+            {/* Button Mount Container */}
+            <div 
+              className={styles.buttonMount}
+              style={{ 
+                minHeight: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              {/* Status messages - shown when button is not mounted */}
+              {(flowState === 'IDLE' || flowState === 'INITIALIZING') && (
+                <span style={{ color: flowState === 'IDLE' ? '#6f6b7a' : '#2196f3', fontSize: '14px' }}>
+                  {flowState === 'IDLE' 
+                    ? 'Click "Initialize & Show Button" to start'
+                    : 'Loading Klarna SDK...'}
+                </span>
+              )}
+              
+              {/* SDK Mount Target - React will NOT manage children of this div */}
+              <div 
+                ref={buttonWrapperRef}
+                style={{ 
+                  width: '100%',
+                  display: flowState === 'IDLE' || flowState === 'INITIALIZING' ? 'none' : 'block',
+                }}
+              />
+            </div>
+
+            {/* Success State */}
+            {flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction && (
+              <div style={{ 
+                padding: '16px', 
+                background: '#e8f5e9', 
+                borderRadius: '8px',
+                marginTop: '16px',
+              }}>
+                <h4 style={{ margin: '0 0 8px', color: '#2e7d32' }}>Payment Successful!</h4>
+                <div style={{ fontSize: '13px' }}>
+                  <div><strong>Transaction ID:</strong></div>
+                  <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>
+                    {paymentTransaction.paymentTransaction.paymentTransactionId}
+                  </code>
+                </div>
+              </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Event Log */}
+      <div className={styles.eventLog}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ margin: 0 }}>Event Log</h3>
+          <button onClick={clearLog} className={styles.clearButton}>Clear</button>
+        </div>
+        <div className={styles.eventLogContent}>
+          {eventLog.length === 0 ? (
+            <p style={{ color: '#6f6b7a', fontSize: '12px' }}>Events will appear here...</p>
+          ) : (
+            eventLog.map((event) => (
+              <div key={event.id} className={styles.eventItem}>
+                <div className={styles.eventTitle} style={{
+                  color: event.type === 'error' ? '#f44336' 
+                       : event.type === 'success' ? '#4caf50'
+                       : event.type === 'warning' ? '#ff9800'
+                       : '#0b051d'
+                }}>
+                  {event.type === 'error' && '✗ '}
+                  {event.type === 'success' && '✓ '}
+                  {event.type === 'warning' && '⚠ '}
+                  {event.title}
+                </div>
+                <div className={styles.eventTime}>
+                  {event.timestamp.toLocaleTimeString()}
+                </div>
+                {event.data !== undefined && event.data !== null && (
+                  <pre>{JSON.stringify(event.data, null, 2)}</pre>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
