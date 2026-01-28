@@ -55,18 +55,6 @@ export default function Header() {
               
               {/* Navigation */}
               <nav className="flex items-center gap-1 ml-2">
-                {/* API Tester Link */}
-                <Link
-                  href="/"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors ${
-                    pathname === '/'
-                      ? 'text-gray-900 font-semibold'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <span>API Tester</span>
-                </Link>
-                
                 {/* Account Structure Dropdown */}
                 <div className="relative" ref={structureMenuRef}>
                   <button
@@ -156,19 +144,34 @@ export default function Header() {
               </nav>
             </div>
             
-            {/* Environment Variables Icon */}
-            <button
-              onClick={() => setShowEnvPanel(!showEnvPanel)}
-              className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Environment Variables"
-            >
-              <Cog6ToothIcon className="h-5 w-5" />
-              {Object.keys(variables).length > 0 && (
-                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] font-semibold bg-klarna-black text-white rounded-full min-w-[18px] text-center">
-                  {Object.keys(variables).length}
-                </span>
-              )}
-            </button>
+            {/* Right side navigation */}
+            <div className="flex items-center gap-2">
+              {/* API Link */}
+              <Link
+                href="/"
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors ${
+                  pathname === '/'
+                    ? 'text-gray-900 font-semibold'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>API</span>
+              </Link>
+              
+              {/* Environment Variables Icon */}
+              <button
+                onClick={() => setShowEnvPanel(!showEnvPanel)}
+                className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Environment Variables"
+              >
+                <Cog6ToothIcon className="h-5 w-5" />
+                {Object.keys(variables).length > 0 && (
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] font-semibold bg-klarna-black text-white rounded-full min-w-[18px] text-center">
+                    {Object.keys(variables).length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>

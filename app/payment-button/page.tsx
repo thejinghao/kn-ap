@@ -77,12 +77,57 @@ const DEFAULT_CLIENT_ID = 'klarna_test_client_SyVDdUcvcTQhQjUkVEhyRFgzWFhxRU4xRH
 // Default Partner Account ID for testing
 const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 
+// localStorage key for event log persistence
+const EVENT_LOG_STORAGE_KEY = 'klarna-payment-button-event-log';
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
+}
+
+// Load event log from localStorage
+function loadEventLogFromStorage(): EventLogItem[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+  
+  try {
+    const stored = localStorage.getItem(EVENT_LOG_STORAGE_KEY);
+    if (!stored) {
+      return [];
+    }
+    
+    const parsed = JSON.parse(stored);
+    // Reconstruct Date objects from ISO strings
+    return parsed.map((item: EventLogItem & { timestamp: string }) => ({
+      ...item,
+      timestamp: new Date(item.timestamp),
+    }));
+  } catch (error) {
+    console.error('Failed to load event log from localStorage:', error);
+    return [];
+  }
+}
+
+// Save event log to localStorage
+function saveEventLogToStorage(eventLog: EventLogItem[]): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
+  try {
+    // Serialize Date objects to ISO strings
+    const serialized = eventLog.map(item => ({
+      ...item,
+      timestamp: item.timestamp.toISOString(),
+    }));
+    localStorage.setItem(EVENT_LOG_STORAGE_KEY, JSON.stringify(serialized));
+  } catch (error) {
+    console.error('Failed to save event log to localStorage:', error);
+  }
 }
 
 function formatAmount(cents: number): string {
@@ -138,6 +183,14 @@ export default function PaymentButtonPage() {
 
   const clearLog = useCallback(() => {
     setEventLog([]);
+    // Also clear from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(EVENT_LOG_STORAGE_KEY);
+      } catch (error) {
+        console.error('Failed to clear event log from localStorage:', error);
+      }
+    }
   }, []);
 
   // ============================================================================
@@ -515,6 +568,11 @@ export default function PaymentButtonPage() {
     setCurrentOrigin(window.location.origin);
     // Generate unique mount ID on client only
     sdkMountIdRef.current = `klarna-sdk-mount-${Date.now()}`;
+    // Load event log from localStorage
+    const storedEvents = loadEventLogFromStorage();
+    if (storedEvents.length > 0) {
+      setEventLog(storedEvents);
+    }
   }, []);
 
   // Handle URL parameters (for return from Klarna journey)
@@ -530,6 +588,11 @@ export default function PaymentButtonPage() {
       }
     }
   }, [logEvent]);
+
+  // Save event log to localStorage whenever it changes
+  useEffect(() => {
+    saveEventLogToStorage(eventLog);
+  }, [eventLog]);
 
   // Cleanup SDK mount on unmount
   useEffect(() => {
