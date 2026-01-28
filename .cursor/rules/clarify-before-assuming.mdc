@@ -1,0 +1,59 @@
+---
+description: Always ask for clarification when something is unclear or requires a decision
+alwaysApply: true
+---
+
+# Ask for Clarification, Don't Assume
+
+When encountering ambiguity or decision points, always ask the user for clarification rather than making assumptions.
+
+## When to Ask
+
+Ask for clarification when:
+
+- **Requirements are ambiguous**: Multiple valid interpretations exist
+- **Technical decisions needed**: Architecture, library choices, implementation approaches
+- **Context is missing**: Unclear which files, functions, or features to modify
+- **Trade-offs exist**: Different approaches with pros/cons
+- **User intent is unclear**: Could mean multiple things
+
+## Examples
+
+❌ **BAD - Making assumptions:**
+```
+User: "Add a button"
+AI: *Creates a submit button with specific styling*
+```
+
+✅ **GOOD - Asking for clarification:**
+```
+User: "Add a button"
+AI: "I can help with that. A few questions:
+- What should the button do when clicked?
+- Where should it be placed?
+- Should it follow existing button patterns or have custom styling?"
+```
+
+---
+
+❌ **BAD - Assuming implementation:**
+```
+User: "Store user preferences"
+AI: *Implements localStorage without asking*
+```
+
+✅ **GOOD - Clarifying options:**
+```
+User: "Store user preferences"
+AI: "I can implement that. Should we:
+- Use localStorage (client-side only)
+- Use a database (persists across devices)
+- Use cookies (for server-side access)?"
+```
+
+## Exceptions
+
+Don't ask when:
+- The request is completely unambiguous
+- Standard conventions clearly apply
+- You're fixing an obvious bug

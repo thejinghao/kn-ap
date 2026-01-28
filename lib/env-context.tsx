@@ -14,7 +14,7 @@ import {
 
 /**
  * Detect if a variable name suggests it should be treated as a secret
- * (Duplicated from bruno-env-parser.ts to avoid importing server-side code)
+ * (Duplicated from env-loader.ts to avoid importing server-side code)
  */
 function isSecretVariable(name: string): boolean {
   const secretPatterns = [
@@ -98,8 +98,8 @@ interface EnvironmentProviderProps {
 }
 
 export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
-  // Bruno default variables (read-only, loaded from API)
-  const [brunoVariables, setBrunoVariables] = useState<Record<string, EnvironmentVariable>>({});
+  // Base variables (read-only, loaded from API - either Vercel or .env.local)
+  const [baseVariables, setBaseVariables] = useState<Record<string, EnvironmentVariable>>({});
   
   // User variables (can be edited, persisted to localStorage)
   const [userVariables, setUserVariables] = useState<Record<string, EnvironmentVariable>>({});
@@ -108,27 +108,28 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Load Bruno variables from API on mount
+  // Load base variables from API on mount (Vercel or .env.local)
   useEffect(() => {
-    async function loadBrunoVariables() {
+    async function loadBaseVariables() {
       try {
         const response = await fetch('/api/env');
         const data = await response.json();
         
         if (data.success && data.variables) {
-          setBrunoVariables(data.variables);
+          setBaseVariables(data.variables);
+          console.log(`[Environment] Loaded variables from source: ${data.source || 'unknown'}`);
         } else if (data.error) {
-          console.warn('[Environment] Error loading Bruno variables:', data.error);
+          console.warn('[Environment] Error loading variables:', data.error);
         }
       } catch (err) {
-        console.error('[Environment] Failed to load Bruno variables:', err);
-        setError('Failed to load Bruno environment variables');
+        console.error('[Environment] Failed to load environment variables:', err);
+        setError('Failed to load environment variables');
       } finally {
         setIsLoading(false);
       }
     }
     
-    loadBrunoVariables();
+    loadBaseVariables();
   }, []);
   
   // Load user variables from localStorage on mount
@@ -153,9 +154,9 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
     }
   }, [userVariables]);
   
-  // Merge Bruno and user variables (user overrides take precedence)
+  // Merge base and user variables (user overrides take precedence)
   const mergedVariables: Record<string, EnvironmentVariable> = {
-    ...brunoVariables,
+    ...baseVariables,
     ...userVariables,
   };
   
@@ -196,47 +197,47 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
     });
   }, []);
   
-  // Reset a variable to Bruno default (remove user override)
+  // Reset a variable to base default (remove user override)
   const resetVariable = useCallback((name: string) => {
-    // Only delete if it's a user override of a Bruno variable
-    if (brunoVariables[name]) {
+    // Only delete if it's a user override of a base variable
+    if (baseVariables[name]) {
       setUserVariables(prev => {
         const next = { ...prev };
         delete next[name];
         return next;
       });
     }
-  }, [brunoVariables]);
+  }, [baseVariables]);
   
   // Get all variables as an array
   const getAllVariables = useCallback((): EnvironmentVariable[] => {
     const allVars: EnvironmentVariable[] = [];
     
-    // Add Bruno variables first
-    for (const [name, variable] of Object.entries(brunoVariables)) {
+    // Add base variables first (from Vercel or .env.local)
+    for (const [name, variable] of Object.entries(baseVariables)) {
       // Check if overridden by user
       const userOverride = userVariables[name];
       if (userOverride) {
-        // Show user override with indication it overrides Bruno
+        // Show user override with indication it overrides base default
         allVars.push({
           ...userOverride,
-          description: userOverride.description || `Overrides Bruno default`,
+          description: userOverride.description || `Overrides default`,
         });
       } else {
         allVars.push(variable);
       }
     }
     
-    // Add user-only variables (not in Bruno)
+    // Add user-only variables (not in base)
     for (const [name, variable] of Object.entries(userVariables)) {
-      if (!brunoVariables[name]) {
+      if (!baseVariables[name]) {
         allVars.push(variable);
       }
     }
     
     // Sort alphabetically
     return allVars.sort((a, b) => a.name.localeCompare(b.name));
-  }, [brunoVariables, userVariables]);
+  }, [baseVariables, userVariables]);
   
   // Substitute variables in text
   const substituteVariables = useCallback((text: string): string => {

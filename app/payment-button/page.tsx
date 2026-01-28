@@ -593,12 +593,6 @@ export default function PaymentButtonPage() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>Klarna Payment Button Demo</h1>
-      <p style={{ color: '#6f6b7a', marginBottom: '20px' }}>
-        Hosted Checkout Integration - One-time Payment Flow
-      </p>
-
       {/* Info Banner */}
       <div className={styles.infoBanner}>
         <div className={styles.infoIcon}>ℹ️</div>
@@ -628,7 +622,7 @@ export default function PaymentButtonPage() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="client-id">Client ID *</label>
+              <label htmlFor="client-id">Acquiring Partner Client ID *</label>
               <input
                 id="client-id"
                 type="text"

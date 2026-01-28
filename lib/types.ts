@@ -236,7 +236,11 @@ export interface RequestFormProps {
 // ============================================
 
 // Source of an environment variable
-export type EnvironmentVariableSource = 'bruno' | 'user' | 'response';
+// - 'vercel': Loaded from process.env (Vercel deployment)
+// - 'env_file': Loaded from .env.local file (local development)
+// - 'user': Manually set by user in the UI
+// - 'response': Extracted from API response
+export type EnvironmentVariableSource = 'vercel' | 'env_file' | 'user' | 'response';
 
 // Metadata about where a response-extracted variable came from
 export interface ResponseMetadata {

@@ -18,13 +18,15 @@ import { EnvironmentVariable } from '@/lib/types';
 
 // Source badge colors
 const SOURCE_STYLES: Record<string, string> = {
-  bruno: 'bg-purple-100 text-purple-700',
+  vercel: 'bg-black text-white',
+  env_file: 'bg-purple-100 text-purple-700',
   user: 'bg-blue-100 text-blue-700',
   response: 'bg-green-100 text-green-700',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
-  bruno: 'Bruno',
+  vercel: 'Vercel',
+  env_file: 'EnvFile',
   user: 'User',
   response: 'Response',
 };
@@ -129,10 +131,10 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
     }
   }, [importContent, importEnvFile]);
 
-  // Check if a variable is a Bruno default
-  const isBrunoDefault = (name: string): boolean => {
-    const brunoVar = variablesMap[name];
-    return brunoVar?.source === 'bruno';
+  // Check if a variable has a base default (from Vercel or .env.local)
+  const isBaseDefault = (name: string): boolean => {
+    const baseVar = variablesMap[name];
+    return baseVar?.source === 'vercel' || baseVar?.source === 'env_file';
   };
 
   if (isLoading) {
@@ -323,7 +325,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                               >
                                 <PencilIcon className="h-4 w-4" />
                               </button>
-                              {variable.source !== 'bruno' && (
+                              {variable.source !== 'vercel' && variable.source !== 'env_file' && (
                                 <button
                                   onClick={() => deleteVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -332,11 +334,11 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               )}
-                              {variable.source === 'user' && isBrunoDefault(variable.name) && (
+                              {variable.source === 'user' && isBaseDefault(variable.name) && (
                                 <button
                                   onClick={() => resetVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
-                                  title="Reset to Bruno default"
+                                  title="Reset to default"
                                 >
                                   <ArrowPathIcon className="h-4 w-4" />
                                 </button>
@@ -592,7 +594,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                               >
                                 <PencilIcon className="h-4 w-4" />
                               </button>
-                              {variable.source !== 'bruno' && (
+                              {variable.source !== 'vercel' && variable.source !== 'env_file' && (
                                 <button
                                   onClick={() => deleteVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -601,11 +603,11 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               )}
-                              {variable.source === 'user' && isBrunoDefault(variable.name) && (
+                              {variable.source === 'user' && isBaseDefault(variable.name) && (
                                 <button
                                   onClick={() => resetVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
-                                  title="Reset to Bruno default"
+                                  title="Reset to default"
                                 >
                                   <ArrowPathIcon className="h-4 w-4" />
                                 </button>

@@ -1,0 +1,64 @@
+---
+description: Always use public registries for package installations (not Klarna internal registry)
+alwaysApply: true
+---
+
+# Public Registry for External Deployment
+
+This project is developed on a Klarna machine but deployed externally. All package installations must use public registries to ensure dependencies are accessible in production.
+
+## Package Manager Configuration
+
+### npm
+
+Always specify the public registry explicitly:
+
+```bash
+# ✅ GOOD - Use public registry
+npm install <package> --registry=https://registry.npmjs.org/
+
+# ✅ GOOD - Set registry in .npmrc
+echo "registry=https://registry.npmjs.org/" > .npmrc
+
+# ❌ BAD - Using default/Klarna registry
+npm install <package>
+```
+
+### yarn
+
+```bash
+# ✅ GOOD - Use public registry
+yarn add <package> --registry https://registry.npmjs.org/
+
+# ✅ GOOD - Set registry in .yarnrc.yml
+echo "npmRegistryServer: https://registry.npmjs.org/" > .yarnrc.yml
+
+# ❌ BAD - Using default/Klarna registry
+yarn add <package>
+```
+
+### pnpm
+
+```bash
+# ✅ GOOD - Use public registry
+pnpm add <package> --registry=https://registry.npmjs.org/
+
+# ✅ GOOD - Set registry in .npmrc
+echo "registry=https://registry.npmjs.org/" > .npmrc
+
+# ❌ BAD - Using default/Klarna registry
+pnpm add <package>
+```
+
+## Configuration Files
+
+Ensure configuration files are committed to the repository:
+
+- `.npmrc` with `registry=https://registry.npmjs.org/`
+- `.yarnrc.yml` with `npmRegistryServer: https://registry.npmjs.org/`
+
+## Why This Matters
+
+- External hosting cannot access Klarna's internal registry
+- Prevents deployment failures due to inaccessible dependencies
+- Ensures reproducible builds in any environment

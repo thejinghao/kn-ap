@@ -44,7 +44,7 @@ export default function Header() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-300">
-        <div className="max-w-5xl mx-auto px-4 py-3">
+        <div className="max-w-[1400px] mx-auto px-5 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
