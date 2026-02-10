@@ -5,7 +5,7 @@
 
 import { EndpointPreset, CategoryInfo } from './types';
 import { loadBrunoEndpoints } from './bruno-parser';
-import { categories, staticEndpointPresets } from './klarna-endpoints';
+import { categories, staticEndpointPresets } from './endpoints';
 
 /**
  * Load all endpoints (static + Bruno) - server-side only

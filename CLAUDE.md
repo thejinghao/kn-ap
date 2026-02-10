@@ -20,6 +20,15 @@ npm start
 
 # Lint code
 npm run lint
+
+# Database commands (Turso + Drizzle)
+npm run db:generate   # Generate migration files from schema changes
+npm run db:migrate    # Run pending migrations
+npm run db:push       # Push schema directly to database (dev)
+npm run db:studio     # Open Drizzle Studio GUI
+
+# Claude Code Skills
+/done                 # Commit all changes with auto-generated message and push to main
 ```
 
 ## Environment Setup
@@ -30,7 +39,13 @@ npm run lint
    - `KLARNA_BASE_URL` - API base URL (test: `https://api-global.test.klarna.com`)
    - `KLARNA_CERT_PATH` / `KLARNA_KEY_PATH` - mTLS certificate paths (relative to project root)
    - `KLARNA_SKIP_MTLS` - Set to `true` to bypass mTLS for testing
+   - `TURSO_DATABASE_URL` - Turso database URL (format: `libsql://your-db.turso.io`)
+   - `TURSO_AUTH_TOKEN` - Turso authentication token
 3. Place mTLS certificates in `certs/` directory (gitignored)
+4. Set up Turso database (optional — app degrades gracefully without it):
+   - `turso db create kn-ap` → `turso db show kn-ap --url` for URL
+   - `turso db tokens create kn-ap` for auth token
+   - `npm run db:push` to create tables
 
 ## Architecture Overview
 
@@ -57,15 +72,33 @@ npm run lint
 - Can be disabled with `KLARNA_SKIP_MTLS=true` for testing
 
 **Endpoint Presets System:**
-- Static presets defined in `lib/klarna-endpoints.ts`
-- Organized by category (credentials, accounts, onboarding, payments, webhooks, settlements)
+- Static presets split across `lib/endpoints/` (per-category files: credentials, accounts, onboarding, payments, webhooks, settlements)
+- Barrel export from `lib/endpoints/index.ts` — import `staticEndpointPresets` from there
+- Legacy `lib/klarna-endpoints.ts` re-exports from `lib/endpoints/` for backwards compatibility
 - Includes path parameters, body templates, and descriptions
 - Supports variable substitution with `{variable_name}` syntax
 
+**Database Layer (Turso + Drizzle):**
+- Turso (libSQL) database for persistent storage, configured via `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`
+- Drizzle ORM for type-safe queries; schema in `lib/db/schema.ts`
+- Tables: `api_call_history`, `environment_variables`, `saved_requests`, `user_preferences`
+- Query helpers in `lib/db/queries/` (call-history, env-variables, saved-requests, preferences)
+- API routes in `app/api/db/` (history, variables, saved-requests, preferences)
+- **Graceful degradation**: If Turso is not configured, app falls back to in-memory/localStorage behavior
+
 **Environment Variable Management:**
-- Variables stored in browser localStorage with source tracking
+- DB-first with localStorage fallback (`lib/env-context.tsx`)
+- On mount: fetches from DB → if empty, migrates localStorage data to DB
+- Writes go to both DB (primary) and localStorage (backup)
+- Server-sourced vars (`vercel`, `env_file`) stay in `/api/env` — only `user` and `response` vars in DB
 - Supports extraction from API responses (e.g., save credential_id from response)
 - Variable substitution in request bodies and paths using `{variable_name}` format
+
+**Call History Persistence:**
+- `useCallHistory` hook (`lib/hooks/useCallHistory.ts`) provides optimistic local state with background DB sync
+- Loads last 100 calls from DB on mount
+- `addCall()` / `updateCall()` update state immediately, write to DB async
+- Degrades to ephemeral (in-memory) if DB unavailable
 
 ### Component Structure
 
@@ -75,15 +108,22 @@ npm run lint
 - `app/payment-button/page.tsx` - Payment button demo
 
 **Core Components:**
-- `components/ApiTester.tsx` - Main controller for API testing UI
 - `components/RequestForm.tsx` - Request configuration (method, path, headers, body)
 - `components/ResponsePanel.tsx` - Response display with JSON viewer
 - `components/EnvironmentPanel.tsx` - Environment variable management
 - `components/KlarnaNetworkDiagram.tsx` - Visual network structure using ReactFlow
 
 **API Integration:**
-- `lib/klarna-endpoints.ts` - Endpoint preset definitions (1300+ lines)
+- `lib/endpoints/` - Endpoint preset definitions split by category (credentials, accounts, onboarding, payments, webhooks, settlements)
 - `lib/types.ts` - TypeScript interfaces for requests, responses, and UI state
+
+**Database Layer:**
+- `lib/db/schema.ts` - Drizzle table definitions
+- `lib/db/client.ts` - Turso client singleton
+- `lib/db/index.ts` - Drizzle ORM instance
+- `lib/db/queries/` - CRUD query helpers (call-history, env-variables, saved-requests, preferences)
+- `lib/hooks/useCallHistory.ts` - Call history hook with optimistic updates + DB sync
+- `lib/api-helpers.ts` - Standardized error handling wrapper for API routes
 
 ## Important Patterns
 
@@ -123,6 +163,40 @@ Set in `.npmrc`:
 ```
 registry=https://registry.npmjs.org/
 ```
+
+## Claude Code Skills
+
+This project includes custom Claude Code skills for common workflows:
+
+### `/done` - Auto Commit and Push
+Commits all changes with an auto-generated descriptive commit message and pushes to main branch.
+
+**Usage:**
+```
+/done
+```
+
+**What it does:**
+1. Reviews all modified and untracked files
+2. Reads key files to understand changes
+3. Generates a clear, descriptive commit message (max 72 chars, present tense, action-oriented)
+4. Stages all changes with `git add .`
+5. Commits with the generated message
+6. Pushes to main branch
+7. Confirms success with git log
+
+**When to use:**
+- Feature work is complete and ready to push
+- Working solo or on personal projects
+- Quick iterations where code review isn't required
+
+**Important notes:**
+- Pushes directly to main (no code review)
+- Only suitable for solo projects or personal work
+- Handles errors gracefully (no changes, push failures)
+- Commit messages follow project conventions (see examples in skill file)
+
+**Skill location:** `.claude/skills/done/SKILL.md`
 
 ## Clarification Pattern
 
@@ -192,6 +266,7 @@ Update documentation when you:
 
 - **Framework:** Next.js 14 (App Router)
 - **UI:** React 18, Material-UI (MUI), Tailwind CSS
+- **Database:** Turso (libSQL) + Drizzle ORM
 - **HTTP Client:** Native Node.js `https` module (for mTLS)
 - **Visualization:** ReactFlow (network diagrams), dagre (graph layout)
 - **JSON Handling:** @uiw/react-json-view
@@ -202,5 +277,10 @@ Update documentation when you:
 - `app/api/klarna-proxy/route.ts:67-82` - mTLS certificate loading
 - `app/api/klarna-proxy/route.ts:84-130` - Klarna header generation
 - `app/api/klarna-proxy/route.ts:133-218` - HTTPS request with mTLS
-- `lib/klarna-endpoints.ts:38-1316` - All endpoint preset definitions
+- `lib/endpoints/` - All endpoint preset definitions (split by category)
+- `lib/db/schema.ts` - Database table definitions (Drizzle)
+- `lib/db/queries/` - Database CRUD operations
+- `lib/hooks/useCallHistory.ts` - Call history persistence hook
+- `lib/env-context.tsx` - Environment variable context (DB-first + localStorage fallback)
 - `lib/types.ts:1-336` - Complete TypeScript type system
+- `drizzle.config.ts` - Drizzle Kit configuration for Turso

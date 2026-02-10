@@ -132,21 +132,101 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
     loadBaseVariables();
   }, []);
   
-  // Load user variables from localStorage on mount
+  // Track whether DB is available
+  const [dbAvailable, setDbAvailable] = useState<boolean | null>(null);
+  const dbInitDone = React.useRef(false);
+
+  // Load user variables: DB-first with localStorage fallback + migration
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setUserVariables(parsed);
+    if (dbInitDone.current) return;
+    dbInitDone.current = true;
+
+    async function loadUserVariables() {
+      // Try DB first
+      try {
+        const res = await fetch('/api/db/variables');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.variables && data.variables.length > 0) {
+            setDbAvailable(true);
+            // Convert DB rows to EnvironmentVariable record
+            const dbVars: Record<string, EnvironmentVariable> = {};
+            for (const row of data.variables) {
+              dbVars[row.name] = {
+                name: row.name,
+                value: row.value,
+                source: row.source || 'user',
+                description: row.description || undefined,
+                isSecret: row.isSecret || false,
+                usageCount: row.usageCount || 0,
+                createdAt: row.createdAt,
+                lastUsedAt: row.lastUsedAt || undefined,
+                metadata: row.metadataEndpoint
+                  ? {
+                      endpoint: row.metadataEndpoint,
+                      method: row.metadataMethod,
+                      timestamp: row.metadataTimestamp,
+                      responseStatus: row.metadataResponseStatus,
+                      jsonPath: row.metadataJsonPath,
+                    }
+                  : undefined,
+              };
+            }
+            setUserVariables(dbVars);
+            return;
+          }
+          setDbAvailable(true);
+
+          // DB is empty — check localStorage for migration
+          const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored) as Record<string, EnvironmentVariable>;
+            setUserVariables(parsed);
+            // Migrate to DB in background
+            const varsToMigrate = Object.values(parsed).map((v) => ({
+              name: v.name,
+              value: v.value,
+              source: (v.source === 'user' || v.source === 'response' ? v.source : 'user') as 'user' | 'response',
+              description: v.description,
+              isSecret: v.isSecret,
+            }));
+            if (varsToMigrate.length > 0) {
+              fetch('/api/db/variables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variables: varsToMigrate }),
+              }).then(() => {
+                console.log('[Environment] Migrated localStorage variables to DB');
+              }).catch(() => {
+                console.warn('[Environment] Failed to migrate variables to DB');
+              });
+            }
+          }
+          return;
+        }
+      } catch {
+        // DB not available
       }
-    } catch (err) {
-      console.error('[Environment] Failed to load user variables from localStorage:', err);
+
+      // Fallback: use localStorage
+      setDbAvailable(false);
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setUserVariables(parsed);
+        }
+      } catch (err) {
+        console.error('[Environment] Failed to load user variables from localStorage:', err);
+      }
     }
+
+    loadUserVariables();
   }, []);
-  
-  // Save user variables to localStorage when they change
+
+  // Save user variables — DB primary, localStorage as backup
   useEffect(() => {
+    // Always keep localStorage in sync as backup
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userVariables));
     } catch (err) {
@@ -172,7 +252,7 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
     options?: SetVariableOptions
   ) => {
     const now = new Date().toISOString();
-    
+
     setUserVariables(prev => ({
       ...prev,
       [name]: {
@@ -186,7 +266,28 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
         usageCount: prev[name]?.usageCount || 0,
       },
     }));
-  }, []);
+
+    // Sync to DB in background
+    if (dbAvailable) {
+      const source = options?.source || 'user';
+      fetch('/api/db/variables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          value,
+          source: source === 'user' || source === 'response' ? source : 'user',
+          description: options?.description,
+          isSecret: options?.isSecret ?? isSecretVariable(name),
+          metadataEndpoint: options?.metadata?.endpoint,
+          metadataMethod: options?.metadata?.method,
+          metadataTimestamp: options?.metadata?.timestamp,
+          metadataResponseStatus: options?.metadata?.responseStatus,
+          metadataJsonPath: options?.metadata?.jsonPath,
+        }),
+      }).catch(() => {});
+    }
+  }, [dbAvailable]);
   
   // Delete a variable
   const deleteVariable = useCallback((name: string) => {
@@ -195,7 +296,16 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
       delete next[name];
       return next;
     });
-  }, []);
+
+    // Sync deletion to DB
+    if (dbAvailable) {
+      fetch('/api/db/variables', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      }).catch(() => {});
+    }
+  }, [dbAvailable]);
   
   // Reset a variable to base default (remove user override)
   const resetVariable = useCallback((name: string) => {

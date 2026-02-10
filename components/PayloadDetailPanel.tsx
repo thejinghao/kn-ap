@@ -8,7 +8,7 @@ import {
   CrossReference,
   entityColors,
 } from '@/lib/onboarding-payload-structure';
-import { staticEndpointPresets } from '@/lib/klarna-endpoints';
+import { staticEndpointPresets } from '@/lib/endpoints';
 import { EndpointPreset } from '@/lib/types';
 import {
   XMarkIcon,

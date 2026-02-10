@@ -15,7 +15,8 @@ import {
 import RequestForm from '@/components/RequestForm';
 import CallHistoryPanel from '@/components/CallHistoryPanel';
 import { useEnvironment } from '@/lib/env-context';
-import { staticEndpointPresets } from '@/lib/klarna-endpoints';
+import { staticEndpointPresets } from '@/lib/endpoints';
+import { useCallHistory } from '@/lib/hooks/useCallHistory';
 
 // Inner component that uses environment context
 function HomeContent() {
@@ -34,8 +35,8 @@ function HomeContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
 
-  // Call history state
-  const [callHistory, setCallHistory] = useState<ApiCallEntry[]>([]);
+  // Call history state (persisted to DB with localStorage fallback)
+  const { calls: callHistory, addCall, updateCall: updateCallEntry } = useCallHistory();
 
   // Handler for saving response values as environment variables
   const handleSaveVariable = useCallback((name: string, value: string, isSecret?: boolean, metadata?: ResponseMetadata) => {
@@ -137,7 +138,7 @@ function HomeContent() {
         requestBody: body ? JSON.parse(body) : undefined,
         error: `Missing environment variables: ${missingEnvVars.join(', ')}`,
       };
-      setCallHistory((prev) => [errorEntry, ...prev]);
+      addCall(errorEntry);
       return;
     }
 
@@ -155,7 +156,7 @@ function HomeContent() {
         requestBody: body ? JSON.parse(body) : undefined,
         error: `Missing required path parameters: ${missingParams.map((p) => p.name).join(', ')}`,
       };
-      setCallHistory((prev) => [errorEntry, ...prev]);
+      addCall(errorEntry);
       return;
     }
 
@@ -171,7 +172,7 @@ function HomeContent() {
     };
 
     // Add to history (at the beginning for chronological order - newest first)
-    setCallHistory((prev) => [pendingEntry, ...prev]);
+    addCall(pendingEntry);
     setIsLoading(true);
 
     try {
@@ -194,13 +195,7 @@ function HomeContent() {
         } catch {
           // Update entry with error
           const duration = Date.now() - startTime;
-          setCallHistory((prev) =>
-            prev.map((c) =>
-              c.id === callId
-                ? { ...c, status: 'error' as const, error: 'Invalid JSON in request body', duration }
-                : c
-            )
-          );
+          updateCallEntry(callId, { status: 'error', error: 'Invalid JSON in request body', duration });
           setIsLoading(false);
           return;
         }
@@ -217,18 +212,11 @@ function HomeContent() {
       const duration = Date.now() - startTime;
 
       // Update entry with response
-      setCallHistory((prev) =>
-        prev.map((c) =>
-          c.id === callId
-            ? {
-                ...c,
-                status: 'success' as const,
-                response: proxyResponse.data,
-                duration,
-              }
-            : c
-        )
-      );
+      updateCallEntry(callId, {
+        status: 'success',
+        response: proxyResponse.data,
+        duration,
+      });
     } catch (err) {
       const duration = Date.now() - startTime;
       let errorMessage = 'An unexpected error occurred';
@@ -246,23 +234,16 @@ function HomeContent() {
       }
 
       // Update entry with error
-      setCallHistory((prev) =>
-        prev.map((c) =>
-          c.id === callId
-            ? {
-                ...c,
-                status: response ? ('success' as const) : ('error' as const),
-                error: response ? undefined : errorMessage,
-                response,
-                duration,
-              }
-            : c
-        )
-      );
+      updateCallEntry(callId, {
+        status: response ? 'success' : 'error',
+        error: response ? undefined : errorMessage,
+        response,
+        duration,
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [method, path, headers, body, pathParams, selectedEndpoint?.name, substituteVariables, findMissingVariables]);
+  }, [method, path, headers, body, pathParams, selectedEndpoint?.name, substituteVariables, findMissingVariables, addCall, updateCallEntry]);
 
   // Calculate bottom padding for call history based on form state
   const formHeight = isFormCollapsed ? 65 : 420; // Approximate heights
