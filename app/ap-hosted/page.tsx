@@ -791,21 +791,19 @@ export default function PaymentButtonPage() {
 
   return (
     <div className="min-h-[calc(100vh-57px)] bg-gray-50 p-5 max-w-[1400px] mx-auto">
-      {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded px-4 py-3 mb-5 text-sm flex items-start gap-2.5 text-blue-700 leading-relaxed">
-        <InformationCircleIcon className="w-4 h-4 shrink-0 mt-0.5" />
-        <div>
-          <strong className="text-blue-900">Acquiring Partner Mode:</strong> Enter your Partner Account ID and Client ID to test the payment flow.
-          The origin <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">{currentOrigin || 'loading...'}</code> must be registered in the store configuration.
-        </div>
-      </div>
-
       {/* Main Layout */}
       <div className="flex flex-col md:flex-row gap-5 mb-5">
         {/* Configuration Panel */}
         <div className="flex-1 min-w-0 md:min-w-[300px]">
           <div className="bg-white border border-gray-200 rounded p-4">
             <h3 className="text-base font-bold text-gray-900 mt-0 mb-1.5">Configuration</h3>
+            <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 text-xs flex items-start gap-2 text-blue-700 leading-relaxed">
+              <InformationCircleIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <div>
+                Enter your Partner Account ID and Client ID to test the hosted or embedded checkout flow.
+                The origin <code className="bg-blue-100/70 px-1 py-0.5 rounded text-[11px] font-mono break-all whitespace-normal">{currentOrigin || 'loading...'}</code> must be registered in the store configuration.
+              </div>
+            </div>
             
             <div className="grid gap-1.5 mb-2.5">
               <label htmlFor="partner-account-id" className="text-xs font-medium text-gray-500">Partner Account ID *</label>
