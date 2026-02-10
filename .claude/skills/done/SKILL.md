@@ -1,21 +1,29 @@
 ---
 name: done
-description: Commit session-related changes with auto-generated message and push to main. Only commits files changed during this session.
+description: Commit changes with auto-generated message and push to main. Use --all to commit everything, otherwise only commits session-related files.
 disable-model-invocation: true
 allowed-tools: Bash(git *), Read, Glob
 ---
 
-Complete the current feature by committing and pushing only session-related changes:
+Complete the current feature by committing and pushing changes.
 
-## Step 1: Identify Session Changes
+## Parameters
+- `--all` — Commit ALL uncommitted changes (staged, modified, and untracked), not just session-related files
+
+## Step 1: Identify Changes
 1. Run `git status` to see all modified/untracked files
 2. Run `git diff --stat` to get summary of changes
+
+**If `--all` flag is provided:**
+3. ALL modified and untracked files are targets for commit — skip session filtering
+
+**If NO flag (default behavior):**
 3. Review the conversation history to determine which files were created or modified during THIS session
 4. Build a list of **session files** — only files you edited, created, or explicitly changed in this conversation
 5. If there are other uncommitted changes unrelated to this session, leave them alone
 
-## Step 2: Review Session Changes
-1. Run `git diff` on the session files to understand what changed
+## Step 2: Review Changes
+1. Run `git diff` on the target files to understand what changed
 2. Read key modified files if needed to understand the changes
 
 ## Step 3: Generate Commit Message
@@ -37,8 +45,14 @@ Create a clear, descriptive commit message following these rules:
 - "Fix bug" (what bug?)
 
 ## Step 4: Commit
+**If `--all`:**
+1. Stage all changes: `git add -A`
+2. Commit with generated message: `git commit -m "Your generated message"`
+
+**If default (no flag):**
 1. Stage ONLY session-related files: `git add <file1> <file2> ...` (list each file explicitly — do NOT use `git add .` or `git add -A`)
 2. Commit with generated message: `git commit -m "Your generated message"`
+
 3. Verify commit succeeded (check exit code)
 
 ## Step 5: Push to Main
@@ -48,7 +62,8 @@ Create a clear, descriptive commit message following these rules:
 4. If there are remaining uncommitted changes (from before the session), mention them to the user
 
 ## Important Notes
-- **Only commit files changed in this session** — never stage unrelated uncommitted changes
-- If no session-related changes exist, inform the user and stop
+- **Default mode**: Only commit files changed in this session — never stage unrelated uncommitted changes
+- **`--all` mode**: Commits everything — useful for catching up on accumulated changes across sessions
+- If no changes exist, inform the user and stop
 - If push fails (network, permissions), report the error clearly
 - The commit message must be specific about what changed
