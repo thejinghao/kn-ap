@@ -26,6 +26,7 @@ interface EventLogItem {
   data?: unknown;
   source?: 'sdk' | 'api' | 'flow';
   direction?: 'request' | 'response';
+  path?: string;
 }
 
 interface AuthorizeResponse {
@@ -211,6 +212,7 @@ export default function PaymentButtonPage() {
     data?: unknown,
     source?: EventLogItem['source'],
     direction?: EventLogItem['direction'],
+    path?: string,
   ) => {
     setEventLog(prev => [{
       id: generateId(),
@@ -220,6 +222,7 @@ export default function PaymentButtonPage() {
       data,
       source,
       direction,
+      path,
     }, ...prev]);
   }, []);
 
@@ -313,15 +316,16 @@ export default function PaymentButtonPage() {
     } else {
       // === Payment Request ID mode (server-side) ===
       const result = await authorizePayment(paymentOptionId);
+      const apiPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
 
-      logEvent('Authorization Request', 'info', result.rawKlarnaRequest, 'api', 'request');
-      logEvent('Authorization Response', result.success ? 'success' : 'error', result.rawKlarnaResponse, 'api', 'response');
+      logEvent('Authorization Request', 'info', result.rawKlarnaRequest, 'api', 'request', apiPath);
+      logEvent('Authorization Response', result.success ? 'success' : 'error', result.rawKlarnaResponse, 'api', 'response', apiPath);
 
       if (!result.success || !result.data) {
         const errorMsg = result.error || 'Authorization failed';
         setFlowState('ERROR');
         setErrorMessage(errorMsg);
-        logEvent('Authorization Error', 'error', { error: errorMsg }, 'api', 'response');
+        logEvent('Authorization Error', 'error', { error: errorMsg }, 'api', 'response', apiPath);
         throw new Error(errorMsg);
       }
 
@@ -400,11 +404,12 @@ export default function PaymentButtonPage() {
           if (!pending) return; // redirect handler already consumed it
           sessionStorage.removeItem('pendingSessionToken');
 
+          const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
           try {
             const finalResult = await authorizePayment(undefined, pending);
 
-            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
-            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request', authPath);
+            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response', authPath);
 
             if (finalResult.success && finalResult.data?.result === 'APPROVED') {
               setFlowState('SUCCESS');
@@ -417,7 +422,7 @@ export default function PaymentButtonPage() {
             const message = error instanceof Error ? error.message : 'Unknown error';
             setFlowState('ERROR');
             setErrorMessage(message);
-            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
+            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
           }
         }, 3000);
       } else {
@@ -695,10 +700,11 @@ export default function PaymentButtonPage() {
     logEvent('Resuming Final Authorization After Redirect', 'info', undefined, 'flow');
     setFlowState('COMPLETING');
 
+    const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
     authorizePayment(undefined, pendingToken)
       .then(finalResult => {
-        logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
-        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+        logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request', authPath);
+        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response', authPath);
 
         if (finalResult.success && finalResult.data?.result === 'APPROVED') {
           setFlowState('SUCCESS');
@@ -712,7 +718,7 @@ export default function PaymentButtonPage() {
         const message = error instanceof Error ? error.message : 'Unknown error';
         setFlowState('ERROR');
         setErrorMessage(message);
-        logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
+        logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted, currentOrigin]);
@@ -1009,6 +1015,11 @@ export default function PaymentButtonPage() {
                   {event.type === 'warning' && '⚠ '}
                   {event.title}
                 </div>
+                {event.path && (
+                  <div className="text-[11px] font-mono text-gray-400 mb-0.5 break-all">
+                    {event.path}
+                  </div>
+                )}
                 <div className="text-[11px] text-gray-500 mb-1.5">
                   {event.timestamp.toLocaleTimeString()}
                 </div>
