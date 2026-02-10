@@ -386,30 +386,40 @@ export default function PaymentButtonPage() {
                           paymentRequest.stateContext?.klarnaNetworkSessionToken;
 
       if (sessionToken) {
-        // Save token to sessionStorage so final auth survives page redirect
+        // Save token to sessionStorage — final auth will happen after redirect
+        // (Don't call authorize here: the page will redirect to returnUrl and the
+        //  redirect-based useEffect will pick up the token and do final auth.
+        //  Calling authorize in BOTH places caused a 409 RESOURCE_CONFLICT.)
         try { sessionStorage.setItem('pendingSessionToken', sessionToken); } catch {}
-
         setFlowState('COMPLETING');
-        try {
-          const finalResult = await authorizePayment(undefined, sessionToken);
-          try { sessionStorage.removeItem('pendingSessionToken'); } catch {}
+        logEvent('Session Token Saved — Awaiting Redirect', 'info', undefined, 'flow');
 
-          logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
-          logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+        // Fallback: if no redirect occurs within 3s (e.g. popup mode), do final auth here
+        setTimeout(async () => {
+          const pending = sessionStorage.getItem('pendingSessionToken');
+          if (!pending) return; // redirect handler already consumed it
+          sessionStorage.removeItem('pendingSessionToken');
 
-          if (finalResult.success && finalResult.data?.result === 'APPROVED') {
-            setFlowState('SUCCESS');
-            setPaymentTransaction(finalResult.data);
-            logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
-          } else {
-            throw new Error(finalResult.error || 'Final authorization failed');
+          try {
+            const finalResult = await authorizePayment(undefined, pending);
+
+            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
+            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+
+            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+              setFlowState('SUCCESS');
+              setPaymentTransaction(finalResult.data);
+              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+            } else {
+              throw new Error(finalResult.error || 'Final authorization failed');
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setFlowState('ERROR');
+            setErrorMessage(message);
+            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
           }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          setFlowState('ERROR');
-          setErrorMessage(message);
-          logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
-        }
+        }, 3000);
       } else {
         setFlowState('SUCCESS');
         logEvent('Payment Completed (No Final Auth Needed)', 'success', undefined, 'flow');
