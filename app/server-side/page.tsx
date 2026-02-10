@@ -956,7 +956,7 @@ export default function ServerSidePaymentPage() {
               {flowState === 'IDLE' || flowState === 'ERROR' ? (
                 <button
                   onClick={initializeSDK}
-                  disabled={cartItems.length === 0}
+                  disabled={cartItems.length === 0 || (!usePaymentRequestData && !manualPaymentRequestId.trim())}
                   className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Initialize & Show Button
