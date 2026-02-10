@@ -61,18 +61,28 @@ function HomeContent() {
         setBody('');
       }
       // Set path parameters if available
+      const paramEntries: PathParamEntry[] = [];
       if (preset.pathParams && preset.pathParams.length > 0) {
-        const paramEntries: PathParamEntry[] = preset.pathParams.map((param) => ({
+        paramEntries.push(...preset.pathParams.map((param) => ({
           id: `${preset.id}-${param.name}`,
           name: param.name,
           value: '',
           required: param.required,
           description: param.description,
-        }));
-        setPathParams(paramEntries);
-      } else {
-        setPathParams([]);
+        })));
       }
+      // Also add query string variables as parameters
+      if (preset.queryParams && preset.queryParams.length > 0) {
+        paramEntries.push(...preset.queryParams.map((param) => ({
+          id: `${preset.id}-qp-${param.name}`,
+          name: param.name,
+          value: '',
+          required: param.required,
+          description: param.description,
+          isQueryParam: true,
+        })));
+      }
+      setPathParams(paramEntries);
       // Set required headers if available
       const newHeaders: HeaderEntry[] = [];
       if (preset.requiredHeaders && preset.requiredHeaders.length > 0) {
@@ -112,13 +122,19 @@ function HomeContent() {
     const callId = uuidv4();
     const startTime = Date.now();
 
-    // Replace path parameters in the endpoint
+    // Replace path and query parameters in the endpoint
     let finalPath = path;
     pathParams.forEach((param) => {
       if (param.value) {
-        // Substitute environment variables in path param values first
+        // Substitute environment variables in param values first
         const substitutedValue = substituteVariables(param.value);
-        finalPath = finalPath.replace(`{${param.name}}`, substitutedValue);
+        if (param.isQueryParam) {
+          // Query params use {{name}} format in the URL
+          finalPath = finalPath.replaceAll(`{{${param.name}}}`, substitutedValue);
+        } else {
+          // Path params use {name} format in the URL
+          finalPath = finalPath.replace(`{${param.name}}`, substitutedValue);
+        }
       }
     });
 

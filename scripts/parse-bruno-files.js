@@ -162,15 +162,16 @@ function parseBrunoFile(filePath) {
 }
 
 function extractPathParamsFromUrl(url) {
-  // Extract parameters in the format :param or {param}
-  const colonParams = url.match(/:(\w+)/g) || [];
-  const braceParams = url.match(/\{(\w+)\}/g) || [];
-  
+  // Only extract path params from the path portion (before query string)
+  const pathPart = url.split('?')[0];
+  const colonParams = pathPart.match(/:(\w+)/g) || [];
+  const braceParams = pathPart.match(/\{(\w+)\}/g) || [];
+
   const params = [
     ...colonParams.map(p => p.replace(':', '')),
     ...braceParams.map(p => p.replace(/[{}]/g, ''))
   ];
-  
+
   return [...new Set(params)]; // Remove duplicates
 }
 
@@ -191,13 +192,20 @@ function scanDirectory(dir, category = '') {
         const endpoint = parseBrunoFile(fullPath);
         
         // Clean up URL and extract path params
-        let cleanUrl = endpoint.url
+        // Split URL into path and query parts
+        const questionMarkIndex = endpoint.url.indexOf('?');
+        const pathPart = questionMarkIndex >= 0 ? endpoint.url.substring(0, questionMarkIndex) : endpoint.url;
+        const queryPart = questionMarkIndex >= 0 ? endpoint.url.substring(questionMarkIndex) : '';
+
+        let cleanPath = pathPart
           .replace(/\{\{base_url\}\}/g, '')
           .replace(/\{\{version\}\}/g, '/v2')
-          .replace(/\?.*$/g, '') // Remove query string
           .replace(/^\/+/, '/') // Ensure single leading slash
           .replace(/:(\w+)/g, '{$1}') // Convert :param to {param}
-          .replace(/\{\{(\w+)\}\}/g, '{$1}'); // Convert {{param}} to {param}
+          .replace(/\{\{(\w+)\}\}/g, '{$1}'); // Convert {{param}} to {param} in path
+
+        // Keep query string as-is ({{env_vars}} preserved for substitution)
+        let cleanUrl = cleanPath + queryPart;
 
         // Extract path params from URL
         const urlPathParams = extractPathParamsFromUrl(cleanUrl);

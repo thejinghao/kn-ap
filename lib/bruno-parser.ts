@@ -150,11 +150,23 @@ export function parseBrunoFile(filePath: string): BrunoFile | null {
  * e.g., "/v2/payment/requests/:payment_request_id" or "/v2/payment/requests/{payment_request_id}"
  */
 function extractPathParamsFromUrl(url: string): string[] {
-  // Match both :param and {param} styles
-  const colonStyleParams = [...url.matchAll(/:(\w+)/g)].map(match => match[1]);
-  const braceStyleParams = [...url.matchAll(/\{(\w+)\}/g)].map(match => match[1]);
-  
+  // Only extract path params from the path portion (before query string)
+  const pathPart = url.split('?')[0];
+  const colonStyleParams = [...pathPart.matchAll(/:(\w+)/g)].map(match => match[1]);
+  const braceStyleParams = [...pathPart.matchAll(/\{(\w+)\}/g)].map(match => match[1]);
+
   return [...colonStyleParams, ...braceStyleParams];
+}
+
+/**
+ * Extract {{variable}} names from the query string portion of a URL
+ */
+function extractQueryStringVars(url: string): string[] {
+  const questionMarkIndex = url.indexOf('?');
+  if (questionMarkIndex < 0) return [];
+  const queryPart = url.substring(questionMarkIndex);
+  const matches = [...queryPart.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]);
+  return [...new Set(matches)];
 }
 
 /**
@@ -162,13 +174,21 @@ function extractPathParamsFromUrl(url: string): string[] {
  * Replace {{base_url}}/{{version}} with empty string and :param with {param}
  */
 function normalizeUrl(url: string): string {
-  return url
+  // Split URL into path and query parts
+  const questionMarkIndex = url.indexOf('?');
+  const pathPart = questionMarkIndex >= 0 ? url.substring(0, questionMarkIndex) : url;
+  const queryPart = questionMarkIndex >= 0 ? url.substring(questionMarkIndex) : '';
+
+  // Normalize path portion
+  const normalizedPath = pathPart
     .replace(/\{\{base_url\}\}/g, '')
     .replace(/\{\{version\}\}/g, '/v2')
-    .replace(/\?.*$/g, '') // Remove query string
-    .replace(/:(\w+)/g, '{$1}') // Convert :param to {param}
-    .replace(/\{\{(\w+)\}\}/g, '{$1}') // Convert remaining {{param}} to {param}
-    .replace(/^\/+/, '/'); // Ensure single leading slash
+    .replace(/:(\w+)/g, '{$1}')           // Convert :param to {param}
+    .replace(/\{\{(\w+)\}\}/g, '{$1}')    // Convert remaining {{param}} to {param} in path
+    .replace(/^\/+/, '/');                  // Ensure single leading slash
+
+  // Keep query string as-is ({{env_vars}} preserved for substitution)
+  return normalizedPath + queryPart;
 }
 
 /**
@@ -274,6 +294,15 @@ export function parseBrunoDirectory(dirPath: string): EndpointPreset[] {
               example: value,
             }));
           
+          // Extract query string variables ({{var}} in query portion)
+          const queryStringVars = extractQueryStringVars(normalizedUrl);
+          const queryParams: ParameterDefinition[] = queryStringVars.map(varName => ({
+            name: varName,
+            description: `Query parameter: ${varName}`,
+            required: false,
+            type: 'string',
+          }));
+
           const preset: EndpointPreset = {
             id: generateId(fullPath, brunoData.name),
             name: brunoData.name,
@@ -282,10 +311,11 @@ export function parseBrunoDirectory(dirPath: string): EndpointPreset[] {
             endpoint: normalizedUrl,
             category: getCategoryFromPath(fullPath),
             pathParams: pathParams.length > 0 ? pathParams : undefined,
+            queryParams: queryParams.length > 0 ? queryParams : undefined,
             bodyTemplate,
             requiredHeaders: requiredHeaders.length > 0 ? requiredHeaders : undefined,
           };
-          
+
           presets.push(preset);
         }
       }
@@ -396,6 +426,15 @@ export function buildFolderHierarchy(dirPath: string): FolderStructure {
               example: value,
             }));
           
+          // Extract query string variables ({{var}} in query portion)
+          const queryStringVars = extractQueryStringVars(normalizedUrl);
+          const queryParams: ParameterDefinition[] = queryStringVars.map(varName => ({
+            name: varName,
+            description: `Query parameter: ${varName}`,
+            required: false,
+            type: 'string',
+          }));
+
           const preset: EndpointPreset = {
             id: generateId(fullPath, brunoData.name),
             name: brunoData.name,
@@ -404,10 +443,11 @@ export function buildFolderHierarchy(dirPath: string): FolderStructure {
             endpoint: normalizedUrl,
             category: getCategoryFromPath(fullPath),
             pathParams: pathParams.length > 0 ? pathParams : undefined,
+            queryParams: queryParams.length > 0 ? queryParams : undefined,
             bodyTemplate,
             requiredHeaders: requiredHeaders.length > 0 ? requiredHeaders : undefined,
           };
-          
+
           currentStructure.presets.push(preset);
         }
       }

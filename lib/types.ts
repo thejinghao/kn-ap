@@ -68,6 +68,7 @@ export interface PathParamEntry {
   value: string;
   required: boolean;
   description?: string;
+  isQueryParam?: boolean;
 }
 
 // Categories for grouping endpoints

@@ -262,7 +262,7 @@ export default function RequestForm({
                     <ChevronRightIcon className="w-3.5 h-3.5 text-gray-600" />
                   )}
                   <span className="text-xs font-medium text-gray-700">
-                    Path Parameters ({pathParams.length})
+                    Parameters ({pathParams.length})
                     {hasRequiredMissingParams && (
                       <span className="ml-1 text-red-500">*</span>
                     )}
