@@ -1,212 +1,16 @@
-/* ========================================================================
-   KLARNA ON-SITE MESSAGING DEMO - CSS Module
-   Based on Klarna Design System
-   ======================================================================== */
+/* On-Site Messaging - Minimal CSS Module
+   Only styles requiring pseudo-elements or complex transitions.
+   All other styling uses Tailwind classes for consistency with the site theme. */
 
 /* ========================================================================
-   BASE CONTAINER
+   TOGGLE SWITCH - Requires pseudo-elements
    ======================================================================== */
-.container {
-  background: #f9f8f5;
-  color: #0b051d;
-  font-family: "Klarna Text", system-ui, sans-serif;
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: calc(100vh - 57px);
-}
-
-.container h3 {
-  font-size: 16px;
-  margin: 12px 0 6px;
-  font-weight: 700;
-}
-
-.container code {
-  background: #e6e2da;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-family: monospace;
-}
-
-/* ========================================================================
-   INFO BANNER - Top banner for important notices
-   ======================================================================== */
-.infoBanner {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  line-height: 1.6;
-  font-size: 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.infoIcon {
-  flex-shrink: 0;
-  font-size: 16px;
-}
-
-.infoContent {
-  flex: 1;
-}
-
-.infoContent strong {
-  color: #0b051d;
-}
-
-.infoContent a {
-  color: #0b051d;
-  font-weight: 600;
-}
-
-.infoContent a:hover {
-  opacity: 0.7;
-}
-
-.infoContent code {
-  background: #e6e2da;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: monospace;
-  word-break: break-all;
-  white-space: normal;
-}
-
-/* ========================================================================
-   LAYOUT - Flexbox grid system
-   ======================================================================== */
-.configRow {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.configPanel {
-  flex: 1;
-  min-width: 300px;
-}
-
-.mainRow {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-/* ========================================================================
-   CONFIGURATION PANELS - White cards with form elements
-   ======================================================================== */
-.config {
-  width: 100%;
-  box-sizing: border-box;
-  background: #fff;
-  border: 1px solid #ddd9d2;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.field {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.field label {
-  font-size: 12px;
-  color: #6f6b7a;
-  font-weight: 500;
-}
-
-.field select,
-.field input[type="number"],
-.field input[type="text"],
-.field input[type="color"],
-.field textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #ddd9d2;
-  border-radius: 8px;
-  padding: 10px;
-  background: #fcfbf8;
-  font: inherit;
-  font-size: 14px;
-}
-
-.field textarea {
-  min-height: 200px;
-  font-family: monospace;
-  resize: vertical;
-  font-size: 12px;
-}
-
-.status {
-  font-size: 12px;
-  color: #6f6b7a;
-  overflow-wrap: break-word;
-}
-
-.container button {
-  background: #0b051d;
-  border: none;
-  color: #f9f8f5;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.container button:hover {
-  background: #3d3948;
-}
-
-.container button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.clearButton {
-  margin: 0 !important;
-  padding: 6px 12px !important;
-  font-size: 12px !important;
-}
-
-/* ========================================================================
-   CURRENCY PILL - Display pill for currency
-   ======================================================================== */
-.pill {
-  display: inline-block;
-  background: #e4e3df;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  margin-left: 6px;
-}
-
-/* ========================================================================
-   TOGGLE SWITCH - Custom styled checkboxes
-   ======================================================================== */
-.toggleContainer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
 .toggleSwitch {
   position: relative;
   display: inline-block;
   width: 44px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .toggleSwitch input {
@@ -218,16 +22,13 @@
 .toggleSlider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #ccc;
+  inset: 0;
+  background: #D1D5DB;
   border-radius: 24px;
   transition: 0.3s;
 }
 
-.toggleSlider:before {
+.toggleSlider::before {
   position: absolute;
   content: "";
   height: 18px;
@@ -240,39 +41,16 @@
 }
 
 .toggleSwitch input:checked + .toggleSlider {
-  background: #0b051d;
+  background: #111827;
 }
 
-.toggleSwitch input:checked + .toggleSlider:before {
+.toggleSwitch input:checked + .toggleSlider::before {
   transform: translateX(20px);
 }
 
 /* ========================================================================
-   COLLAPSIBLE SECTIONS - Accordion-style panels
+   COLLAPSIBLE SECTIONS - Max-height transition animation
    ======================================================================== */
-.collapsibleHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  user-select: none;
-  padding: 4px 0;
-}
-
-.collapsibleHeader:hover {
-  opacity: 0.8;
-}
-
-.collapseIcon {
-  transition: transform 0.3s;
-  font-size: 14px;
-  color: #6f6b7a;
-}
-
-.collapseIcon.collapsed {
-  transform: rotate(-90deg);
-}
-
 .collapsibleContent {
   overflow: hidden;
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
@@ -280,245 +58,15 @@
   opacity: 1;
 }
 
-.collapsibleContent.collapsed {
-  max-height: 0;
-  opacity: 0;
+.collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
 }
 
-/* ========================================================================
-   OSM-SPECIFIC: Full-width panel for CSS customization
-   ======================================================================== */
-.fullWidthPanel {
-  flex: 0 0 100%;
+.collapseIcon {
+  transition: transform 0.3s;
 }
 
-/* ========================================================================
-   OSM-SPECIFIC: Parts grid for CSS part editors
-   ======================================================================== */
-.partsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
-}
-
-.partSection {
-  background: #fcfbf8;
-  border: 1px solid #e6e2da;
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.partHeader {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0b051d;
-  margin-bottom: 10px;
-  font-family: monospace;
-}
-
-/* ========================================================================
-   OSM-SPECIFIC: Placement display area
-   ======================================================================== */
-.placementContainer {
-  flex: 1;
-  min-width: 300px;
-  background: #fff;
-  border: 1px solid #ddd9d2;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.placementContent {
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ========================================================================
-   OSM-SPECIFIC: Observer panel (live code preview)
-   ======================================================================== */
-.observerPanel {
-  flex: 1;
-  min-width: 300px;
-  background: #fff;
-  border: 1px solid #ddd9d2;
-  border-radius: 8px;
-  padding: 16px;
-  overflow-y: auto;
-  max-height: 600px;
-}
-
-.codeBlock {
-  margin-bottom: 12px;
-}
-
-.codeLabel {
-  font-size: 11px;
-  color: #6f6b7a;
-  font-weight: 600;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.codeContent {
-  background: #1a1a2e;
-  color: #e0e0e0;
-  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 12px;
-  overflow-x: auto;
-  white-space: pre;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ========================================================================
-   OSM-SPECIFIC: Reset and info styles
-   ======================================================================== */
-.resetButton {
-  background: #6f6b7a !important;
-  margin: 0 !important;
-  padding: 6px 12px !important;
-  font-size: 12px !important;
-}
-
-.noCustomization {
-  color: #6f6b7a;
-  font-size: 13px;
-  font-style: italic;
-  padding: 16px;
-  text-align: center;
-}
-
-.cssInfo {
-  font-size: 12px;
-  color: #6f6b7a;
-  margin-top: 8px;
-}
-
-.cssInfo a {
-  color: #0b051d;
-  font-weight: 600;
-}
-
-.cssInfo a:hover {
-  opacity: 0.7;
-}
-
-/* ========================================================================
-   EVENT LOG PANEL - Real-time SDK event display (newest first)
-   ======================================================================== */
-.eventLog {
-  flex: 1;
-  min-width: 300px;
-  background: #fff;
-  border: 1px solid #ddd9d2;
-  border-radius: 8px;
-  padding: 16px;
-  max-height: 800px;
-  overflow-y: auto;
-}
-
-.eventLogContent pre {
-  background: #fcfbf8;
-  border: 1px solid #e6e2da;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 11px;
-  overflow-x: auto;
-  margin: 8px 0;
-  max-height: 300px;
-  overflow-y: auto;
-  word-break: break-word;
-}
-
-.eventItem {
-  margin-bottom: 16px;
-  border-bottom: 1px solid #e6e2da;
-  padding-bottom: 12px;
-}
-
-.eventItem:last-child {
-  border-bottom: none;
-}
-
-.eventTitle {
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: #0b051d;
-  font-size: 13px;
-}
-
-.eventTime {
-  font-size: 11px;
-  color: #6f6b7a;
-  margin-bottom: 6px;
-}
-
-/* ========================================================================
-   RESPONSIVE DESIGN - Mobile-friendly layout
-   ======================================================================== */
-@media (max-width: 768px) {
-  .configRow {
-    flex-direction: column;
-  }
-
-  .configPanel {
-    min-width: 100%;
-  }
-
-  .mainRow {
-    flex-direction: column;
-  }
-
-  .placementContainer {
-    min-width: 100%;
-  }
-
-  .observerPanel {
-    min-width: 100%;
-  }
-
-  .eventLog {
-    min-width: 100%;
-    max-height: 600px;
-  }
-
-  .partsGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ========================================================================
-   CUSTOM SCROLLBAR
-   ======================================================================== */
-.observerPanel::-webkit-scrollbar,
-.eventLog::-webkit-scrollbar,
-.eventLogContent pre::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.observerPanel::-webkit-scrollbar-track,
-.eventLog::-webkit-scrollbar-track,
-.eventLogContent pre::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.observerPanel::-webkit-scrollbar-thumb,
-.eventLog::-webkit-scrollbar-thumb,
-.eventLogContent pre::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.observerPanel::-webkit-scrollbar-thumb:hover,
-.eventLog::-webkit-scrollbar-thumb:hover,
-.eventLogContent pre::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+.collapseIconRotated {
+  transform: rotate(-90deg);
 }

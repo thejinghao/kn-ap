@@ -425,6 +425,18 @@
   font-size: 13px;
 }
 
+.sourceBadge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .eventTime {
   font-size: 11px;
   color: #6f6b7a;

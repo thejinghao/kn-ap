@@ -57,6 +57,8 @@ interface AuthorizeResponse {
     };
   } | null;
   error?: string;
+  rawKlarnaRequest?: unknown;
+  rawKlarnaResponse?: unknown;
   requestMetadata: {
     timestamp: string;
     correlationId: string;
@@ -338,6 +340,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
       return NextResponse.json({
         success: true,
         data: transformedData,
+        rawKlarnaRequest: klarnaBody,
+        rawKlarnaResponse: responseData,
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       });
     } else {
@@ -366,6 +370,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
         success: false,
         data: null,
         error: errorMessage,
+        rawKlarnaRequest: klarnaBody,
+        rawKlarnaResponse: responseData,
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       }, { status: response.status });
     }

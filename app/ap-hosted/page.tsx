@@ -23,6 +23,8 @@ interface EventLogItem {
   timestamp: Date;
   type: 'info' | 'success' | 'error' | 'warning';
   data?: unknown;
+  source?: 'sdk' | 'api' | 'flow';
+  direction?: 'request' | 'response';
 }
 
 interface AuthorizeResponse {
@@ -43,6 +45,8 @@ interface AuthorizeResponse {
     };
   } | null;
   error?: string;
+  rawKlarnaRequest?: unknown;
+  rawKlarnaResponse?: unknown;
   requestMetadata: {
     correlationId: string;
   };
@@ -130,8 +134,28 @@ function saveEventLogToStorage(eventLog: EventLogItem[]): void {
   }
 }
 
-function formatAmount(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+// ============================================================================
+// UTILITY: Build default payment request data JSON
+// ============================================================================
+
+function buildDefaultPaymentRequestData(origin: string): string {
+  return JSON.stringify({
+    currency: DEFAULT_CONFIG.currency,
+    amount: DEFAULT_CONFIG.amount,
+    paymentRequestReference: 'Auto-generated on button click',
+    supplementaryPurchaseData: {
+      purchaseReference: 'Auto-generated on button click',
+      lineItems: [{
+        name: 'Test Product',
+        quantity: 1,
+        totalAmount: DEFAULT_CONFIG.amount,
+        unitPrice: DEFAULT_CONFIG.amount,
+      }],
+    },
+    customerInteractionConfig: {
+      returnUrl: `${origin}/ap-hosted?status=complete`,
+    },
+  }, null, 2);
 }
 
 // ============================================================================
@@ -159,6 +183,12 @@ export default function PaymentButtonPage() {
   // Event Log
   const [eventLog, setEventLog] = useState<EventLogItem[]>([]);
   
+  // Initiation mode toggle
+  const [usePaymentRequestData, setUsePaymentRequestData] = useState(true);
+  const usePaymentRequestDataRef = useRef(true);
+  const [paymentRequestDataJson, setPaymentRequestDataJson] = useState('');
+  const paymentRequestDataJsonRef = useRef('');
+
   // Refs
   const buttonWrapperRef = useRef<HTMLDivElement>(null);
   const sdkInitializedRef = useRef(false);
@@ -172,13 +202,21 @@ export default function PaymentButtonPage() {
   // EVENT LOGGING
   // ============================================================================
 
-  const logEvent = useCallback((title: string, type: EventLogItem['type'], data?: unknown) => {
+  const logEvent = useCallback((
+    title: string,
+    type: EventLogItem['type'],
+    data?: unknown,
+    source?: EventLogItem['source'],
+    direction?: EventLogItem['direction'],
+  ) => {
     setEventLog(prev => [{
       id: generateId(),
       title,
       timestamp: new Date(),
       type,
       data,
+      source,
+      direction,
     }, ...prev]);
   }, []);
 
@@ -212,7 +250,7 @@ export default function PaymentButtonPage() {
         paymentOptionId,
         paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
         paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
-        returnUrl: `${currentOrigin}/payment-button?status=complete`,
+        returnUrl: `${currentOrigin}/ap-hosted?status=complete`,
         klarnaNetworkSessionToken,
         supplementaryPurchaseData: {
           purchaseReference: `purchase_${Date.now()}`,
@@ -233,65 +271,89 @@ export default function PaymentButtonPage() {
   // INITIATE CALLBACK (called when button is clicked)
   // ============================================================================
 
-  const handleInitiate = useCallback(async (): Promise<
-    | { paymentRequestId: string }
-    | { returnUrl?: string }
-  > => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleInitiate = useCallback(async (): Promise<any> => {
     // Get paymentOptionId from the stored presentation
     const paymentOptionId = presentationRef.current?.paymentOption?.paymentOptionId;
-    
-    logEvent('Button Clicked - Initiating Payment', 'info', { paymentOptionId });
+
+    logEvent('Button Clicked - Initiating Payment', 'info', {
+      paymentOptionId,
+      mode: usePaymentRequestDataRef.current ? 'paymentRequestData' : 'paymentRequestId',
+    }, 'flow');
     setFlowState('AUTHORIZING');
     setErrorMessage(null);
 
-    // Call authorize API
-    const result = await authorizePayment(paymentOptionId);
-    
-    logEvent('Authorization Response', result.success ? 'success' : 'error', result);
-
-    if (!result.success || !result.data) {
-      const errorMsg = result.error || 'Authorization failed';
-      setFlowState('ERROR');
-      setErrorMessage(errorMsg);
-      logEvent('Authorization Error', 'error', { error: errorMsg });
-      // Throw with clear message - SDK will catch this
-      throw new Error(errorMsg);
-    }
-
-    const { result: authResult, paymentRequest, paymentTransaction: tx } = result.data;
-
-    switch (authResult) {
-      case 'APPROVED':
-        // Direct approval (rare for hosted checkout)
-        setFlowState('SUCCESS');
-        setPaymentTransaction(result.data);
-        logEvent('Payment Approved', 'success', tx);
-        return { returnUrl: `${currentOrigin}/payment-button?status=approved` };
-
-      case 'STEP_UP_REQUIRED':
-        // Customer needs to complete Klarna journey
-        if (!paymentRequest?.paymentRequestId) {
-          const errorMsg = 'No payment request ID returned';
-          setFlowState('ERROR');
-          setErrorMessage(errorMsg);
-          throw new Error(errorMsg);
+    if (usePaymentRequestDataRef.current) {
+      // === Payment Request Data mode (client-side) ===
+      try {
+        const data = JSON.parse(paymentRequestDataJsonRef.current);
+        // Auto-generate references
+        if (!data.paymentRequestReference || data.paymentRequestReference.includes('Auto-generated')) {
+          data.paymentRequestReference = `pr_${Date.now()}_${generateId()}`;
         }
-        setFlowState('STEP_UP');
-        logEvent('Step-up Required - Launching Klarna Journey', 'info', paymentRequest);
-        // Return paymentRequestId to SDK - it will handle the Klarna journey
-        return { paymentRequestId: paymentRequest.paymentRequestId };
-
-      case 'DECLINED':
-        const declineMsg = result.data.resultReason || 'Payment declined';
+        if (data.supplementaryPurchaseData?.purchaseReference?.includes('Auto-generated')) {
+          data.supplementaryPurchaseData.purchaseReference = `purchase_${Date.now()}`;
+        }
+        // Add paymentOptionId from current presentation
+        if (paymentOptionId) {
+          data.paymentOptionId = paymentOptionId;
+        }
+        logEvent('Payment Request Data', 'info', data, 'flow');
+        return data; // SDK will create the payment request
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Invalid JSON';
         setFlowState('ERROR');
-        setErrorMessage(declineMsg);
-        throw new Error(declineMsg);
+        setErrorMessage(msg);
+        logEvent('Invalid Payment Request Data', 'error', { error: msg }, 'flow');
+        throw new Error(msg);
+      }
+    } else {
+      // === Payment Request ID mode (server-side) ===
+      const result = await authorizePayment(paymentOptionId);
 
-      default:
-        const unknownMsg = `Unknown result: ${authResult}`;
+      logEvent('Authorization Request', 'info', result.rawKlarnaRequest, 'api', 'request');
+      logEvent('Authorization Response', result.success ? 'success' : 'error', result.rawKlarnaResponse, 'api', 'response');
+
+      if (!result.success || !result.data) {
+        const errorMsg = result.error || 'Authorization failed';
         setFlowState('ERROR');
-        setErrorMessage(unknownMsg);
-        throw new Error(unknownMsg);
+        setErrorMessage(errorMsg);
+        logEvent('Authorization Error', 'error', { error: errorMsg }, 'api', 'response');
+        throw new Error(errorMsg);
+      }
+
+      const { result: authResult, paymentRequest, paymentTransaction: tx } = result.data;
+
+      switch (authResult) {
+        case 'APPROVED':
+          setFlowState('SUCCESS');
+          setPaymentTransaction(result.data);
+          logEvent('Payment Approved', 'success', tx, 'flow');
+          return { returnUrl: `${currentOrigin}/ap-hosted?status=approved` };
+
+        case 'STEP_UP_REQUIRED':
+          if (!paymentRequest?.paymentRequestId) {
+            const errorMsg = 'No payment request ID returned';
+            setFlowState('ERROR');
+            setErrorMessage(errorMsg);
+            throw new Error(errorMsg);
+          }
+          setFlowState('STEP_UP');
+          logEvent('Step-up Required - Launching Klarna Journey', 'info', paymentRequest, 'flow');
+          return { paymentRequestId: paymentRequest.paymentRequestId };
+
+        case 'DECLINED':
+          const declineMsg = result.data.resultReason || 'Payment declined';
+          setFlowState('ERROR');
+          setErrorMessage(declineMsg);
+          throw new Error(declineMsg);
+
+        default:
+          const unknownMsg = `Unknown result: ${authResult}`;
+          setFlowState('ERROR');
+          setErrorMessage(unknownMsg);
+          throw new Error(unknownMsg);
+      }
     }
   }, [authorizePayment, logEvent, currentOrigin]);
 
@@ -305,7 +367,7 @@ export default function PaymentButtonPage() {
     klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
       // Deduplicate: SDK may fire 'complete' twice
       if (finalAuthInProgressRef.current) {
-        logEvent('Duplicate Complete Event (ignored)', 'warning');
+        logEvent('Duplicate Complete Event (ignored)', 'warning', undefined, 'sdk');
         return true;
       }
       finalAuthInProgressRef.current = true;
@@ -314,39 +376,45 @@ export default function PaymentButtonPage() {
         paymentRequestId: paymentRequest.paymentRequestId,
         state: paymentRequest.state,
         stateContext: paymentRequest.stateContext,
-      });
+      }, 'sdk');
 
-      // Get the klarna_network_session_token from stateContext
-      const sessionToken = paymentRequest.stateContext?.klarna_network_session_token ||
-                          paymentRequest.stateContext?.klarnaNetworkSessionToken;
-
-      if (sessionToken) {
-        setFlowState('COMPLETING');
-        logEvent('Performing Final Authorization', 'info', { hasSessionToken: true });
-
-        try {
-          // Final authorization with the session token
-          const finalResult = await authorizePayment(undefined, sessionToken);
-          
-          logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult);
-
-          if (finalResult.success && finalResult.data?.result === 'APPROVED') {
-            setFlowState('SUCCESS');
-            setPaymentTransaction(finalResult.data);
-            logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction);
-          } else {
-            throw new Error(finalResult.error || 'Final authorization failed');
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          setFlowState('ERROR');
-          setErrorMessage(message);
-          logEvent('Final Authorization Error', 'error', { error: message });
-        }
-      } else {
-        // If no session token, the payment is complete
+      if (usePaymentRequestDataRef.current) {
+        // === Payment Request Data mode: SDK handled everything ===
         setFlowState('SUCCESS');
-        logEvent('Payment Completed (No Final Auth Needed)', 'success');
+        logEvent('Payment Completed', 'success', {
+          paymentRequestId: paymentRequest.paymentRequestId,
+          state: paymentRequest.state,
+        }, 'flow');
+      } else {
+        // === Payment Request ID mode: need final authorization ===
+        const sessionToken = paymentRequest.stateContext?.klarna_network_session_token ||
+                            paymentRequest.stateContext?.klarnaNetworkSessionToken;
+
+        if (sessionToken) {
+          setFlowState('COMPLETING');
+          try {
+            const finalResult = await authorizePayment(undefined, sessionToken);
+
+            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
+            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+
+            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+              setFlowState('SUCCESS');
+              setPaymentTransaction(finalResult.data);
+              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+            } else {
+              throw new Error(finalResult.error || 'Final authorization failed');
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setFlowState('ERROR');
+            setErrorMessage(message);
+            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
+          }
+        } else {
+          setFlowState('SUCCESS');
+          logEvent('Payment Completed (No Final Auth Needed)', 'success', undefined, 'flow');
+        }
       }
 
       // Return true to allow default redirect behavior
@@ -359,7 +427,7 @@ export default function PaymentButtonPage() {
       logEvent('Payment Aborted', 'warning', {
         state: paymentRequest.state,
         stateReason: paymentRequest.stateReason,
-      });
+      }, 'sdk');
       
       setFlowState('READY');
       setErrorMessage('Payment was cancelled');
@@ -373,7 +441,7 @@ export default function PaymentButtonPage() {
     // Handle errors
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     klarnaInstance.Payment.on('error', (error: any, paymentRequest: any) => {
-      logEvent('Payment Error', 'error', { error, paymentRequest });
+      logEvent('Payment Error', 'error', { error, paymentRequest }, 'sdk');
       setFlowState('ERROR');
       setErrorMessage(error?.message || 'An error occurred');
     });
@@ -389,7 +457,7 @@ export default function PaymentButtonPage() {
         amount: DEFAULT_CONFIG.amount,
         currency: DEFAULT_CONFIG.currency,
         locale: DEFAULT_CONFIG.locale,
-      });
+      }, 'sdk');
 
       const presentationResult = await klarnaInstance.Payment.presentation({
         amount: DEFAULT_CONFIG.amount,
@@ -401,7 +469,7 @@ export default function PaymentButtonPage() {
       logEvent('Payment Presentation Received', 'success', {
         instruction: String(presentationResult.instruction || 'N/A'),
         hasPaymentOption: !!presentationResult.paymentOption,
-      });
+      }, 'sdk');
 
       // Store full presentation in ref (for button mounting)
       presentationRef.current = presentationResult;
@@ -417,7 +485,7 @@ export default function PaymentButtonPage() {
       return presentationResult;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      logEvent('Presentation Error', 'error', { error: message });
+      logEvent('Presentation Error', 'error', { error: message }, 'sdk');
       throw error;
     }
   }, [logEvent]);
@@ -456,7 +524,7 @@ export default function PaymentButtonPage() {
     logEvent('Mounting Payment Button', 'info', {
       paymentOptionId: paymentOption.paymentOptionId,
       instruction: String(presentationResult.instruction || 'N/A'),
-    });
+    }, 'sdk');
 
     try {
       // Generate a new unique ID for this mount
@@ -485,11 +553,11 @@ export default function PaymentButtonPage() {
       // Store reference to the mounted button
       mountedButtonRef.current = buttonInstance;
 
-      logEvent('Payment Button Mounted', 'success');
+      logEvent('Payment Button Mounted', 'success', undefined, 'sdk');
       setFlowState('READY');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      logEvent('Button Mount Error', 'error', { error: message });
+      logEvent('Button Mount Error', 'error', { error: message }, 'sdk');
       setErrorMessage(`Failed to mount button: ${message}`);
       setFlowState('ERROR');
     }
@@ -514,7 +582,7 @@ export default function PaymentButtonPage() {
 
     setFlowState('INITIALIZING');
     setErrorMessage(null);
-    logEvent('Initializing Klarna SDK', 'info', { clientId: clientId.substring(0, 30) + '...' });
+    logEvent('Initializing Klarna SDK', 'info', { clientId: clientId.substring(0, 30) + '...' }, 'sdk');
 
     try {
       // Patch customElements.define for React Strict Mode
@@ -540,7 +608,7 @@ export default function PaymentButtonPage() {
         products: ['PAYMENT'],
       });
 
-      logEvent('SDK Initialized Successfully', 'success');
+      logEvent('SDK Initialized Successfully', 'success', undefined, 'sdk');
 
       // Attach event handlers
       attachSDKEventHandlers(klarnaInstance);
@@ -562,7 +630,7 @@ export default function PaymentButtonPage() {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setFlowState('ERROR');
       setErrorMessage(`SDK initialization failed: ${message}`);
-      logEvent('SDK Initialization Error', 'error', { error: message });
+      logEvent('SDK Initialization Error', 'error', { error: message }, 'sdk');
     }
   }, [clientId, partnerAccountId, attachSDKEventHandlers, getPresentation, mountPaymentButton, logEvent]);
 
@@ -570,12 +638,23 @@ export default function PaymentButtonPage() {
   // EFFECTS
   // ============================================================================
 
+  // Sync refs with state for use inside SDK callbacks
+  useEffect(() => {
+    usePaymentRequestDataRef.current = usePaymentRequestData;
+  }, [usePaymentRequestData]);
+
+  useEffect(() => {
+    paymentRequestDataJsonRef.current = paymentRequestDataJson;
+  }, [paymentRequestDataJson]);
+
   // Initialize client-side state after mount (hydration safety)
   useEffect(() => {
     setIsMounted(true);
     setCurrentOrigin(window.location.origin);
     // Generate unique mount ID on client only
     sdkMountIdRef.current = `klarna-sdk-mount-${Date.now()}`;
+    // Initialize default payment request data JSON
+    setPaymentRequestDataJson(buildDefaultPaymentRequestData(window.location.origin));
     // Load event log from localStorage
     const storedEvents = loadEventLogFromStorage();
     if (storedEvents.length > 0) {
@@ -590,7 +669,7 @@ export default function PaymentButtonPage() {
       const status = params.get('status');
       
       if (status) {
-        logEvent('Returned from Klarna Journey', 'info', { status });
+        logEvent('Returned from Klarna Journey', 'info', { status }, 'flow');
         // Clear URL parameters
         window.history.replaceState({}, '', window.location.pathname);
       }
@@ -636,7 +715,7 @@ export default function PaymentButtonPage() {
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
     clearSdkMount();
-    logEvent('Flow Reset', 'info');
+    logEvent('Flow Reset', 'info', undefined, 'flow');
   }, [logEvent, clearSdkMount]);
 
   // ============================================================================
@@ -705,15 +784,45 @@ export default function PaymentButtonPage() {
               />
             </div>
 
-            <div className={styles.field}>
-              <label>Payment Details (Hardcoded)</label>
-              <div className={styles.infoBox}>
-                <div><strong>Amount:</strong> {formatAmount(DEFAULT_CONFIG.amount)}</div>
-                <div><strong>Currency:</strong> {DEFAULT_CONFIG.currency}</div>
-                <div><strong>Locale:</strong> {DEFAULT_CONFIG.locale}</div>
-                <div><strong>Country:</strong> {DEFAULT_CONFIG.country}</div>
-              </div>
+            {/* Toggle */}
+            <div className={styles.toggleContainer}>
+              <label className={styles.toggleSwitch}>
+                <input
+                  type="checkbox"
+                  checked={usePaymentRequestData}
+                  onChange={(e) => setUsePaymentRequestData(e.target.checked)}
+                  disabled={flowState !== 'IDLE' && flowState !== 'ERROR' && flowState !== 'READY'}
+                />
+                <span className={styles.toggleSlider} />
+              </label>
+              <span style={{ fontSize: '14px', color: '#0b051d', fontWeight: 500 }}>
+                Use Payment Request Data (off = use Payment Request ID)
+              </span>
             </div>
+
+            {/* Payment Request Data section (toggle ON) */}
+            {usePaymentRequestData && (
+              <div className={styles.field}>
+                <label>Payment Request Data (JSON)</label>
+                <textarea
+                  value={paymentRequestDataJson}
+                  onChange={(e) => setPaymentRequestDataJson(e.target.value)}
+                  placeholder="Enter payment request data as JSON..."
+                />
+                <div className={styles.status}>
+                  Edit the JSON directly. References will be auto-generated on button click.
+                </div>
+              </div>
+            )}
+
+            {/* Payment Request ID section (toggle OFF) */}
+            {!usePaymentRequestData && (
+              <div className={styles.infoBox}>
+                <strong>Server-side flow:</strong> When the button is clicked, the app calls
+                the Klarna Payment Authorize API to create a payment request and returns
+                the <code>paymentRequestId</code> to the SDK.
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
               {flowState === 'IDLE' || flowState === 'ERROR' ? (
@@ -843,11 +952,23 @@ export default function PaymentButtonPage() {
             eventLog.map((event) => (
               <div key={event.id} className={styles.eventItem}>
                 <div className={styles.eventTitle} style={{
-                  color: event.type === 'error' ? '#f44336' 
+                  color: event.type === 'error' ? '#f44336'
                        : event.type === 'success' ? '#4caf50'
                        : event.type === 'warning' ? '#ff9800'
                        : '#0b051d'
                 }}>
+                  {event.source === 'sdk' && (
+                    <span className={styles.sourceBadge} style={{ background: '#e3f2fd', color: '#1565c0' }}>SDK</span>
+                  )}
+                  {event.source === 'api' && event.direction === 'request' && (
+                    <span className={styles.sourceBadge} style={{ background: '#fff3e0', color: '#e65100' }}>API REQ</span>
+                  )}
+                  {event.source === 'api' && event.direction === 'response' && (
+                    <span className={styles.sourceBadge} style={{ background: '#f3e5f5', color: '#7b1fa2' }}>API RES</span>
+                  )}
+                  {event.source === 'flow' && (
+                    <span className={styles.sourceBadge} style={{ background: '#e8f5e9', color: '#2e7d32' }}>FLOW</span>
+                  )}
                   {event.type === 'error' && '✗ '}
                   {event.type === 'success' && '✓ '}
                   {event.type === 'warning' && '⚠ '}

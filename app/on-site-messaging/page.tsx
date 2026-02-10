@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 import styles from './page.module.css';
 
 // ============================================================================
@@ -180,6 +181,13 @@ function saveEventLogToStorage(eventLog: EventLogItem[]): void {
     // ignore
   }
 }
+
+// ============================================================================
+// SHARED TAILWIND CLASS STRINGS
+// ============================================================================
+
+const inputClasses = 'w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
+const selectClasses = inputClasses;
 
 // ============================================================================
 // MAIN COMPONENT
@@ -601,65 +609,65 @@ export default function OnSiteMessagingPage() {
 
   // Suppress hydration warnings for dynamic content
   if (!isMounted) {
-    return <div className={styles.container} />;
+    return <div className="min-h-[calc(100vh-57px)] bg-gray-50" />;
   }
 
   return (
-    <div className={styles.container}>
+    <div className="min-h-[calc(100vh-57px)] bg-gray-50 p-5 max-w-[1400px] mx-auto">
       {/* Main Row - Placement + Observer */}
-      <div className={styles.mainRow} style={{ marginBottom: 20 }}>
+      <div className="flex flex-col md:flex-row gap-5 items-start mb-5">
         {/* Placement Display */}
-        <div className={styles.placementContainer}>
-          <h3 style={{ marginTop: 0 }}>
-            Placement: <span style={{ fontWeight: 400, color: '#6f6b7a' }}>{placementKey}</span>
+        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 mt-0 mb-1.5">
+            Placement: <span className="font-normal text-gray-500">{placementKey}</span>
           </h3>
-          <div className={styles.placementContent}>
+          <div className="min-h-[80px] flex items-center justify-center">
             <div id="messaging-placement" style={{ width: '100%' }} />
           </div>
         </div>
 
         {/* Observer Panel */}
-        <div className={styles.observerPanel}>
-          <h3 style={{ marginTop: 0 }}>Observer</h3>
+        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[600px] custom-scrollbar">
+          <h3 className="text-base font-semibold text-gray-900 mt-0 mb-1.5">Observer</h3>
 
-          <div className={styles.codeBlock}>
-            <div className={styles.codeLabel}>SDK Initialization</div>
-            <pre className={styles.codeContent}>{observerCode.sdkCode}</pre>
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">SDK Initialization</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.sdkCode}</pre>
           </div>
 
-          <div className={styles.codeBlock}>
-            <div className={styles.codeLabel}>Placement</div>
-            <pre className={styles.codeContent}>{observerCode.placementCode}</pre>
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">Placement</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.placementCode}</pre>
           </div>
 
-          <div className={styles.codeBlock}>
-            <div className={styles.codeLabel}>HTML</div>
-            <pre className={styles.codeContent}>{observerCode.htmlCode}</pre>
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">HTML</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.htmlCode}</pre>
           </div>
 
           {observerCode.cssCode && (
-            <div className={styles.codeBlock}>
-              <div className={styles.codeLabel}>CSS</div>
-              <pre className={styles.codeContent}>{observerCode.cssCode}</pre>
+            <div className="mb-3">
+              <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">CSS</div>
+              <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.cssCode}</pre>
             </div>
           )}
         </div>
       </div>
 
       {/* Configuration Row - 3 panels */}
-      <div className={styles.configRow}>
+      <div className="flex flex-col md:flex-row gap-5 mb-5">
         {/* SDK Configuration Panel */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
+        <div className="flex-1 min-w-0 md:min-w-[300px]">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div
-              className={styles.collapsibleHeader}
+              className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setSdkPanelOpen(!sdkPanelOpen)}
             >
-              <h3 style={{ marginTop: 0, marginBottom: 0 }}>SDK Configuration</h3>
-              <span className={`${styles.collapseIcon} ${!sdkPanelOpen ? styles.collapsed : ''}`}>▼</span>
+              <h3 className="text-base font-semibold text-gray-900 m-0">SDK Configuration</h3>
+              <span className={`text-sm text-gray-500 ${styles.collapseIcon} ${!sdkPanelOpen ? styles.collapseIconRotated : ''}`}>&#9660;</span>
             </div>
             <div className={`${styles.collapsibleContent} ${!sdkPanelOpen ? styles.collapsed : ''}`}>
-              <div className={styles.toggleContainer} style={{ marginTop: 12 }}>
+              <div className="flex items-center gap-3 mb-3 mt-3">
                 <label className={styles.toggleSwitch}>
                   <input
                     type="checkbox"
@@ -668,15 +676,16 @@ export default function OnSiteMessagingPage() {
                   />
                   <span className={styles.toggleSlider} />
                 </label>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{partnerMode ? 'Acquiring Partner Mode' : 'Sub-Partner Mode'}</span>
+                <span className="text-[13px] font-medium text-gray-700">{partnerMode ? 'Acquiring Partner Mode' : 'Sub-Partner Mode'}</span>
               </div>
 
               {partnerMode && (
-                <div className={styles.field}>
-                  <label htmlFor="osm-partner-account-id">Partner Account ID</label>
+                <div className="grid gap-1.5 mb-2.5">
+                  <label htmlFor="osm-partner-account-id" className="text-xs font-medium text-gray-500">Partner Account ID</label>
                   <input
                     id="osm-partner-account-id"
                     type="text"
+                    className={inputClasses}
                     placeholder="krn:partner:global:account:live:XXXXXXXX"
                     value={partnerAccountId}
                     onChange={(e) => setPartnerAccountId(e.target.value)}
@@ -684,41 +693,43 @@ export default function OnSiteMessagingPage() {
                 </div>
               )}
 
-              <div className={styles.field}>
-                <label htmlFor="osm-client-id">Client ID *</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-client-id" className="text-xs font-medium text-gray-500">Client ID *</label>
                 <input
                   id="osm-client-id"
                   type="text"
+                  className={inputClasses}
                   placeholder="klarna_test_client_..."
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
                 />
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="osm-sdk-token">SDK Token</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-sdk-token" className="text-xs font-medium text-gray-500">SDK Token</label>
                 <input
                   id="osm-sdk-token"
                   type="text"
+                  className={inputClasses}
                   placeholder="Optional SDK token"
                   value={sdkToken}
                   onChange={(e) => setSdkToken(e.target.value)}
                 />
               </div>
 
-              <div className={styles.infoBanner} style={{ marginTop: 8, marginBottom: 0 }}>
-                <div className={styles.infoIcon}>ℹ️</div>
-                <div className={styles.infoContent}>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-2 flex items-start gap-2.5 text-sm text-blue-700 leading-relaxed">
+                <InformationCircleIcon className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
                   {partnerMode ? (
                     <>
                       The partner account must be onboarded with{' '}
-                      <code>store_groups[].stores[].type = WEBSITE</code> and <code>store_groups[].stores[].url</code> set to{' '}
-                      <code>{currentOrigin || 'this origin'}</code>
+                      <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">store_groups[].stores[].type = WEBSITE</code> and <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">store_groups[].stores[].url</code> set to{' '}
+                      <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">{currentOrigin || 'this origin'}</code>
                     </>
                   ) : (
                     <>
-                      <code>{currentOrigin || 'this origin'}</code> must be registered as an allowed origin in the
-                      Klarna Partner Portal. Navigate to Settings → Client Identifier → Allowed Origins.
+                      <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">{currentOrigin || 'this origin'}</code> must be registered as an allowed origin in the
+                      Klarna Partner Portal. Navigate to Settings &rarr; Client Identifier &rarr; Allowed Origins.
                     </>
                   )}
                 </div>
@@ -728,23 +739,24 @@ export default function OnSiteMessagingPage() {
         </div>
 
         {/* Payment Configuration Panel */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
+        <div className="flex-1 min-w-0 md:min-w-[300px]">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div
-              className={styles.collapsibleHeader}
+              className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setPaymentPanelOpen(!paymentPanelOpen)}
             >
-              <h3 style={{ marginTop: 0, marginBottom: 0 }}>
+              <h3 className="text-base font-semibold text-gray-900 m-0">
                 Payment Configuration
-                <span className={styles.pill}>{currency}</span>
+                <span className="inline-block bg-gray-200 px-2 py-0.5 rounded-full text-xs font-bold ml-1.5">{currency}</span>
               </h3>
-              <span className={`${styles.collapseIcon} ${!paymentPanelOpen ? styles.collapsed : ''}`}>▼</span>
+              <span className={`text-sm text-gray-500 ${styles.collapseIcon} ${!paymentPanelOpen ? styles.collapseIconRotated : ''}`}>&#9660;</span>
             </div>
             <div className={`${styles.collapsibleContent} ${!paymentPanelOpen ? styles.collapsed : ''}`}>
-              <div className={styles.field} style={{ marginTop: 12 }}>
-                <label htmlFor="osm-country">Country</label>
+              <div className="grid gap-1.5 mb-2.5 mt-3">
+                <label htmlFor="osm-country" className="text-xs font-medium text-gray-500">Country</label>
                 <select
                   id="osm-country"
+                  className={selectClasses}
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                 >
@@ -756,10 +768,11 @@ export default function OnSiteMessagingPage() {
                 </select>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="osm-locale">Locale</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-locale" className="text-xs font-medium text-gray-500">Locale</label>
                 <select
                   id="osm-locale"
+                  className={selectClasses}
                   value={locale}
                   onChange={(e) => setLocale(e.target.value)}
                 >
@@ -771,11 +784,12 @@ export default function OnSiteMessagingPage() {
                 </select>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="osm-amount">Amount (minor units)</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-amount" className="text-xs font-medium text-gray-500">Amount (minor units)</label>
                 <input
                   id="osm-amount"
                   type="number"
+                  className={inputClasses}
                   value={amount}
                   onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)}
                 />
@@ -785,20 +799,21 @@ export default function OnSiteMessagingPage() {
         </div>
 
         {/* Messaging Configuration Panel */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
+        <div className="flex-1 min-w-0 md:min-w-[300px]">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div
-              className={styles.collapsibleHeader}
+              className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setMessagingPanelOpen(!messagingPanelOpen)}
             >
-              <h3 style={{ marginTop: 0, marginBottom: 0 }}>Messaging Configuration</h3>
-              <span className={`${styles.collapseIcon} ${!messagingPanelOpen ? styles.collapsed : ''}`}>▼</span>
+              <h3 className="text-base font-semibold text-gray-900 m-0">Messaging Configuration</h3>
+              <span className={`text-sm text-gray-500 ${styles.collapseIcon} ${!messagingPanelOpen ? styles.collapseIconRotated : ''}`}>&#9660;</span>
             </div>
             <div className={`${styles.collapsibleContent} ${!messagingPanelOpen ? styles.collapsed : ''}`}>
-              <div className={styles.field} style={{ marginTop: 12 }}>
-                <label htmlFor="osm-placement-key">Placement Key</label>
+              <div className="grid gap-1.5 mb-2.5 mt-3">
+                <label htmlFor="osm-placement-key" className="text-xs font-medium text-gray-500">Placement Key</label>
                 <select
                   id="osm-placement-key"
+                  className={selectClasses}
                   value={placementKey}
                   onChange={(e) => setPlacementKey(e.target.value)}
                 >
@@ -810,10 +825,11 @@ export default function OnSiteMessagingPage() {
                 </select>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="osm-theme">Theme</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-theme" className="text-xs font-medium text-gray-500">Theme</label>
                 <select
                   id="osm-theme"
+                  className={selectClasses}
                   value={theme}
                   onChange={(e) => setTheme(e.target.value)}
                 >
@@ -823,11 +839,12 @@ export default function OnSiteMessagingPage() {
                 </select>
               </div>
 
-              <div className={styles.field}>
-                <label htmlFor="osm-message-prefix">Message Prefix</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label htmlFor="osm-message-prefix" className="text-xs font-medium text-gray-500">Message Prefix</label>
                 <input
                   id="osm-message-prefix"
                   type="text"
+                  className={inputClasses}
                   placeholder="Optional prefix text"
                   value={messagePrefix}
                   onChange={(e) => setMessagePrefix(e.target.value)}
@@ -839,114 +856,118 @@ export default function OnSiteMessagingPage() {
       </div>
 
       {/* CSS Customization Panel - Full Width */}
-      <div className={styles.configRow}>
-        <div className={styles.fullWidthPanel}>
-          <div className={styles.config}>
-            <div
-              className={styles.collapsibleHeader}
-              onClick={() => setCssPanelOpen(!cssPanelOpen)}
-            >
-              <h3 style={{ marginTop: 0, marginBottom: 0 }}>CSS Customization (::part API)</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {activeParts.length > 0 && (
-                  <button className={styles.resetButton} onClick={(e) => { e.stopPropagation(); resetAllStyles(); }}>
-                    Reset All Styles
-                  </button>
-                )}
-                <span className={`${styles.collapseIcon} ${!cssPanelOpen ? styles.collapsed : ''}`}>▼</span>
-              </div>
-            </div>
-            <div className={`${styles.collapsibleContent} ${!cssPanelOpen ? styles.collapsed : ''}`}>
-              {activeParts.length === 0 ? (
-                <div className={styles.noCustomization}>
-                  This placement type does not expose CSS parts for customization.
-                </div>
-              ) : (
-                <div className={styles.partsGrid}>
-                  {activeParts.map((shortName) => {
-                    const fullName = PART_SHORT_TO_FULL[shortName];
-                    if (!fullName) return null;
-                    const inputs = CSS_INPUTS_BY_PART[fullName];
-                    if (!inputs) return null;
-
-                    return (
-                      <div key={shortName} className={styles.partSection}>
-                        <div className={styles.partHeader}>::part({fullName})</div>
-                        {inputs.map((input) => (
-                          <div key={input.id} className={styles.field}>
-                            <label htmlFor={input.id}>{input.label}</label>
-                            <input
-                              id={input.id}
-                              type="text"
-                              placeholder={input.placeholder}
-                              value={partStyles[input.part]?.[input.prop] || ''}
-                              onChange={(e) => handlePartStyleChange(input.part, input.prop, e.target.value)}
-                            />
-                          </div>
-                        ))}
-                        {/* Badge alignment special case */}
-                        {shortName === 'badge' && (
-                          <div className={styles.field}>
-                            <label htmlFor="css-badge-align">Badge Alignment</label>
-                            <select
-                              id="css-badge-align"
-                              value={badgeAlignment}
-                              onChange={(e) => setBadgeAlignment(e.target.value)}
-                            >
-                              <option value="">Default</option>
-                              <option value="left">Left</option>
-                              <option value="right">Right</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+      <div className="mb-5">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div
+            className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
+            onClick={() => setCssPanelOpen(!cssPanelOpen)}
+          >
+            <h3 className="text-base font-semibold text-gray-900 m-0">CSS Customization (::part API)</h3>
+            <div className="flex items-center gap-2">
+              {activeParts.length > 0 && (
+                <button
+                  className="bg-gray-500 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-gray-600 border-none cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); resetAllStyles(); }}
+                >
+                  Reset All Styles
+                </button>
               )}
-              <div className={styles.cssInfo}>
-                Styles are applied via the CSS <code>::part()</code> API on the web component shadow DOM.
+              <span className={`text-sm text-gray-500 ${styles.collapseIcon} ${!cssPanelOpen ? styles.collapseIconRotated : ''}`}>&#9660;</span>
+            </div>
+          </div>
+          <div className={`${styles.collapsibleContent} ${!cssPanelOpen ? styles.collapsed : ''}`}>
+            {activeParts.length === 0 ? (
+              <div className="text-gray-500 text-[13px] italic p-4 text-center">
+                This placement type does not expose CSS parts for customization.
               </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 mt-3">
+                {activeParts.map((shortName) => {
+                  const fullName = PART_SHORT_TO_FULL[shortName];
+                  if (!fullName) return null;
+                  const inputs = CSS_INPUTS_BY_PART[fullName];
+                  if (!inputs) return null;
+
+                  return (
+                    <div key={shortName} className="bg-gray-50 border border-gray-200 rounded-lg p-3.5">
+                      <div className="text-[13px] font-bold text-gray-900 mb-2.5 font-mono">::part({fullName})</div>
+                      {inputs.map((input) => (
+                        <div key={input.id} className="grid gap-1.5 mb-2.5">
+                          <label htmlFor={input.id} className="text-xs font-medium text-gray-500">{input.label}</label>
+                          <input
+                            id={input.id}
+                            type="text"
+                            className={inputClasses}
+                            placeholder={input.placeholder}
+                            value={partStyles[input.part]?.[input.prop] || ''}
+                            onChange={(e) => handlePartStyleChange(input.part, input.prop, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                      {/* Badge alignment special case */}
+                      {shortName === 'badge' && (
+                        <div className="grid gap-1.5 mb-2.5">
+                          <label htmlFor="css-badge-align" className="text-xs font-medium text-gray-500">Badge Alignment</label>
+                          <select
+                            id="css-badge-align"
+                            className={selectClasses}
+                            value={badgeAlignment}
+                            onChange={(e) => setBadgeAlignment(e.target.value)}
+                          >
+                            <option value="">Default</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-2">
+              Styles are applied via the CSS <code className="bg-gray-200 px-1 py-0.5 rounded text-[11px] font-mono">::part()</code> API on the web component shadow DOM.
             </div>
           </div>
         </div>
       </div>
 
       {/* Event Log - Full Width */}
-      <div className={styles.eventLog}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>Event Log</h3>
-          <button onClick={clearLog} className={styles.clearButton}>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 max-h-[800px] overflow-y-auto custom-scrollbar">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-base font-semibold text-gray-900 m-0">Event Log</h3>
+          <button
+            onClick={clearLog}
+            className="bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-gray-800 border-none cursor-pointer"
+          >
             Clear
           </button>
         </div>
-        <div className={styles.eventLogContent}>
+        <div>
           {eventLog.length === 0 ? (
-            <p style={{ color: '#6f6b7a', fontSize: 12 }}>Events will appear here...</p>
+            <p className="text-gray-500 text-xs">Events will appear here...</p>
           ) : (
             eventLog.map((event) => (
-              <div key={event.id} className={styles.eventItem}>
+              <div key={event.id} className="mb-4 border-b border-gray-200 pb-3 last:border-b-0">
                 <div
-                  className={styles.eventTitle}
-                  style={{
-                    color:
-                      event.type === 'error'
-                        ? '#f44336'
-                        : event.type === 'success'
-                          ? '#4caf50'
-                          : event.type === 'warning'
-                            ? '#ff9800'
-                            : '#0b051d',
-                  }}
+                  className={`font-bold mb-1 text-[13px] ${
+                    event.type === 'error'
+                      ? 'text-red-500'
+                      : event.type === 'success'
+                        ? 'text-green-600'
+                        : event.type === 'warning'
+                          ? 'text-amber-500'
+                          : 'text-gray-900'
+                  }`}
                 >
-                  {event.type === 'error' && '✗ '}
-                  {event.type === 'success' && '✓ '}
-                  {event.type === 'warning' && '⚠ '}
+                  {event.type === 'error' && '\u2717 '}
+                  {event.type === 'success' && '\u2713 '}
+                  {event.type === 'warning' && '\u26A0 '}
                   {event.title}
                 </div>
-                <div className={styles.eventTime}>{event.timestamp.toLocaleTimeString()}</div>
+                <div className="text-[11px] text-gray-500 mb-1.5">{event.timestamp.toLocaleTimeString()}</div>
                 {event.data !== undefined && event.data !== null && (
-                  <pre>{JSON.stringify(event.data, null, 2)}</pre>
+                  <pre className="bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
                 )}
               </div>
             ))

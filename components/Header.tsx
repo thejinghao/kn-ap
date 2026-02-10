@@ -51,7 +51,7 @@ export default function Header() {
   }, [showEnvPanel]);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
-  const isPaymentsPage = pathname?.startsWith('/payment-button') || pathname?.startsWith('/on-site-messaging');
+  const isPaymentsPage = pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/on-site-messaging');
 
   return (
     <>
@@ -136,17 +136,17 @@ export default function Header() {
                   {showPaymentsMenu && (
                     <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                       <Link
-                        href="/payment-button"
+                        href="/ap-hosted"
                         onClick={() => setShowPaymentsMenu(false)}
                         className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                          pathname === '/payment-button'
+                          pathname === '/ap-hosted'
                             ? 'bg-gray-50 text-gray-900'
                             : 'text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         <CreditCardIcon className="w-4 h-4 text-gray-500" />
                         <div>
-                          <div className="font-medium">Payment Button (SDK)</div>
+                          <div className="font-medium">AP Hosted</div>
                           <div className="text-xs text-gray-500">Klarna payment button integration</div>
                         </div>
                       </Link>

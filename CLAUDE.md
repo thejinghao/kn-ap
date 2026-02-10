@@ -105,7 +105,7 @@ npm run db:studio     # Open Drizzle Studio GUI
 **Pages:**
 - `app/page.tsx` - API Tester interface (main page)
 - `app/account_structure/page.tsx` - Account structure visualization with network diagram
-- `app/payment-button/page.tsx` - Payment button demo
+- `app/ap-hosted/page.tsx` - AP Hosted payment button demo
 - `app/on-site-messaging/page.tsx` - On-Site Messaging demo with placement configuration
 
 **Core Components:**
