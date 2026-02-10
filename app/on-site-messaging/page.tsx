@@ -186,7 +186,7 @@ function saveEventLogToStorage(eventLog: EventLogItem[]): void {
 // SHARED TAILWIND CLASS STRINGS
 // ============================================================================
 
-const inputClasses = 'w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
+const inputClasses = 'w-full border border-gray-300 rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
 const selectClasses = inputClasses;
 
 // ============================================================================
@@ -614,10 +614,37 @@ export default function OnSiteMessagingPage() {
 
   return (
     <div className="min-h-[calc(100vh-57px)] bg-gray-50 p-5 max-w-[1400px] mx-auto">
-      {/* Main Row - Placement + Observer */}
+      {/* Main Row - Observer + Placement */}
       <div className="flex flex-col md:flex-row gap-5 items-start mb-5">
+        {/* Observer Panel */}
+        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded p-4 overflow-y-auto max-h-[600px] custom-scrollbar">
+          <h3 className="text-base font-semibold text-gray-900 mt-0 mb-1.5">Observer</h3>
+
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">SDK Initialization</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.sdkCode}</pre>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">Placement</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.placementCode}</pre>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">HTML</div>
+            <pre className="bg-gray-800 text-gray-200 font-mono rounded p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.htmlCode}</pre>
+          </div>
+
+          {observerCode.cssCode && (
+            <div className="mb-3">
+              <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">CSS</div>
+              <pre className="bg-gray-800 text-gray-200 font-mono rounded p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.cssCode}</pre>
+            </div>
+          )}
+        </div>
+
         {/* Placement Display */}
-        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded-lg p-4">
+        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded p-4">
           <h3 className="text-base font-semibold text-gray-900 mt-0 mb-1.5">
             Placement: <span className="font-normal text-gray-500">{placementKey}</span>
           </h3>
@@ -625,40 +652,13 @@ export default function OnSiteMessagingPage() {
             <div id="messaging-placement" style={{ width: '100%' }} />
           </div>
         </div>
-
-        {/* Observer Panel */}
-        <div className="flex-1 min-w-0 md:min-w-[300px] w-full bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[600px] custom-scrollbar">
-          <h3 className="text-base font-semibold text-gray-900 mt-0 mb-1.5">Observer</h3>
-
-          <div className="mb-3">
-            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">SDK Initialization</div>
-            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.sdkCode}</pre>
-          </div>
-
-          <div className="mb-3">
-            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">Placement</div>
-            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.placementCode}</pre>
-          </div>
-
-          <div className="mb-3">
-            <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">HTML</div>
-            <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.htmlCode}</pre>
-          </div>
-
-          {observerCode.cssCode && (
-            <div className="mb-3">
-              <div className="text-[11px] text-gray-500 font-semibold mb-1 uppercase tracking-wider">CSS</div>
-              <pre className="bg-gray-800 text-gray-200 font-mono rounded-md p-3 text-xs leading-relaxed overflow-x-auto whitespace-pre m-0">{observerCode.cssCode}</pre>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Configuration Row - 3 panels */}
       <div className="flex flex-col md:flex-row gap-5 mb-5">
         {/* SDK Configuration Panel */}
         <div className="flex-1 min-w-0 md:min-w-[300px]">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white border border-gray-200 rounded p-4">
             <div
               className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setSdkPanelOpen(!sdkPanelOpen)}
@@ -717,7 +717,7 @@ export default function OnSiteMessagingPage() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-2 flex items-start gap-2.5 text-sm text-blue-700 leading-relaxed">
+              <div className="bg-blue-50 border border-blue-200 rounded px-4 py-3 mt-2 flex items-start gap-2.5 text-sm text-blue-700 leading-relaxed">
                 <InformationCircleIcon className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
                   {partnerMode ? (
@@ -740,7 +740,7 @@ export default function OnSiteMessagingPage() {
 
         {/* Payment Configuration Panel */}
         <div className="flex-1 min-w-0 md:min-w-[300px]">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white border border-gray-200 rounded p-4">
             <div
               className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setPaymentPanelOpen(!paymentPanelOpen)}
@@ -800,7 +800,7 @@ export default function OnSiteMessagingPage() {
 
         {/* Messaging Configuration Panel */}
         <div className="flex-1 min-w-0 md:min-w-[300px]">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white border border-gray-200 rounded p-4">
             <div
               className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
               onClick={() => setMessagingPanelOpen(!messagingPanelOpen)}
@@ -857,7 +857,7 @@ export default function OnSiteMessagingPage() {
 
       {/* CSS Customization Panel - Full Width */}
       <div className="mb-5">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-white border border-gray-200 rounded p-4">
           <div
             className="flex items-center justify-between cursor-pointer select-none py-1 hover:opacity-80"
             onClick={() => setCssPanelOpen(!cssPanelOpen)}
@@ -866,7 +866,7 @@ export default function OnSiteMessagingPage() {
             <div className="flex items-center gap-2">
               {activeParts.length > 0 && (
                 <button
-                  className="bg-gray-500 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-gray-600 border-none cursor-pointer"
+                  className="bg-gray-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-600 border-none cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); resetAllStyles(); }}
                 >
                   Reset All Styles
@@ -889,7 +889,7 @@ export default function OnSiteMessagingPage() {
                   if (!inputs) return null;
 
                   return (
-                    <div key={shortName} className="bg-gray-50 border border-gray-200 rounded-lg p-3.5">
+                    <div key={shortName} className="bg-gray-50 border border-gray-200 rounded p-3.5">
                       <div className="text-[13px] font-bold text-gray-900 mb-2.5 font-mono">::part({fullName})</div>
                       {inputs.map((input) => (
                         <div key={input.id} className="grid gap-1.5 mb-2.5">
@@ -933,12 +933,12 @@ export default function OnSiteMessagingPage() {
       </div>
 
       {/* Event Log - Full Width */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 max-h-[800px] overflow-y-auto custom-scrollbar">
+      <div className="bg-white border border-gray-200 rounded p-4 max-h-[800px] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-base font-semibold text-gray-900 m-0">Event Log</h3>
           <button
             onClick={clearLog}
-            className="bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-gray-800 border-none cursor-pointer"
+            className="bg-gray-900 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-800 border-none cursor-pointer"
           >
             Clear
           </button>
@@ -967,7 +967,7 @@ export default function OnSiteMessagingPage() {
                 </div>
                 <div className="text-[11px] text-gray-500 mb-1.5">{event.timestamp.toLocaleTimeString()}</div>
                 {event.data !== undefined && event.data !== null && (
-                  <pre className="bg-gray-50 border border-gray-200 rounded-md p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
+                  <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
                 )}
               </div>
             ))

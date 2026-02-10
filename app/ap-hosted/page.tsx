@@ -796,8 +796,13 @@ export default function PaymentButtonPage() {
                 <span className={styles.toggleSlider} />
               </label>
               <span style={{ fontSize: '14px', color: '#0b051d', fontWeight: 500 }}>
-                Use Payment Request Data (off = use Payment Request ID)
+                {usePaymentRequestData ? 'Use Payment Request Data' : 'Use Payment Request ID'}
               </span>
+            </div>
+            <div className={styles.status} style={{ marginTop: '-4px', marginBottom: '12px' }}>
+              {usePaymentRequestData
+                ? 'The initiate callback returns a paymentRequestData object containing the full payment details. The SDK creates the payment request client-side — no server call is needed during initiation. You can edit the JSON below to customize the payment request data that will be passed to the SDK.'
+                : 'The initiate callback calls your server, which uses Klarna\'s Payment Authorize API to create a payment request server-side. The server returns a paymentRequestId to the SDK, which the SDK then uses to proceed with the payment flow.'}
             </div>
 
             {/* Payment Request Data section (toggle ON) */}
@@ -815,14 +820,7 @@ export default function PaymentButtonPage() {
               </div>
             )}
 
-            {/* Payment Request ID section (toggle OFF) */}
-            {!usePaymentRequestData && (
-              <div className={styles.infoBox}>
-                <strong>Server-side flow:</strong> When the button is clicked, the app calls
-                the Klarna Payment Authorize API to create a payment request and returns
-                the <code>paymentRequestId</code> to the SDK.
-              </div>
-            )}
+
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
               {flowState === 'IDLE' || flowState === 'ERROR' ? (
