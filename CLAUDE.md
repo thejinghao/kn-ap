@@ -148,6 +148,9 @@ krn:partner:global:account:test:uuid
 krn:partner:global:account:payment-product:uuid
 ```
 
+### Token Naming: `interoperability_token` vs `klarna_network_session_token`
+These two names refer to the **same token**. `klarna_network_session_token` is the legacy name; `interoperability_token` is the current name. Some Klarna docs and API responses still use the old term. Treat them as interchangeable when reading docs, writing code, or handling API responses.
+
 ## Package Installation Rules
 
 **CRITICAL:** Developed on Klarna machine but deployed externally. Always use public npm registry:
@@ -170,30 +173,31 @@ registry=https://registry.npmjs.org/
 This project includes custom Claude Code skills for common workflows:
 
 ### `/done` - Auto Commit and Push
-Commits only session-related changes with an auto-generated descriptive commit message and pushes to main branch.
+Commits changes with an auto-generated descriptive commit message and pushes to main branch.
 
 **Usage:**
 ```
-/done
+/done              # Commit only session-related changes (default)
+/done --all        # Commit ALL uncommitted changes
 ```
 
 **What it does:**
 1. Reviews all modified and untracked files
-2. Identifies which files were changed during the current session
+2. Identifies target files (session-only by default, or all with `--all`)
 3. Reads key files to understand changes
 4. Generates a clear, descriptive commit message (max 72 chars, present tense, action-oriented)
-5. Stages only session-related files (explicit `git add <file>`, never `git add .`)
+5. Stages target files (`git add -A` for `--all`, explicit `git add <file>` for default)
 6. Commits with the generated message
 7. Pushes to main branch
 8. Confirms success with git log and notes any remaining uncommitted changes
 
 **When to use:**
-- Feature work is complete and ready to push
-- Working solo or on personal projects
-- Quick iterations where code review isn't required
+- `/done` — Feature work is complete, commit only what you changed this session
+- `/done --all` — Catch up on accumulated changes across multiple sessions
 
 **Important notes:**
-- Only commits files changed in the current session — leaves unrelated uncommitted changes alone
+- Default mode only commits files changed in the current session — leaves unrelated uncommitted changes alone
+- `--all` mode commits everything — staged, modified, and untracked files
 - Pushes directly to main (no code review)
 - Only suitable for solo projects or personal work
 - Handles errors gracefully (no changes, push failures)
