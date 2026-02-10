@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
 import styles from './page.module.css';
 
@@ -65,6 +65,18 @@ interface PresentationInfo {
   paymentOptionId: string | null;
 }
 
+interface CatalogItem {
+  id: string;
+  name: string;
+  unitPrice: number;
+  description: string;
+}
+
+interface CartItem {
+  catalogItem: CatalogItem;
+  quantity: number;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -74,7 +86,6 @@ const DEFAULT_CONFIG = {
   locale: 'en-US',
   currency: 'USD',
   country: 'US',
-  amount: 11836, // $118.36 in cents
 };
 
 // Default Client ID for testing (replace with your own)
@@ -87,6 +98,20 @@ const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 const EVENT_LOG_STORAGE_KEY = 'klarna-payment-button-event-log';
 
 const inputClasses = 'w-full border border-gray-300 rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
+
+const PRODUCT_CATALOG: CatalogItem[] = [
+  { id: 'tshirt', name: 'T-Shirt', unitPrice: 2999, description: 'Cotton crew neck' },
+  { id: 'shoes', name: 'Running Shoes', unitPrice: 8999, description: 'Lightweight trainers' },
+  { id: 'earbuds', name: 'Wireless Earbuds', unitPrice: 4999, description: 'Bluetooth 5.0' },
+  { id: 'wallet', name: 'Leather Wallet', unitPrice: 3499, description: 'Genuine leather' },
+  { id: 'bottle', name: 'Water Bottle', unitPrice: 1499, description: 'Insulated 32oz' },
+];
+
+const TAX_RATE = 0.08;
+
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -142,19 +167,18 @@ function saveEventLogToStorage(eventLog: EventLogItem[]): void {
 // UTILITY: Build default payment request data JSON
 // ============================================================================
 
-function buildDefaultPaymentRequestData(origin: string): string {
+function buildDefaultPaymentRequestData(
+  origin: string,
+  totalAmount: number,
+  lineItems: { name: string; quantity: number; totalAmount: number; unitPrice: number }[],
+): string {
   return JSON.stringify({
     currency: DEFAULT_CONFIG.currency,
-    amount: DEFAULT_CONFIG.amount,
+    amount: totalAmount,
     paymentRequestReference: 'Auto-generated on button click',
     supplementaryPurchaseData: {
       purchaseReference: 'Auto-generated on button click',
-      lineItems: [{
-        name: 'Test Product',
-        quantity: 1,
-        totalAmount: DEFAULT_CONFIG.amount,
-        unitPrice: DEFAULT_CONFIG.amount,
-      }],
+      lineItems,
     },
     customerInteractionConfig: {
       returnUrl: `${origin}/ap-hosted?status=complete`,
@@ -193,6 +217,30 @@ export default function PaymentButtonPage() {
   const [paymentRequestDataJson, setPaymentRequestDataJson] = useState('');
   const paymentRequestDataJsonRef = useRef('');
 
+  // Cart State
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
+    { catalogItem: PRODUCT_CATALOG[1], quantity: 1 },
+  ]);
+
+  // Cart derived values
+  const cartSubtotal = useMemo(() =>
+    cartItems.reduce((sum, item) => sum + item.catalogItem.unitPrice * item.quantity, 0), [cartItems]);
+  const cartTax = useMemo(() => Math.round(cartSubtotal * TAX_RATE), [cartSubtotal]);
+  const cartTotal = useMemo(() => cartSubtotal + cartTax, [cartSubtotal, cartTax]);
+  const cartLineItems = useMemo(() => cartItems.map(item => ({
+    name: item.catalogItem.name,
+    quantity: item.quantity,
+    totalAmount: item.catalogItem.unitPrice * item.quantity,
+    unitPrice: item.catalogItem.unitPrice,
+  })), [cartItems]);
+  const allLineItems = useMemo(() => [
+    ...cartLineItems,
+    { name: 'Tax (8%)', quantity: 1, totalAmount: cartTax, unitPrice: cartTax },
+  ], [cartLineItems, cartTax]);
+
+  const cartLocked = flowState !== 'IDLE' && flowState !== 'ERROR';
+
   // Refs
   const buttonWrapperRef = useRef<HTMLDivElement>(null);
   const sdkInitializedRef = useRef(false);
@@ -201,6 +249,24 @@ export default function PaymentButtonPage() {
   const mountedButtonRef = useRef<any>(null);
   const sdkMountIdRef = useRef<string>('klarna-sdk-mount');
   const finalAuthInProgressRef = useRef(false);
+  const cartTotalRef = useRef(cartTotal);
+  const allLineItemsRef = useRef(allLineItems);
+
+  // ============================================================================
+  // CART MANIPULATION
+  // ============================================================================
+
+  const removeFromCart = useCallback((catalogItemId: string) => {
+    setCartItems(prev => prev.filter(item => item.catalogItem.id !== catalogItemId));
+  }, []);
+
+  const updateQuantity = useCallback((catalogItemId: string, delta: number) => {
+    setCartItems(prev => prev.map(item =>
+      item.catalogItem.id === catalogItemId
+        ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+        : item
+    ));
+  }, []);
 
   // ============================================================================
   // EVENT LOGGING
@@ -252,7 +318,7 @@ export default function PaymentButtonPage() {
       body: JSON.stringify({
         partnerAccountId,
         currency: DEFAULT_CONFIG.currency,
-        amount: DEFAULT_CONFIG.amount,
+        amount: cartTotalRef.current,
         paymentOptionId,
         paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
         paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
@@ -260,12 +326,7 @@ export default function PaymentButtonPage() {
         klarnaNetworkSessionToken,
         supplementaryPurchaseData: {
           purchaseReference: `purchase_${Date.now()}`,
-          lineItems: [{
-            name: 'Test Product',
-            quantity: 1,
-            totalAmount: DEFAULT_CONFIG.amount,
-            unitPrice: DEFAULT_CONFIG.amount,
-          }],
+          lineItems: allLineItemsRef.current,
         },
       }),
     });
@@ -467,13 +528,13 @@ export default function PaymentButtonPage() {
   const getPresentation = useCallback(async (klarnaInstance: KlarnaSDK) => {
     try {
       logEvent('Getting Payment Presentation', 'info', {
-        amount: DEFAULT_CONFIG.amount,
+        amount: cartTotalRef.current,
         currency: DEFAULT_CONFIG.currency,
         locale: DEFAULT_CONFIG.locale,
       }, 'sdk');
 
       const presentationResult = await klarnaInstance.Payment.presentation({
-        amount: DEFAULT_CONFIG.amount,
+        amount: cartTotalRef.current,
         currency: DEFAULT_CONFIG.currency,
         locale: DEFAULT_CONFIG.locale,
         intents: ['PAY'],
@@ -660,14 +721,29 @@ export default function PaymentButtonPage() {
     paymentRequestDataJsonRef.current = paymentRequestDataJson;
   }, [paymentRequestDataJson]);
 
+  // Sync cart refs
+  useEffect(() => {
+    cartTotalRef.current = cartTotal;
+  }, [cartTotal]);
+
+  useEffect(() => {
+    allLineItemsRef.current = allLineItems;
+  }, [allLineItems]);
+
+  // Auto-regenerate paymentRequestDataJson when cart changes
+  useEffect(() => {
+    if (!currentOrigin) return;
+    if (flowState !== 'IDLE' && flowState !== 'ERROR') return;
+    setPaymentRequestDataJson(buildDefaultPaymentRequestData(currentOrigin, cartTotal, allLineItems));
+  }, [cartTotal, allLineItems, currentOrigin, flowState]);
+
   // Initialize client-side state after mount (hydration safety)
   useEffect(() => {
     setIsMounted(true);
     setCurrentOrigin(window.location.origin);
     // Generate unique mount ID on client only
     sdkMountIdRef.current = `klarna-sdk-mount-${Date.now()}`;
-    // Initialize default payment request data JSON
-    setPaymentRequestDataJson(buildDefaultPaymentRequestData(window.location.origin));
+    // paymentRequestDataJson is initialized by the cart-change effect above
     // Load event log from localStorage
     const storedEvents = loadEventLogFromStorage();
     if (storedEvents.length > 0) {
@@ -762,28 +838,16 @@ export default function PaymentButtonPage() {
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
     clearSdkMount();
+    setCartItems([
+      { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
+      { catalogItem: PRODUCT_CATALOG[1], quantity: 1 },
+    ]);
     logEvent('Flow Reset', 'info', undefined, 'flow');
   }, [logEvent, clearSdkMount]);
 
   // ============================================================================
   // RENDER HELPERS
   // ============================================================================
-
-  const getFlowStateDisplay = () => {
-    const states: Record<FlowState, { label: string; textClass: string; borderClass: string }> = {
-      IDLE: { label: 'Ready to Initialize', textClass: 'text-gray-500', borderClass: 'border-gray-400' },
-      INITIALIZING: { label: 'Initializing SDK...', textClass: 'text-blue-500', borderClass: 'border-blue-500' },
-      READY: { label: 'Ready for Payment', textClass: 'text-green-600', borderClass: 'border-green-600' },
-      AUTHORIZING: { label: 'Authorizing Payment...', textClass: 'text-amber-500', borderClass: 'border-amber-500' },
-      STEP_UP: { label: 'Customer in Klarna Journey', textClass: 'text-purple-600', borderClass: 'border-purple-600' },
-      COMPLETING: { label: 'Completing Authorization...', textClass: 'text-amber-500', borderClass: 'border-amber-500' },
-      SUCCESS: { label: 'Payment Successful!', textClass: 'text-green-600', borderClass: 'border-green-600' },
-      ERROR: { label: 'Error Occurred', textClass: 'text-red-500', borderClass: 'border-red-500' },
-    };
-    return states[flowState];
-  };
-
-  const stateDisplay = getFlowStateDisplay();
 
   // ============================================================================
   // RENDER
@@ -874,27 +938,21 @@ export default function PaymentButtonPage() {
               {flowState === 'IDLE' || flowState === 'ERROR' ? (
                 <button
                   onClick={initializeSDK}
-                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer"
+                  disabled={cartItems.length === 0}
+                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Initialize & Show Button
-                </button>
-              ) : flowState === 'SUCCESS' ? (
-                <button
-                  onClick={resetFlow}
-                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer"
-                >
-                  Start New Payment
                 </button>
               ) : (
                 <button
                   disabled
                   className="bg-gray-300 text-white px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
                 >
-                  {flowState === 'INITIALIZING' ? 'Initializing...' : 'Processing...'}
+                  {flowState === 'INITIALIZING' ? 'Initializing...' : flowState === 'SUCCESS' ? 'Payment Complete' : 'Processing...'}
                 </button>
               )}
 
-              {flowState !== 'IDLE' && flowState !== 'INITIALIZING' && (
+              {flowState !== 'IDLE' && flowState !== 'INITIALIZING' && flowState !== 'SUCCESS' && (
                 <button
                   onClick={resetFlow}
                   className="bg-gray-500 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-600 border-none cursor-pointer"
@@ -906,66 +964,181 @@ export default function PaymentButtonPage() {
           </div>
         </div>
 
-        {/* Payment Button Panel */}
+        {/* Checkout Panel */}
         <div className="flex-1 min-w-0 md:min-w-[300px]">
-          <div className="bg-white border border-gray-200 rounded p-4">
-            <h3 className="text-base font-bold text-gray-900 mt-0 mb-1.5">Payment Button</h3>
-
-            {/* Flow State Indicator */}
-            <div className={`p-3 bg-gray-50 rounded mb-4 border-2 ${stateDisplay.borderClass}`}>
-              <div className={`font-bold mb-1 ${stateDisplay.textClass}`}>
-                {stateDisplay.label}
-              </div>
-              {errorMessage && (
-                <div className="text-red-500 text-[13px]">
-                  {errorMessage}
-                </div>
-              )}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            {/* Browser Title Bar */}
+            <div className="bg-gray-200 px-3 py-2 flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
             </div>
-
-            {/* Presentation Info */}
-            {presentationInfo && (
-              <div className="bg-gray-50 border border-gray-200 rounded p-2.5 text-xs text-gray-500 leading-relaxed mb-4">
-                <div><strong className="text-gray-900">Instruction:</strong> {presentationInfo.instruction}</div>
-                {presentationInfo.paymentOptionId && (
-                  <div><strong className="text-gray-900">Payment Option ID:</strong> {presentationInfo.paymentOptionId}</div>
-                )}
-              </div>
-            )}
-
-            {/* Button Mount Container */}
-            <div className="mt-5 min-h-[60px] flex items-center justify-center relative">
-              {/* Status messages - shown when button is not mounted */}
-              {(flowState === 'IDLE' || flowState === 'INITIALIZING') && (
-                <span className={`text-sm ${flowState === 'IDLE' ? 'text-gray-500' : 'text-blue-500'}`}>
-                  {flowState === 'IDLE'
-                    ? 'Click "Initialize & Show Button" to start'
-                    : 'Loading Klarna SDK...'}
-                </span>
-              )}
-
-              {/* SDK Mount Target - React will NOT manage children of this div */}
-              <div
-                ref={buttonWrapperRef}
-                style={{
-                  width: '100%',
-                  display: flowState === 'IDLE' || flowState === 'INITIALIZING' ? 'none' : 'block',
-                }}
-              />
+            {/* Browser URL Bar */}
+            <div className="bg-gray-100 px-3 py-1.5 flex items-center gap-2 text-xs border-b border-gray-200">
+              <svg className="w-3 h-3 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z" />
+              </svg>
+              <span className="text-gray-500 font-mono text-xs">
+                checkout.acquiring-partner.com{flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? '/order-confirmation' : '/checkout'}
+              </span>
             </div>
+            {/* Browser Content Area */}
+            <div className="bg-white p-4">
+            <h3 className="text-base font-bold text-gray-900 mt-0 mb-3">Checkout</h3>
 
-            {/* Success State */}
-            {flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction && (
-              <div className="p-4 bg-green-50 rounded mt-4">
-                <h4 className="m-0 mb-2 text-green-700">Payment Successful!</h4>
-                <div className="text-[13px]">
-                  <div><strong>Transaction ID:</strong></div>
-                  <code className="text-[11px] break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
-                    {paymentTransaction.paymentTransaction.paymentTransactionId}
-                  </code>
-                </div>
+            {flowState === 'IDLE' ? (
+              /* ---- Pre-initialization placeholder ---- */
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-gray-400 text-sm mb-1">Configure settings and click</div>
+                <div className="text-gray-500 font-medium text-sm">&quot;Initialize &amp; Show Button&quot; to start</div>
               </div>
+            ) : flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? (
+              /* ---- Order Confirmation ---- */
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-4">Order Confirmed</h4>
+
+                <div className="bg-gray-50 rounded p-3 text-left text-sm mb-3 space-y-3">
+                  <div>
+                    <div className="text-xs text-gray-500">Transaction Reference <span className="text-gray-400 italic">— Provided by the partner</span></div>
+                    <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
+                      {paymentTransaction.paymentTransaction.paymentTransactionReference}
+                    </code>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Transaction ID <span className="text-gray-400 italic">— From Klarna</span></div>
+                    <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
+                      {paymentTransaction.paymentTransaction.paymentTransactionId}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="text-sm font-medium text-gray-700 mb-4">
+                  Amount charged: <span className="font-bold">{formatCents(paymentTransaction.paymentTransaction.amount)}</span>
+                </div>
+
+                <button
+                  onClick={resetFlow}
+                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer w-full"
+                >
+                  New Order
+                </button>
+              </div>
+            ) : (
+              /* ---- Checkout Content ---- */
+              <>
+                {/* Cart Items */}
+                <div className="space-y-2 mb-3">
+                  {cartItems.length === 0 && (
+                    <div className="text-sm text-gray-400 text-center py-4">Cart is empty</div>
+                  )}
+                  {cartItems.map(item => (
+                    <div key={item.catalogItem.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900">{item.catalogItem.name}</div>
+                        <div className="text-xs text-gray-500">{formatCents(item.catalogItem.unitPrice)} each</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateQuantity(item.catalogItem.id, -1)}
+                          disabled={cartLocked || item.quantity <= 1}
+                          className="w-6 h-6 rounded bg-gray-200 text-gray-700 text-xs font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-300"
+                        >
+                          &minus;
+                        </button>
+                        <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.catalogItem.id, 1)}
+                          disabled={cartLocked}
+                          className="w-6 h-6 rounded bg-gray-200 text-gray-700 text-xs font-bold border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-300"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="text-sm font-medium text-gray-900 w-16 text-right">
+                        {formatCents(item.catalogItem.unitPrice * item.quantity)}
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.catalogItem.id)}
+                        disabled={cartLocked}
+                        className="text-gray-400 hover:text-red-500 text-xs border-none bg-transparent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed p-1"
+                      >
+                        &#x2715;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Order Summary */}
+                <div className="border-t border-gray-200 pt-2 mb-4 space-y-1 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatCents(cartSubtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax (8%)</span>
+                    <span>{formatCents(cartTax)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200">
+                    <span>Total</span>
+                    <span>{formatCents(cartTotal)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="mb-2">
+                  <div className="text-xs font-medium text-gray-500 mb-2">Payment Method</div>
+
+                  {/* Credit Card - mock disabled */}
+                  <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-2 opacity-60">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                      <span className="text-sm text-gray-500">Credit Card</span>
+                    </div>
+                  </div>
+
+                  {/* Klarna - selected */}
+                  <div className="p-3 bg-pink-50 rounded border-2 border-pink-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-pink-400 bg-pink-400 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">Pay with Klarna</span>
+                    </div>
+
+                    {/* Flow Status */}
+                    {errorMessage && (
+                      <div className="text-red-500 text-xs mb-2 ml-6">{errorMessage}</div>
+                    )}
+                    {(flowState === 'INITIALIZING' || flowState === 'AUTHORIZING' || flowState === 'COMPLETING') && (
+                      <div className="text-xs text-blue-500 mb-2 ml-6">
+                        {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : flowState === 'AUTHORIZING' ? 'Authorizing payment...' : 'Completing authorization...'}
+                      </div>
+                    )}
+                    {flowState === 'STEP_UP' && (
+                      <div className="text-xs text-purple-600 mb-2 ml-6">Customer in Klarna journey...</div>
+                    )}
+
+                    {/* Button Mount Container */}
+                    <div className="min-h-[48px] flex items-center justify-center relative">
+                      {/* SDK Mount Target - React will NOT manage children of this div */}
+                      <div
+                        ref={buttonWrapperRef}
+                        style={{
+                          width: '100%',
+                          display: flowState === 'INITIALIZING' ? 'none' : 'block',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
+            </div>
           </div>
         </div>
       </div>
