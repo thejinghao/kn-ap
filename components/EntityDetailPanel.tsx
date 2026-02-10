@@ -104,7 +104,7 @@ export default function EntityDetailPanel({
             className="text-lg font-semibold truncate"
             style={{ color: colors.text }}
           >
-            {view && entity.displayNameByView?.[view] ?? entity.name}
+            {(view && entity.displayNameByView?.[view]) ?? entity.name}
           </h3>
         </div>
         <button
