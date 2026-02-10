@@ -11,6 +11,7 @@ import {
   RectangleGroupIcon,
   DocumentTextIcon,
   CreditCardIcon,
+  ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/react/24/outline';
 import EnvironmentPanel from './EnvironmentPanel';
 import { useEnvironment } from '@/lib/env-context';
@@ -50,7 +51,7 @@ export default function Header() {
   }, [showEnvPanel]);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
-  const isPaymentsPage = pathname?.startsWith('/payment-button');
+  const isPaymentsPage = pathname?.startsWith('/payment-button') || pathname?.startsWith('/on-site-messaging');
 
   return (
     <>
@@ -147,6 +148,21 @@ export default function Header() {
                         <div>
                           <div className="font-medium">Payment Button (SDK)</div>
                           <div className="text-xs text-gray-500">Klarna payment button integration</div>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/on-site-messaging"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/on-site-messaging'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">On-Site Messaging (SDK)</div>
+                          <div className="text-xs text-gray-500">Configure messaging placements</div>
                         </div>
                       </Link>
                     </div>

@@ -62,7 +62,7 @@ export const onboardingPresets: EndpointPreset[] = [
       name: 'List Payment Profiles',
       description: 'Get all available payment profiles',
       method: 'GET',
-      endpoint: '/v2/distribution/payment-profiles',
+      endpoint: '/v2/distribution/products/payment/profiles',
       category: 'onboarding',
     },
 
