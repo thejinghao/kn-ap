@@ -29,6 +29,31 @@ interface EventLogItem {
   path?: string;
 }
 
+interface AuthorizeResponse {
+  success: boolean;
+  data: {
+    result: 'APPROVED' | 'DECLINED' | 'STEP_UP_REQUIRED';
+    resultReason?: string;
+    paymentTransaction?: {
+      paymentTransactionId: string;
+      paymentTransactionReference: string;
+      amount: number;
+      currency: string;
+    };
+    paymentRequest?: {
+      paymentRequestId: string;
+      paymentRequestReference: string;
+      state: string;
+    };
+  } | null;
+  error?: string;
+  rawKlarnaRequest?: unknown;
+  rawKlarnaResponse?: unknown;
+  requestMetadata: {
+    correlationId: string;
+  };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KlarnaSDKType = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,6 +90,9 @@ const DEFAULT_CONFIG = {
 
 // Default Client ID for testing
 const DEFAULT_CLIENT_ID = 'klarna_test_client_L0ZwWW55akg3MjUzcmgyP1RuP3A_KEdIJFBINUxzZXMsOGU5M2NmZGItNmFiOC00ZjQ3LWFhMGMtZDI4NTE1OGU0MTNmLDEsQ3VNRmtmdlpHd1VIRmdDT1Q0Zkh2ZkJ1YkxETy9ZTGFiYUZvYVJ4ZTAyYz0';
+
+// Default Partner Account ID for final authorization (AP's account)
+const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 
 // localStorage key for event log persistence (separate from ap-hosted)
 const EVENT_LOG_STORAGE_KEY = 'klarna-sub-partner-payment-event-log';
@@ -169,6 +197,7 @@ export default function ServerSidePaymentPage() {
 
   // Configuration State
   const [clientId, setClientId] = useState(DEFAULT_CLIENT_ID);
+  const [partnerAccountId, setPartnerAccountId] = useState(DEFAULT_PARTNER_ACCOUNT_ID);
   const [sdkToken, setSdkToken] = useState('');
   const [sessionToken, setSessionToken] = useState('');
 
@@ -225,6 +254,7 @@ export default function ServerSidePaymentPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mountedButtonRef = useRef<any>(null);
   const sdkMountIdRef = useRef<string>('klarna-sdk-mount');
+  const finalAuthInProgressRef = useRef(false);
   const cartTotalRef = useRef(cartTotal);
   const allLineItemsRef = useRef(allLineItems);
 
@@ -279,6 +309,36 @@ export default function ServerSidePaymentPage() {
       }
     }
   }, []);
+
+  // ============================================================================
+  // AUTHORIZE PAYMENT API CALL
+  // ============================================================================
+
+  const authorizePayment = useCallback(async (
+    paymentOptionId?: string,
+    klarnaNetworkSessionToken?: string
+  ): Promise<AuthorizeResponse> => {
+    const response = await fetch('/api/payment/authorize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        partnerAccountId,
+        currency: DEFAULT_CONFIG.currency,
+        amount: cartTotalRef.current,
+        paymentOptionId,
+        paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
+        paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
+        returnUrl: `${currentOrigin}/server-side?status=complete`,
+        klarnaNetworkSessionToken,
+        supplementaryPurchaseData: {
+          purchaseReference: `purchase_${Date.now()}`,
+          lineItems: allLineItemsRef.current,
+        },
+      }),
+    });
+
+    return response.json();
+  }, [partnerAccountId, currentOrigin]);
 
   // ============================================================================
   // INITIATE CALLBACK (called when button is clicked)
@@ -347,23 +407,61 @@ export default function ServerSidePaymentPage() {
     // Handle payment completion
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
+      // Deduplicate: SDK may fire 'complete' twice
+      if (finalAuthInProgressRef.current) {
+        logEvent('Duplicate Complete Event (ignored)', 'warning', undefined, 'sdk');
+        return true;
+      }
+      finalAuthInProgressRef.current = true;
+
       logEvent('Payment Complete Event', 'success', {
         paymentRequestId: paymentRequest.paymentRequestId,
         state: paymentRequest.state,
         stateContext: paymentRequest.stateContext,
       }, 'sdk');
 
-      // Sub-partner flow: final authorization happens on the sub-partner's backend,
-      // not through our AP proxy. We just show success.
-      const tx = paymentRequest.stateContext?.paymentTransaction;
-      if (tx) {
-        setPaymentTransaction({ paymentTransaction: tx });
+      // Extract session token for final authorization
+      const completionToken = paymentRequest.stateContext?.klarna_network_session_token ||
+                          paymentRequest.stateContext?.klarnaNetworkSessionToken ||
+                          paymentRequest.stateContext?.interoperabilityToken;
+
+      if (completionToken) {
+        // Save token to sessionStorage — final auth will happen after redirect
+        try { sessionStorage.setItem('pendingSessionToken', completionToken); } catch {}
+        setFlowState('COMPLETING');
+        logEvent('Session Token Saved — Awaiting Redirect', 'info', undefined, 'flow');
+
+        // Fallback: if no redirect occurs within 3s (e.g. popup mode), do final auth here
+        setTimeout(async () => {
+          const pending = sessionStorage.getItem('pendingSessionToken');
+          if (!pending) return; // redirect handler already consumed it
+          sessionStorage.removeItem('pendingSessionToken');
+
+          const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
+          try {
+            const finalResult = await authorizePayment(undefined, pending);
+
+            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request', authPath);
+            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response', authPath);
+
+            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+              setFlowState('SUCCESS');
+              setPaymentTransaction(finalResult.data);
+              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+            } else {
+              throw new Error(finalResult.error || 'Final authorization failed');
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setFlowState('ERROR');
+            setErrorMessage(message);
+            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
+          }
+        }, 3000);
+      } else {
+        setFlowState('SUCCESS');
+        logEvent('Payment Completed (No Final Auth Needed)', 'success', undefined, 'flow');
       }
-      setFlowState('SUCCESS');
-      logEvent('Payment Completed', 'success', {
-        note: 'Final authorization should be performed by the sub-partner backend.',
-        stateContext: paymentRequest.stateContext,
-      }, 'flow');
 
       // Return true to allow default redirect behavior
       return true;
@@ -393,7 +491,7 @@ export default function ServerSidePaymentPage() {
       setFlowState('ERROR');
       setErrorMessage(error?.message || 'An error occurred');
     });
-  }, [logEvent]);
+  }, [authorizePayment, logEvent]);
 
   // ============================================================================
   // GET PAYMENT PRESENTATION & MOUNT BUTTON
@@ -647,6 +745,40 @@ export default function ServerSidePaymentPage() {
     }
   }, [logEvent]);
 
+  // Resume final authorization after page redirect (session token saved pre-redirect)
+  useEffect(() => {
+    if (!isMounted || !currentOrigin) return;
+
+    const pendingToken = sessionStorage.getItem('pendingSessionToken');
+    if (!pendingToken) return;
+
+    sessionStorage.removeItem('pendingSessionToken');
+    logEvent('Resuming Final Authorization After Redirect', 'info', undefined, 'flow');
+    setFlowState('COMPLETING');
+
+    const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
+    authorizePayment(undefined, pendingToken)
+      .then(finalResult => {
+        logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request', authPath);
+        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response', authPath);
+
+        if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+          setFlowState('SUCCESS');
+          setPaymentTransaction(finalResult.data);
+          logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+        } else {
+          throw new Error(finalResult.error || 'Final authorization failed');
+        }
+      })
+      .catch(error => {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setFlowState('ERROR');
+        setErrorMessage(message);
+        logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, currentOrigin]);
+
   // Save event log to localStorage whenever it changes
   useEffect(() => {
     saveEventLogToStorage(eventLog);
@@ -684,6 +816,7 @@ export default function ServerSidePaymentPage() {
     presentationRef.current = null;
     setKlarna(null);
     sdkInitializedRef.current = false;
+    finalAuthInProgressRef.current = false;
     clearSdkMount();
     setCartItems([
       { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
@@ -747,6 +880,19 @@ export default function ServerSidePaymentPage() {
                 placeholder="Interoperability token provided by the AP"
                 value={sessionToken}
                 onChange={(e) => setSessionToken(e.target.value)}
+                disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
+              />
+            </div>
+
+            <div className="grid gap-1.5 mb-2.5">
+              <label htmlFor="partner-account-id" className="text-xs font-medium text-gray-500">Partner Account ID <span className="text-gray-400">(for final authorization)</span></label>
+              <input
+                id="partner-account-id"
+                type="text"
+                className={inputClasses}
+                placeholder="krn:partner:global:account:live:XXXXXXXX"
+                value={partnerAccountId}
+                onChange={(e) => setPartnerAccountId(e.target.value)}
                 disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
               />
             </div>
