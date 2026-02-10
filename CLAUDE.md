@@ -170,7 +170,7 @@ registry=https://registry.npmjs.org/
 This project includes custom Claude Code skills for common workflows:
 
 ### `/done` - Auto Commit and Push
-Commits all changes with an auto-generated descriptive commit message and pushes to main branch.
+Commits only session-related changes with an auto-generated descriptive commit message and pushes to main branch.
 
 **Usage:**
 ```
@@ -179,12 +179,13 @@ Commits all changes with an auto-generated descriptive commit message and pushes
 
 **What it does:**
 1. Reviews all modified and untracked files
-2. Reads key files to understand changes
-3. Generates a clear, descriptive commit message (max 72 chars, present tense, action-oriented)
-4. Stages all changes with `git add .`
-5. Commits with the generated message
-6. Pushes to main branch
-7. Confirms success with git log
+2. Identifies which files were changed during the current session
+3. Reads key files to understand changes
+4. Generates a clear, descriptive commit message (max 72 chars, present tense, action-oriented)
+5. Stages only session-related files (explicit `git add <file>`, never `git add .`)
+6. Commits with the generated message
+7. Pushes to main branch
+8. Confirms success with git log and notes any remaining uncommitted changes
 
 **When to use:**
 - Feature work is complete and ready to push
@@ -192,6 +193,7 @@ Commits all changes with an auto-generated descriptive commit message and pushes
 - Quick iterations where code review isn't required
 
 **Important notes:**
+- Only commits files changed in the current session — leaves unrelated uncommitted changes alone
 - Pushes directly to main (no code review)
 - Only suitable for solo projects or personal work
 - Handles errors gracefully (no changes, push failures)

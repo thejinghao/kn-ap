@@ -1,18 +1,24 @@
 ---
 name: done
-description: Commit all changes with auto-generated message and push to main. Use when feature work is complete.
+description: Commit session-related changes with auto-generated message and push to main. Only commits files changed during this session.
 disable-model-invocation: true
 allowed-tools: Bash(git *), Read, Glob
 ---
 
-Complete the current feature by committing and pushing changes:
+Complete the current feature by committing and pushing only session-related changes:
 
-## Step 1: Review Changes
+## Step 1: Identify Session Changes
 1. Run `git status` to see all modified/untracked files
 2. Run `git diff --stat` to get summary of changes
-3. Read 2-3 key modified files to understand what changed
+3. Review the conversation history to determine which files were created or modified during THIS session
+4. Build a list of **session files** — only files you edited, created, or explicitly changed in this conversation
+5. If there are other uncommitted changes unrelated to this session, leave them alone
 
-## Step 2: Generate Commit Message
+## Step 2: Review Session Changes
+1. Run `git diff` on the session files to understand what changed
+2. Read key modified files if needed to understand the changes
+
+## Step 3: Generate Commit Message
 Create a clear, descriptive commit message following these rules:
 - **Format**: "Action + what changed + where (if needed)"
 - **Length**: Maximum 72 characters
@@ -30,17 +36,19 @@ Create a clear, descriptive commit message following these rules:
 - "Changes to API" (what changes?)
 - "Fix bug" (what bug?)
 
-## Step 3: Commit
-1. Stage all changes: `git add .`
+## Step 4: Commit
+1. Stage ONLY session-related files: `git add <file1> <file2> ...` (list each file explicitly — do NOT use `git add .` or `git add -A`)
 2. Commit with generated message: `git commit -m "Your generated message"`
 3. Verify commit succeeded (check exit code)
 
-## Step 4: Push to Main
+## Step 5: Push to Main
 1. Push to main branch: `git push origin main`
 2. Wait for push to complete
 3. Confirm success with final `git status` and `git log -1 --oneline`
+4. If there are remaining uncommitted changes (from before the session), mention them to the user
 
 ## Important Notes
-- If there are no changes to commit, inform the user and stop
+- **Only commit files changed in this session** — never stage unrelated uncommitted changes
+- If no session-related changes exist, inform the user and stop
 - If push fails (network, permissions), report the error clearly
 - The commit message must be specific about what changed

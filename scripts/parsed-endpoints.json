@@ -323,7 +323,7 @@
     "category": "Compliance Decision",
     "name": "Get all decisions for an account",
     "method": "GET",
-    "endpoint": "/v2/accounts/{partner_account_id}/compliance/decisions",
+    "endpoint": "/v2/accounts/{partner_account_id}/compliance/decisions?size=20",
     "pathParams": [
       "partner_account_id"
     ],
@@ -404,7 +404,7 @@
     "category": "Partner Accounts",
     "name": "Read Account",
     "method": "GET",
-    "endpoint": "/v2/accounts/{partner_account_id}",
+    "endpoint": "/v2/accounts/{partner_account_id}?expand=products&expand=brands&expand=store_groups&expand=partner_business_entities",
     "pathParams": [
       "partner_account_id"
     ],
@@ -639,7 +639,7 @@
     "category": "Payment Programs",
     "name": "List all Payment Programs for a Payment Product",
     "method": "GET",
-    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs?merchant_category_code=0744&customer_country={{customer.country}}&enablement_type=PRESET",
     "pathParams": [
       "partner_account_id"
     ],
@@ -657,7 +657,7 @@
     "category": "Payment Programs",
     "name": "List all Payment Programs for a Payment Program Plan",
     "method": "GET",
-    "endpoint": "/v2/distribution/products/payment/payment-program-plans/{payment_program_plan_id}",
+    "endpoint": "/v2/distribution/products/payment/payment-program-plans/{payment_program_plan_id}?merchant_category_code=0744&customer_country={{customer.country}}&transaction_currency={{currency}}&version={{payment_program_plan_version}}&enablement_type=OPTIONAL",
     "pathParams": [
       "payment_program_plan_id"
     ],
@@ -766,7 +766,7 @@
     "category": "User Access",
     "name": "Delete user access",
     "method": "DELETE",
-    "endpoint": "/v2/portal/user-access",
+    "endpoint": "/v2/portal/user-access?account_id={{partner_account_id}}",
     "pathParams": [],
     "queryParams": [
       "account_id",
@@ -794,7 +794,7 @@
     "category": "Price Plans",
     "name": "Read a Price Plan",
     "method": "GET",
-    "endpoint": "/v2/distribution/products/payment/price-plans/{price_plan_id}",
+    "endpoint": "/v2/distribution/products/payment/price-plans/{price_plan_id}?merchant_category_code=0744&currency={{currency}}&customer_country={{customer.country}}&version={{price_plan_version}}&pricing_payment_category=DIGITAL",
     "pathParams": [
       "price_plan_id"
     ],
@@ -944,7 +944,7 @@
     "category": "Settlements",
     "name": "List settlements",
     "method": "GET",
-    "endpoint": "/v2/settlements",
+    "endpoint": "/v2/settlements?interval_start={{interval_start}}&interval_end={{interval_end}}",
     "pathParams": [],
     "queryParams": [
       "interval_start",
@@ -1121,5 +1121,2491 @@
     "headers": [],
     "hasBody": true,
     "bodyPreview": "{\n\"type\": \"WEBSITE\",\n\"store_reference\": \"{{$randomUUID}}\",\n\"url\": \"{{$randomUrl}}\""
+  },
+  {
+    "file": "Create signing key.bru",
+    "category": "Signing Keys",
+    "name": "Create signing key",
+    "method": "POST",
+    "endpoint": "/v2/notification/signing-keys",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Delete signing key.bru",
+    "category": "Signing Keys",
+    "name": "Delete signing key",
+    "method": "DELETE",
+    "endpoint": "/v2/notification/signing-keys/{signing_key_id}",
+    "pathParams": [
+      "signing_key_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get signing key.bru",
+    "category": "Signing Keys",
+    "name": "Get signing key",
+    "method": "GET",
+    "endpoint": "/v2/notification/signing-keys/{signing_key_id}",
+    "pathParams": [
+      "signing_key_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List signing keys.bru",
+    "category": "Signing Keys",
+    "name": "List signing keys",
+    "method": "GET",
+    "endpoint": "/v2/notification/signing-keys",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create webhook - Compliance Decision.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Compliance Decision",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"partner.compliance.decision.created\"\n],\n\"event_version\": \"v2\",\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \"ENABLED\""
+  },
+  {
+    "file": "Create webhook - Identity.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Identity",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"identity.customer-token.state-change.revoked\"\n],\n\"event_version\": \"v2\",\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \"ENABLED\""
+  },
+  {
+    "file": "Create webhook - Partner account.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Partner account",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"partner.account.state-change.operational\",\n\"partner.account.change.created\"\n],\n\"event_version\": \"v2\",\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \"E"
+  },
+  {
+    "file": "Create webhook - Payment Disputes.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment Disputes",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.dispute.state-change.pre-arbitration\",\n\"payment.dispute.state-change.arbitration-pending\",\n\"payment.dispute.state-change.merchant-evidence-pending"
+  },
+  {
+    "file": "Create webhook - Payment Funding (Pay in Full non-guaranteed).bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment Funding (Pay in Full non-guaranteed)",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.funding.state-change.funded\",\n\"payment.funding.state-change.expired\"\n],\n\"event_version\": \"v2\",\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \""
+  },
+  {
+    "file": "Create webhook - Payment Request.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment Request",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.request.state-change.submitted\",\n\"payment.request.state-change.in-progress\",\n\"payment.request.state-change.canceled\",\n\"payment.request.state-chang"
+  },
+  {
+    "file": "Create webhook - Payment transactions.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment transactions",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.transaction.state-change.authorized\",\n\"payment.transaction.state-change.completed\",\n\"payment.transaction.state-change.expired\",\n\"payment.transacti"
+  },
+  {
+    "file": "Create webhook - all events.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - all events",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.*\",\n\"settlement.*\",\n\"partner.*\",\n\"identity.*\"\n],\n\"event_version\": \"v2\",\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \"ENABLED\""
+  },
+  {
+    "file": "Create webhook - settlement.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - settlement",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"settlement.report.created\",\n\"settlement.report.uploaded-to-sftp\",\n\"settlement.payout.processed\",\n\"settlement.payout.confirmed\",\n\"settlement.payout.failed\""
+  },
+  {
+    "file": "Delete webhook.bru",
+    "category": "Webhooks",
+    "name": "Delete webhook",
+    "method": "DELETE",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get webhook.bru",
+    "category": "Webhooks",
+    "name": "Get webhook",
+    "method": "GET",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List Webhooks.bru",
+    "category": "Webhooks",
+    "name": "List Webhooks",
+    "method": "GET",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Simulate a webhook.bru",
+    "category": "Webhooks",
+    "name": "Simulate a webhook",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}/simulate",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"event_type\": \"payment.request.state-change.completed\",\n\"event_version\": \"v2\""
+  },
+  {
+    "file": "Update webhook.bru",
+    "category": "Webhooks",
+    "name": "Update webhook",
+    "method": "PATCH",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.request.*\",\n\"payment.transaction.*\",\n\"payment.funding.*\",\n\"payment.dispute.*\",\n\"identity.*\",\n\"settlement.report.*\",\n\"partner.compliance.*\",\n\"partn"
+  },
+  {
+    "file": "Generate SDK token.bru",
+    "category": "Identity API",
+    "name": "Generate SDK token",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/identity/sdk-tokens",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Introspect a customer token issued in the account linking flow.bru",
+    "category": "Identity API",
+    "name": "Introspect a customer token issued in the account linking flow",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/identity/customer-token/introspect",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Revoke a customer token issued in the account linking flow.bru",
+    "category": "Identity API",
+    "name": "Revoke a customer token issued in the account linking flow",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/identity/customer-token/revoke",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate SDK token.bru",
+    "category": "Other",
+    "name": "Generate SDK token",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/interoperability/sdk-tokens",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate interoperability token.bru",
+    "category": "Other",
+    "name": "Generate interoperability token",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/interoperability/tokens",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate testable interoperability token.bru",
+    "category": "Other",
+    "name": "Generate testable interoperability token",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/interoperability/test-tokens",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token",
+      "Klarna-Customer-Region"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"customer_journey\": \"KLARNA_EXPRESS_CHECKOUT\""
+  },
+  {
+    "file": "Get credit promotion messaging for auto-size placement.bru",
+    "category": "Credit Promotion",
+    "name": "Get credit promotion messaging for auto-size placement",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/messaging/credit-promotion-auto-size?locale={{locale}}&amount=12336&currency={{currency}}&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "app_return_url"
+    ],
+    "headers": [
+      "~Klarna-Customer-Token",
+      "~Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get credit promotion messaging for badge placement.bru",
+    "category": "Credit Promotion",
+    "name": "Get credit promotion messaging for badge placement",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/messaging/credit-promotion-badge?locale={{locale}}&amount=12336&currency={{currency}}&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "app_return_url"
+    ],
+    "headers": [
+      "~Klarna-Customer-Token",
+      "~Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get top strip promotion messaging for auto-size placement.bru",
+    "category": "Top Strip",
+    "name": "Get top strip promotion messaging for auto-size placement",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/messaging/top-strip-promotion-auto-size?locale={{locale}}&amount=12336&currency={{currency}}&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "app_return_url"
+    ],
+    "headers": [
+      "~Klarna-Customer-Token",
+      "~Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get top strip promotion messaging for badge placement.bru",
+    "category": "Top Strip",
+    "name": "Get top strip promotion messaging for badge placement",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/messaging/top-strip-promotion-badge?locale={{locale}}&amount=12336&currency={{currency}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "~app_return_url"
+    ],
+    "headers": [
+      "~Klarna-Customer-Token",
+      "~Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Authorize (Klarna-Interoperability-Token).bru",
+    "category": "Charge token",
+    "name": "Authorize (Klarna-Interoperability-Token)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Interoperability-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 4000,\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id\": \"S0xBUk5B\",\n\"captu"
+  },
+  {
+    "file": "Authorize (Klarna-Payment-Token).bru",
+    "category": "Charge token",
+    "name": "Authorize (Klarna-Payment-Token)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Payment-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id\": \"S0xBUk5B\",\n\"capt"
+  },
+  {
+    "file": "Authorize ondemand (Klarna-Customer-Token).bru",
+    "category": "Charge token",
+    "name": "Authorize ondemand (Klarna-Customer-Token)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id\": \"S0xBUk5B\",\n\"capt"
+  },
+  {
+    "file": "Authorize subscription (Klarna-Customer-Token).bru",
+    "category": "Charge token",
+    "name": "Authorize subscription (Klarna-Customer-Token)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id\": \"S0xBUk5B\",\n\"capt"
+  },
+  {
+    "file": "Authorize - QR_CODE.bru",
+    "category": "In-Store",
+    "name": "Authorize - QR_CODE",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"NOW\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_program_ena"
+  },
+  {
+    "file": "Authorize - event reservation.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - event reservation",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Authorize - interoperability_data.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - interoperability_data",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"interoperability_data\": \"{\\\"content_type\\\":\\\"vnd.klarna.interoperability-data.v2+json\\\",\\\"content\\\":{\\\"payment_request\\\":{\\\"supplementary_purchase_data\\\":{\\\"purchase_ref"
+  },
+  {
+    "file": "Authorize - legacy EMD.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - legacy EMD",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Authorize - marketplaces.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - marketplaces",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Authorize - standard ecommerce.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - standard ecommerce",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Authorize - travel.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - travel",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Authorize - vouchers.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Authorize - vouchers",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Customer login use case.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Customer login use case",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Mixed Payments (Subscription with free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription with free trial)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Mixed Payments (Subscription without free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription without free trial)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "On-demand payments (with initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (with initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "On-demand payments (without initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (without initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$randomUUID}}\",\n\"customer\": {\n\"given_name\": \"{{customer.given_name}}\",\n\"family_name\""
+  },
+  {
+    "file": "Subscription with free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription with free trial",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$randomUUID}}\",\n\"subscriptions\": [\n{\n\"subscription_reference\": \"GAME_PASS_USER_XYZ\","
+  },
+  {
+    "file": "Subscription without free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription without free trial",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"capture\": \"LATER\",\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"payment_option_id"
+  },
+  {
+    "file": "Accept dispute loss.bru",
+    "category": "Payment Dispute API",
+    "name": "Accept dispute loss",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/accept-loss",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "1 - Authorize (Klarna-Customer-Token).bru",
+    "category": "Disputes - E2E flow",
+    "name": "1 - Authorize (Klarna-Customer-Token)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/authorize",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"request_payment_transaction\": {\n\"amount\": 12336,\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\",\n\"capture\": \"LATER\"\n\"acquiring_config\":"
+  },
+  {
+    "file": "2 - Capture Payment Transaction.bru",
+    "category": "Disputes - E2E flow",
+    "name": "2 - Capture Payment Transaction",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}/capture",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"capture_amount\": 12336,\n\"payment_capture_reference\": \"partner-capture-reference-{{$randomUUID}}\",\n\"remaining_authorization\": \"RELEASE\",\n\"supplementary_capture_data\": {\n\"line_items\": [\n{\n\"name\": \"Bl"
+  },
+  {
+    "file": "3 - List Disputes.bru",
+    "category": "Disputes - E2E flow",
+    "name": "3 - List Disputes",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes?payment_transaction_id={{payment_transaction_id}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "payment_transaction_id",
+      "~opened_at_start",
+      "~opened_at_end",
+      "~starting_after",
+      "~size",
+      "~purchase_references",
+      "~payment_product_instance_id",
+      "~state",
+      "~state",
+      "~state",
+      "~state",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~sort_by",
+      "~sort_by",
+      "~sort_by",
+      "~closed_at_start",
+      "~closed_at_end",
+      "~ending_before"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "4 - Get Dispute.bru",
+    "category": "Disputes - E2E flow",
+    "name": "4 - Get Dispute",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "5 - Download dispute attachment.bru",
+    "category": "Disputes - E2E flow",
+    "name": "5 - Download dispute attachment",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/attachments/{payment_dispute_attachment_id}/download",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id",
+      "payment_dispute_attachment_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "6 - Upload merchant evidence attachment.bru",
+    "category": "Disputes - E2E flow",
+    "name": "6 - Upload merchant evidence attachment",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/attachments",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "7 - Respond - YES_BUT_NOT_ACCEPTED.bru",
+    "category": "Disputes - E2E flow",
+    "name": "7 - Respond - YES_BUT_NOT_ACCEPTED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "Download dispute attachment.bru",
+    "category": "Payment Dispute API",
+    "name": "Download dispute attachment",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/attachments/{payment_dispute_attachment_id}/download",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id",
+      "payment_dispute_attachment_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get Dispute.bru",
+    "category": "Payment Dispute API",
+    "name": "Get Dispute",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List Disputes.bru",
+    "category": "Payment Dispute API",
+    "name": "List Disputes",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes?opened_at_start={{opened_at_start}}&opened_at_end={{opened_at_end}}&payment_transaction_id={{payment_transaction_id}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "opened_at_start",
+      "opened_at_end",
+      "payment_transaction_id",
+      "~starting_after",
+      "~size",
+      "~purchase_references",
+      "~payment_product_instance_id",
+      "~state",
+      "~state",
+      "~state",
+      "~state",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~reason",
+      "~sort_by",
+      "~sort_by",
+      "~sort_by",
+      "~closed_at_start",
+      "~closed_at_end",
+      "~ending_before"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "NO_DISPUTE_NOT_ACCEPTED.bru",
+    "category": "Capture amount incorrect",
+    "name": "NO_DISPUTE_NOT_ACCEPTED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA.bru",
+    "category": "Capture amount incorrect",
+    "name": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "NO_DISPUTE_NOT_ACCEPTED.bru",
+    "category": "Product Faulty",
+    "name": "NO_DISPUTE_NOT_ACCEPTED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "YES_OTHER_RESOLUTION.bru",
+    "category": "Product Faulty",
+    "name": "YES_OTHER_RESOLUTION",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA.bru",
+    "category": "Product Faulty",
+    "name": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - BUY_ONLINE_PICK_UP_IN_STORE.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - BUY_ONLINE_PICK_UP_IN_STORE",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - BY_POST_OR_MAIL.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - BY_POST_OR_MAIL",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - DIGITAL_DELIVERY.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - DIGITAL_DELIVERY",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - FOOD_DELIVERY_PERISHABLES_TO_CUSTOMER.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - FOOD_DELIVERY_PERISHABLES_TO_CUSTOMER",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - FOOD_DELIVERY_PERISHABLES_TO_PICK_UP_SPOT.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - FOOD_DELIVERY_PERISHABLES_TO_PICK_UP_SPOT",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "delivery_method - INTERNAL_DELIVERY_SERVICE_LOGISTICS_CARRIER.bru",
+    "category": "Product Not Received",
+    "name": "delivery_method - INTERNAL_DELIVERY_SERVICE_LOGISTICS_CARRIER",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "FULLY_SHIPPED.bru",
+    "category": "Purchase high risk",
+    "name": "FULLY_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "NOT_SHIPPED.bru",
+    "category": "Purchase high risk",
+    "name": "NOT_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "PARTIALLY_SHIPPED.bru",
+    "category": "Purchase high risk",
+    "name": "PARTIALLY_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "product type - PHYSICAL_PRODUCTS_FULLY_SHIPPED.bru",
+    "category": "Purchase unauthorized",
+    "name": "product type - PHYSICAL_PRODUCTS_FULLY_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "product type - PHYSICAL_PRODUCTS_NOT_SHIPPED.bru",
+    "category": "Purchase unauthorized",
+    "name": "product type - PHYSICAL_PRODUCTS_NOT_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "product type - PHYSICAL_PRODUCTS_PARTIALLY_SHIPPED.bru",
+    "category": "Purchase unauthorized",
+    "name": "product type - PHYSICAL_PRODUCTS_PARTIALLY_SHIPPED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "product type - SERVICES.bru",
+    "category": "Purchase unauthorized",
+    "name": "product type - SERVICES",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "product type - TICKETS_TRAVEL.bru",
+    "category": "Purchase unauthorized",
+    "name": "product type - TICKETS_TRAVEL",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "RETURN_NOT_RECEIVED.bru",
+    "category": "Return Not Refunded",
+    "name": "RETURN_NOT_RECEIVED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "YES_BUT_NOT_ACCEPTED.bru",
+    "category": "Return Not Refunded",
+    "name": "YES_BUT_NOT_ACCEPTED",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA.bru",
+    "category": "Return Not Refunded",
+    "name": "YES_WILL_REFUND_THE_CUSTOMER_THROUGH_KLARNA",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/respond",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"additional_information\": \"additional information about the dispute response\",\n\"attachments\": [\n{\n\"payment_dispute_attachment_id\": \"{{payment_dispute_attachment_id}}\",\n\"description\": \"attachment des"
+  },
+  {
+    "file": "Upload merchant evidence attachment.bru",
+    "category": "Payment Dispute API",
+    "name": "Upload merchant evidence attachment",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/disputes/{payment_dispute_id}/attachments",
+    "pathParams": [
+      "partner_account_id",
+      "payment_dispute_id"
+    ],
+    "queryParams": [
+      "~payment_product_instance_id"
+    ],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Klarna payment presentation API (ADD_TO_WALLET intent).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (ADD_TO_WALLET intent)",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/presentation?locale={{locale}}&currency={{currency}}&intents[]=ADD_TO_WALLET&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (Klarna-Customer-Token).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (Klarna-Customer-Token)",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=PAY&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (Klarna-Interoperability-Token).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (Klarna-Interoperability-Token)",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=PAY&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [
+      "Klarna-Interoperability-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (SUBSCRIBE intent).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (SUBSCRIBE intent)",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=SUBSCRIBE&subscription_billing_interval=MONTH&subscription_billing_interval_frequency=1&app_return_url={{app_return_url}}",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "subscription_billing_interval",
+      "subscription_billing_interval_frequency",
+      "app_return_url"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Cancel payment request.bru",
+    "category": "Payment Request API",
+    "name": "Cancel payment request",
+    "method": "DELETE",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create a payment request (QR_CODE).bru",
+    "category": "In-Store",
+    "name": "Create a payment request (QR_CODE)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - event reservation.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - event reservation",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - interoperability_data.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - interoperability_data",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"interoperability_data\": \"{\\\"content_type\\\":\\\"vnd.klarna.interoperability-data.v2+json\\"
+  },
+  {
+    "file": "Create a payment request - legacy EMD.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - legacy EMD",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - marketplaces.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - marketplaces",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - standard ecommerce.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - standard ecommerce",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - travel.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - travel",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - vouchers.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - vouchers",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Read the state of a Payment Request.bru",
+    "category": "Payment Request API",
+    "name": "Read the state of a Payment Request",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Customer login use case.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Customer login use case",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Mixed Payments (Subscription with free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription with free trial)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Mixed Payments (Subscription without free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription without free trial)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "On-demand payments (with initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (with initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "On-demand payments (without initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (without initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$randomUUID}}\",\n\"c"
+  },
+  {
+    "file": "Subscription with free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription with free trial",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$randomUUID}}\",\n\"s"
+  },
+  {
+    "file": "Subscription without free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription without free trial",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Update a Payment Request.bru",
+    "category": "Payment Request API",
+    "name": "Update a Payment Request",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Interoperability-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 11836,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Cancel payment token.bru",
+    "category": "Payment Token API",
+    "name": "Cancel payment token",
+    "method": "DELETE",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/tokens/{payment_token}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_token"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Capture Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Capture Payment Transaction",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}/capture",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"capture_amount\": 12336,\n\"payment_capture_reference\": \"partner-capture-reference-{{$randomUUID}}\",\n\"remaining_authorization\": \"RELEASE\",\n\"supplementary_capture_data\": {\n\"line_items\": {{line_items}},"
+  },
+  {
+    "file": "Read Payment Capture.bru",
+    "category": "Payment Transaction API",
+    "name": "Read Payment Capture",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/captures/{payment_capture_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_capture_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read Payment Chargeback.bru",
+    "category": "Payment Transaction API",
+    "name": "Read Payment Chargeback",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/chargebacks/{payment_chargeback_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_chargeback_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read Payment Refund.bru",
+    "category": "Payment Transaction API",
+    "name": "Read Payment Refund",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/refunds/{payment_refund_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_refund_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Read Payment Transaction",
+    "method": "GET",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Reauthorize Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Reauthorize Payment Transaction",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}/authorize",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"extension_days\": 10,\n\"amount\": 12336,\n\"supplementary_purchase_data\": {\n\"line_items\": {{line_items}},\n\"shipping\": [\n{\n\"shipping_reference\": \"shipment-recipient-e8fdc4f5\",\n\"recipient\": {\n\"given_name\""
+  },
+  {
+    "file": "Refund Payment Capture.bru",
+    "category": "Payment Transaction API",
+    "name": "Refund Payment Capture",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/captures/{payment_capture_id}/refund",
+    "pathParams": [
+      "partner_account_id",
+      "payment_capture_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"refund_amount\": 12336,\n\"payment_refund_reference\": \"partner-refund-reference-{{$randomUUID}}}\",\n\"supplementary_refund_data\": {\n\"line_items\": {{line_items}}"
+  },
+  {
+    "file": "Refund Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Refund Payment Transaction",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}/refund",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"refund_amount\": 12336,\n\"refund_reference\": \"partner-refund-reference-{{$randomUUID}}\",\n\"supplementary_refund_data\": {\n\"line_items\": {{line_items}}"
+  },
+  {
+    "file": "Update Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Update Payment Transaction",
+    "method": "PATCH",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$randomUUID}}\"\n\"payment_transaction_reference\": \"payment-transaction-reference-{{$randomUUID}}\""
+  },
+  {
+    "file": "Void Payment Transaction.bru",
+    "category": "Payment Transaction API",
+    "name": "Void Payment Transaction",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/payment/transactions/{payment_transaction_id}/void",
+    "pathParams": [
+      "partner_account_id",
+      "payment_transaction_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create an API Key.bru",
+    "category": "API Keys",
+    "name": "Create an API Key",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/api-key",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} API Credentials\""
+  },
+  {
+    "file": "Disable an API Key.bru",
+    "category": "API Keys",
+    "name": "Disable an API Key",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all API Keys.bru",
+    "category": "API Keys",
+    "name": "List all API Keys",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/api-key",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read an API Key.bru",
+    "category": "API Keys",
+    "name": "Read an API Key",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update an API Key.bru",
+    "category": "API Keys",
+    "name": "Update an API Key",
+    "method": "PATCH",
+    "endpoint": "/v2/account/integration/credentials/api-key/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} API Credentials\""
+  },
+  {
+    "file": "Create a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Create a Client Identifier",
+    "method": "POST",
+    "endpoint": "/v2/account/integration/credentials/client-identifier",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} Client Credentials\""
+  },
+  {
+    "file": "Disable a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Disable a Client Identifier",
+    "method": "DELETE",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List all Client Identifiers.bru",
+    "category": "Client Identifiers",
+    "name": "List all Client Identifiers",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-identifier",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Read a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Read a Client Identifier",
+    "method": "GET",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Update a Client Identifier.bru",
+    "category": "Client Identifiers",
+    "name": "Update a Client Identifier",
+    "method": "PATCH",
+    "endpoint": "/v2/account/integration/credentials/client-identifier/{credential_id}",
+    "pathParams": [
+      "credential_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"description\": \"{{environment}} Client Credentials\""
+  },
+  {
+    "file": "Create signing key.bru",
+    "category": "Signing Keys",
+    "name": "Create signing key",
+    "method": "POST",
+    "endpoint": "/v2/notification/signing-keys",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Delete signing key.bru",
+    "category": "Signing Keys",
+    "name": "Delete signing key",
+    "method": "DELETE",
+    "endpoint": "/v2/notification/signing-keys/{signing_key_id}",
+    "pathParams": [
+      "signing_key_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get signing key.bru",
+    "category": "Signing Keys",
+    "name": "Get signing key",
+    "method": "GET",
+    "endpoint": "/v2/notification/signing-keys/{signing_key_id}",
+    "pathParams": [
+      "signing_key_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List signing keys.bru",
+    "category": "Signing Keys",
+    "name": "List signing keys",
+    "method": "GET",
+    "endpoint": "/v2/notification/signing-keys",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create webhook - Payment Disputes.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment Disputes",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.dispute.state-change.pre-arbitration\",\n\"payment.dispute.state-change.arbitration-pending\",\n\"payment.dispute.state-change.merchant-evidence-pending"
+  },
+  {
+    "file": "Create webhook - Payment Request.bru",
+    "category": "Webhooks",
+    "name": "Create webhook - Payment Request",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.request.state-change.submitted\",\n\"payment.request.state-change.in-progress\",\n\"payment.request.state-change.canceled\",\n\"payment.request.state-chang"
+  },
+  {
+    "file": "Delete webhook.bru",
+    "category": "Webhooks",
+    "name": "Delete webhook",
+    "method": "DELETE",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Get webhook.bru",
+    "category": "Webhooks",
+    "name": "Get webhook",
+    "method": "GET",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "List Webhooks.bru",
+    "category": "Webhooks",
+    "name": "List Webhooks",
+    "method": "GET",
+    "endpoint": "/v2/notification/webhooks",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Simulate a webhook.bru",
+    "category": "Webhooks",
+    "name": "Simulate a webhook",
+    "method": "POST",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}/simulate",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"event_type\": \"payment.request.state-change.completed\",\n\"event_version\": \"v2\""
+  },
+  {
+    "file": "Update webhook.bru",
+    "category": "Webhooks",
+    "name": "Update webhook",
+    "method": "PATCH",
+    "endpoint": "/v2/notification/webhooks/{webhook_id}",
+    "pathParams": [
+      "webhook_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"url\": \"{{webhook_url}}\",\n\"event_types\": [\n\"payment.request.*\",\n\"payment.dispute.*\"\n],\n\"signing_key_id\": \"{{signing_key_id}}\",\n\"status\": \"ENABLED\""
+  },
+  {
+    "file": "Klarna payment presentation API (ADD_TO_WALLET intent).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (ADD_TO_WALLET intent)",
+    "method": "GET",
+    "endpoint": "/v2/payment/presentation?locale={{locale}}&currency={{currency}}&intents[]=ADD_TO_WALLET&app_return_url={{app_return_url}}",
+    "pathParams": [],
+    "queryParams": [
+      "locale",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (Klarna-Customer-Token).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (Klarna-Customer-Token)",
+    "method": "GET",
+    "endpoint": "/v2/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=PAY&app_return_url={{app_return_url}}",
+    "pathParams": [],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (Klarna-Interoperability-Token).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (Klarna-Interoperability-Token)",
+    "method": "GET",
+    "endpoint": "/v2/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=PAY&app_return_url={{app_return_url}}",
+    "pathParams": [],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "app_return_url"
+    ],
+    "headers": [
+      "~Klarna-Interoperability-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Klarna payment presentation API (SUBSCRIBE intent).bru",
+    "category": "Payment Presentation API",
+    "name": "Klarna payment presentation API (SUBSCRIBE intent)",
+    "method": "GET",
+    "endpoint": "/v2/payment/presentation?locale={{locale}}&amount=12336&currency={{currency}}&intents[]=SUBSCRIBE&subscription_billing_interval=MONTH&subscription_billing_interval_frequency=1&app_return_url={{app_return_url}}",
+    "pathParams": [],
+    "queryParams": [
+      "locale",
+      "amount",
+      "currency",
+      "intents[]",
+      "subscription_billing_interval",
+      "subscription_billing_interval_frequency",
+      "app_return_url"
+    ],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"locale\": \"{{locale}}\",\n\"amount\": 11836,\n\"currency\": \"{{currency}}\",\n\"intents\": [\"PAY\"]"
+  },
+  {
+    "file": "Cancel payment request.bru",
+    "category": "Payment Request API",
+    "name": "Cancel payment request",
+    "method": "DELETE",
+    "endpoint": "/v2/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Create a payment request (QR_CODE).bru",
+    "category": "In-Store",
+    "name": "Create a payment request (QR_CODE)",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - event reservation.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - event reservation",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - interoperability_data.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - interoperability_data",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"interoperability_data\": \"{\\\"content_type\\\":\\\"vnd.klarna.interoperability-data.v2+json\\"
+  },
+  {
+    "file": "Create a payment request - legacy EMD.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - legacy EMD",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - marketplaces.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - marketplaces",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - standard ecommerce.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - standard ecommerce",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - travel.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - travel",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Create a payment request - vouchers.bru",
+    "category": "One-time Payment Scenarios",
+    "name": "Create a payment request - vouchers",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "~Klarna-Customer-Token"
+    ],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Read the state of a Payment Request.bru",
+    "category": "Payment Request API",
+    "name": "Read the state of a Payment Request",
+    "method": "GET",
+    "endpoint": "/v2/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Customer login use case.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Customer login use case",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"customer:login\"\n],\n\"customer_token_reference\":"
+  },
+  {
+    "file": "Mixed Payments (Subscription with free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription with free trial)",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_not_present\"\n],\n\"customer_tok"
+  },
+  {
+    "file": "Mixed Payments (Subscription without free trial).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Mixed Payments (Subscription without free trial)",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_not_present\"\n],\n\"customer_tok"
+  },
+  {
+    "file": "On-demand payments (with initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (with initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_present\"\n],\n\"customer_token_r"
+  },
+  {
+    "file": "On-demand payments (without initial purchase).bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "On-demand payments (without initial purchase)",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_present\"\n],\n\"customer_token_reference\": \"{{$ra"
+  },
+  {
+    "file": "Subscription with free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription with free trial",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_not_present\"\n],\n\"customer_token_reference\": \"{"
+  },
+  {
+    "file": "Subscription without free trial.bru",
+    "category": "Tokenized Payment Scenarios",
+    "name": "Subscription without free trial",
+    "method": "POST",
+    "endpoint": "/v2/payment/requests",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 12336,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"request_customer_token\": {\n\"scopes\": [\n\"payment:customer_not_present\"\n],\n\"customer_tok"
+  },
+  {
+    "file": "Update a Payment Request.bru",
+    "category": "Payment Request API",
+    "name": "Update a Payment Request",
+    "method": "PATCH",
+    "endpoint": "/v2/payment/requests/{payment_request_id}",
+    "pathParams": [
+      "payment_request_id"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "hasBody": true,
+    "bodyPreview": "{\n\"currency\": \"{{currency}}\",\n\"amount\": 11836,\n\"payment_request_reference\": \"payment-reference-{{$randomUUID}}\",\n\"supplementary_purchase_data\": {\n\"purchase_reference\": \"merchant-purchase-reference-{{$"
+  },
+  {
+    "file": "Generate SDK token.bru",
+    "category": "Identity API",
+    "name": "Generate SDK token",
+    "method": "POST",
+    "endpoint": "/v2/identity/sdk-tokens",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Introspect a customer token issued in the account linking flow-.bru",
+    "category": "Identity API",
+    "name": "Introspect a customer token issued in the account linking flow-",
+    "method": "POST",
+    "endpoint": "/v2/identity/customer-token/introspect",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Revoke a customer token issued in the account linking flow-.bru",
+    "category": "Identity API",
+    "name": "Revoke a customer token issued in the account linking flow-",
+    "method": "POST",
+    "endpoint": "/v2/accounts/{partner_account_id}/identity/customer-token/revoke",
+    "pathParams": [
+      "partner_account_id"
+    ],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate SDK token.bru",
+    "category": "Product API Interoperability",
+    "name": "Generate SDK token",
+    "method": "POST",
+    "endpoint": "/v2/interoperability/sdk-tokens",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Interoperability-Token",
+      "~Klarna-Network-Session-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
+  },
+  {
+    "file": "Generate interoperability token.bru",
+    "category": "Product API Interoperability",
+    "name": "Generate interoperability token",
+    "method": "POST",
+    "endpoint": "/v2/interoperability/tokens",
+    "pathParams": [],
+    "queryParams": [],
+    "headers": [
+      "Klarna-Customer-Token"
+    ],
+    "hasBody": false,
+    "bodyPreview": null
   }
 ]
