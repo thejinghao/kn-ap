@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 import styles from './page.module.css';
 
 // ============================================================================
@@ -83,6 +84,8 @@ const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 
 // localStorage key for event log persistence
 const EVENT_LOG_STORAGE_KEY = 'klarna-payment-button-event-log';
+
+const inputClasses = 'w-full border border-gray-300 rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -378,43 +381,34 @@ export default function PaymentButtonPage() {
         stateContext: paymentRequest.stateContext,
       }, 'sdk');
 
-      if (usePaymentRequestDataRef.current) {
-        // === Payment Request Data mode: SDK handled everything ===
-        setFlowState('SUCCESS');
-        logEvent('Payment Completed', 'success', {
-          paymentRequestId: paymentRequest.paymentRequestId,
-          state: paymentRequest.state,
-        }, 'flow');
-      } else {
-        // === Payment Request ID mode: need final authorization ===
-        const sessionToken = paymentRequest.stateContext?.klarna_network_session_token ||
-                            paymentRequest.stateContext?.klarnaNetworkSessionToken;
+      // Both modes: final authorization with session token
+      const sessionToken = paymentRequest.stateContext?.klarna_network_session_token ||
+                          paymentRequest.stateContext?.klarnaNetworkSessionToken;
 
-        if (sessionToken) {
-          setFlowState('COMPLETING');
-          try {
-            const finalResult = await authorizePayment(undefined, sessionToken);
+      if (sessionToken) {
+        setFlowState('COMPLETING');
+        try {
+          const finalResult = await authorizePayment(undefined, sessionToken);
 
-            logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
-            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+          logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
+          logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
 
-            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
-              setFlowState('SUCCESS');
-              setPaymentTransaction(finalResult.data);
-              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
-            } else {
-              throw new Error(finalResult.error || 'Final authorization failed');
-            }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            setFlowState('ERROR');
-            setErrorMessage(message);
-            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
+          if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+            setFlowState('SUCCESS');
+            setPaymentTransaction(finalResult.data);
+            logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+          } else {
+            throw new Error(finalResult.error || 'Final authorization failed');
           }
-        } else {
-          setFlowState('SUCCESS');
-          logEvent('Payment Completed (No Final Auth Needed)', 'success', undefined, 'flow');
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          setFlowState('ERROR');
+          setErrorMessage(message);
+          logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
         }
+      } else {
+        setFlowState('SUCCESS');
+        logEvent('Payment Completed (No Final Auth Needed)', 'success', undefined, 'flow');
       }
 
       // Return true to allow default redirect behavior
@@ -723,15 +717,15 @@ export default function PaymentButtonPage() {
   // ============================================================================
 
   const getFlowStateDisplay = () => {
-    const states: Record<FlowState, { label: string; color: string }> = {
-      IDLE: { label: 'Ready to Initialize', color: '#6f6b7a' },
-      INITIALIZING: { label: 'Initializing SDK...', color: '#2196f3' },
-      READY: { label: 'Ready for Payment', color: '#4caf50' },
-      AUTHORIZING: { label: 'Authorizing Payment...', color: '#ff9800' },
-      STEP_UP: { label: 'Customer in Klarna Journey', color: '#9c27b0' },
-      COMPLETING: { label: 'Completing Authorization...', color: '#ff9800' },
-      SUCCESS: { label: 'Payment Successful!', color: '#4caf50' },
-      ERROR: { label: 'Error Occurred', color: '#f44336' },
+    const states: Record<FlowState, { label: string; textClass: string; borderClass: string }> = {
+      IDLE: { label: 'Ready to Initialize', textClass: 'text-gray-500', borderClass: 'border-gray-400' },
+      INITIALIZING: { label: 'Initializing SDK...', textClass: 'text-blue-500', borderClass: 'border-blue-500' },
+      READY: { label: 'Ready for Payment', textClass: 'text-green-600', borderClass: 'border-green-600' },
+      AUTHORIZING: { label: 'Authorizing Payment...', textClass: 'text-amber-500', borderClass: 'border-amber-500' },
+      STEP_UP: { label: 'Customer in Klarna Journey', textClass: 'text-purple-600', borderClass: 'border-purple-600' },
+      COMPLETING: { label: 'Completing Authorization...', textClass: 'text-amber-500', borderClass: 'border-amber-500' },
+      SUCCESS: { label: 'Payment Successful!', textClass: 'text-green-600', borderClass: 'border-green-600' },
+      ERROR: { label: 'Error Occurred', textClass: 'text-red-500', borderClass: 'border-red-500' },
     };
     return states[flowState];
   };
@@ -743,28 +737,29 @@ export default function PaymentButtonPage() {
   // ============================================================================
 
   return (
-    <div className={styles.container}>
+    <div className="min-h-[calc(100vh-57px)] bg-gray-50 p-5 max-w-[1400px] mx-auto">
       {/* Info Banner */}
-      <div className={styles.infoBanner}>
-        <div className={styles.infoIcon}>ℹ️</div>
-        <div className={styles.infoContent}>
-          <strong>Acquiring Partner Mode:</strong> Enter your Partner Account ID and Client ID to test the payment flow.
-          The origin <code>{currentOrigin || 'loading...'}</code> must be registered in the store configuration.
+      <div className="bg-blue-50 border border-blue-200 rounded px-4 py-3 mb-5 text-sm flex items-start gap-2.5 text-blue-700 leading-relaxed">
+        <InformationCircleIcon className="w-4 h-4 shrink-0 mt-0.5" />
+        <div>
+          <strong className="text-blue-900">Acquiring Partner Mode:</strong> Enter your Partner Account ID and Client ID to test the payment flow.
+          The origin <code className="bg-blue-100/70 px-1 py-0.5 rounded text-xs font-mono break-all whitespace-normal">{currentOrigin || 'loading...'}</code> must be registered in the store configuration.
         </div>
       </div>
 
       {/* Main Layout */}
-      <div className={styles.configRow}>
+      <div className="flex flex-col md:flex-row gap-5 mb-5">
         {/* Configuration Panel */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
-            <h3 style={{ marginTop: 0 }}>Configuration</h3>
+        <div className="flex-1 min-w-0 md:min-w-[300px]">
+          <div className="bg-white border border-gray-200 rounded p-4">
+            <h3 className="text-base font-bold text-gray-900 mt-0 mb-1.5">Configuration</h3>
             
-            <div className={styles.field}>
-              <label htmlFor="partner-account-id">Partner Account ID *</label>
+            <div className="grid gap-1.5 mb-2.5">
+              <label htmlFor="partner-account-id" className="text-xs font-medium text-gray-500">Partner Account ID *</label>
               <input
                 id="partner-account-id"
                 type="text"
+                className={inputClasses}
                 placeholder="krn:partner:global:account:live:XXXXXXXX"
                 value={partnerAccountId}
                 onChange={(e) => setPartnerAccountId(e.target.value)}
@@ -772,11 +767,12 @@ export default function PaymentButtonPage() {
               />
             </div>
 
-            <div className={styles.field}>
-              <label htmlFor="client-id">Acquiring Partner Client ID *</label>
+            <div className="grid gap-1.5 mb-2.5">
+              <label htmlFor="client-id" className="text-xs font-medium text-gray-500">Acquiring Partner Client ID *</label>
               <input
                 id="client-id"
                 type="text"
+                className={inputClasses}
                 placeholder="klarna_test_client_..."
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
@@ -785,7 +781,7 @@ export default function PaymentButtonPage() {
             </div>
 
             {/* Toggle */}
-            <div className={styles.toggleContainer}>
+            <div className="flex items-center gap-3 mb-3">
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
@@ -795,11 +791,11 @@ export default function PaymentButtonPage() {
                 />
                 <span className={styles.toggleSlider} />
               </label>
-              <span style={{ fontSize: '14px', color: '#0b051d', fontWeight: 500 }}>
+              <span className="text-sm font-medium text-gray-700">
                 {usePaymentRequestData ? 'Use Payment Request Data' : 'Use Payment Request ID'}
               </span>
             </div>
-            <div className={styles.status} style={{ marginTop: '-4px', marginBottom: '12px' }}>
+            <div className="text-xs text-gray-500 break-words -mt-1 mb-3">
               {usePaymentRequestData
                 ? 'The initiate callback returns a paymentRequestData object containing the full payment details. The SDK creates the payment request client-side — no server call is needed during initiation. You can edit the JSON below to customize the payment request data that will be passed to the SDK.'
                 : 'The initiate callback calls your server, which uses Klarna\'s Payment Authorize API to create a payment request server-side. The server returns a paymentRequestId to the SDK, which the SDK then uses to proceed with the payment flow.'}
@@ -807,14 +803,15 @@ export default function PaymentButtonPage() {
 
             {/* Payment Request Data section (toggle ON) */}
             {usePaymentRequestData && (
-              <div className={styles.field}>
-                <label>Payment Request Data (JSON)</label>
+              <div className="grid gap-1.5 mb-2.5">
+                <label className="text-xs font-medium text-gray-500">Payment Request Data (JSON)</label>
                 <textarea
+                  className={`${inputClasses} min-h-[200px] font-mono text-xs resize-y`}
                   value={paymentRequestDataJson}
                   onChange={(e) => setPaymentRequestDataJson(e.target.value)}
                   placeholder="Enter payment request data as JSON..."
                 />
-                <div className={styles.status}>
+                <div className="text-xs text-gray-500 break-words">
                   Edit the JSON directly. References will be auto-generated on button click.
                 </div>
               </div>
@@ -822,25 +819,34 @@ export default function PaymentButtonPage() {
 
 
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+            <div className="flex gap-2.5 mt-4">
               {flowState === 'IDLE' || flowState === 'ERROR' ? (
-                <button onClick={initializeSDK}>
+                <button
+                  onClick={initializeSDK}
+                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer"
+                >
                   Initialize & Show Button
                 </button>
               ) : flowState === 'SUCCESS' ? (
-                <button onClick={resetFlow}>
+                <button
+                  onClick={resetFlow}
+                  className="bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer"
+                >
                   Start New Payment
                 </button>
               ) : (
-                <button disabled>
+                <button
+                  disabled
+                  className="bg-gray-300 text-white px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
+                >
                   {flowState === 'INITIALIZING' ? 'Initializing...' : 'Processing...'}
                 </button>
               )}
-              
+
               {flowState !== 'IDLE' && flowState !== 'INITIALIZING' && (
-                <button 
+                <button
                   onClick={resetFlow}
-                  style={{ background: '#6f6b7a' }}
+                  className="bg-gray-500 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-600 border-none cursor-pointer"
                 >
                   Reset
                 </button>
@@ -850,27 +856,17 @@ export default function PaymentButtonPage() {
         </div>
 
         {/* Payment Button Panel */}
-        <div className={styles.configPanel}>
-          <div className={styles.config}>
-            <h3 style={{ marginTop: 0 }}>Payment Button</h3>
-            
+        <div className="flex-1 min-w-0 md:min-w-[300px]">
+          <div className="bg-white border border-gray-200 rounded p-4">
+            <h3 className="text-base font-bold text-gray-900 mt-0 mb-1.5">Payment Button</h3>
+
             {/* Flow State Indicator */}
-            <div style={{ 
-              padding: '12px', 
-              background: '#fcfbf8', 
-              borderRadius: '8px', 
-              marginBottom: '16px',
-              border: `2px solid ${stateDisplay.color}`,
-            }}>
-              <div style={{ 
-                fontWeight: 700, 
-                color: stateDisplay.color,
-                marginBottom: '4px',
-              }}>
+            <div className={`p-3 bg-gray-50 rounded mb-4 border-2 ${stateDisplay.borderClass}`}>
+              <div className={`font-bold mb-1 ${stateDisplay.textClass}`}>
                 {stateDisplay.label}
               </div>
               {errorMessage && (
-                <div style={{ color: '#f44336', fontSize: '13px' }}>
+                <div className="text-red-500 text-[13px]">
                   {errorMessage}
                 </div>
               )}
@@ -878,38 +874,29 @@ export default function PaymentButtonPage() {
 
             {/* Presentation Info */}
             {presentationInfo && (
-              <div className={styles.infoBox} style={{ marginBottom: '16px' }}>
-                <div><strong>Instruction:</strong> {presentationInfo.instruction}</div>
+              <div className="bg-gray-50 border border-gray-200 rounded p-2.5 text-xs text-gray-500 leading-relaxed mb-4">
+                <div><strong className="text-gray-900">Instruction:</strong> {presentationInfo.instruction}</div>
                 {presentationInfo.paymentOptionId && (
-                  <div><strong>Payment Option ID:</strong> {presentationInfo.paymentOptionId}</div>
+                  <div><strong className="text-gray-900">Payment Option ID:</strong> {presentationInfo.paymentOptionId}</div>
                 )}
               </div>
             )}
 
             {/* Button Mount Container */}
-            <div 
-              className={styles.buttonMount}
-              style={{ 
-                minHeight: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-              }}
-            >
+            <div className="mt-5 min-h-[60px] flex items-center justify-center relative">
               {/* Status messages - shown when button is not mounted */}
               {(flowState === 'IDLE' || flowState === 'INITIALIZING') && (
-                <span style={{ color: flowState === 'IDLE' ? '#6f6b7a' : '#2196f3', fontSize: '14px' }}>
-                  {flowState === 'IDLE' 
+                <span className={`text-sm ${flowState === 'IDLE' ? 'text-gray-500' : 'text-blue-500'}`}>
+                  {flowState === 'IDLE'
                     ? 'Click "Initialize & Show Button" to start'
                     : 'Loading Klarna SDK...'}
                 </span>
               )}
-              
+
               {/* SDK Mount Target - React will NOT manage children of this div */}
-              <div 
+              <div
                 ref={buttonWrapperRef}
-                style={{ 
+                style={{
                   width: '100%',
                   display: flowState === 'IDLE' || flowState === 'INITIALIZING' ? 'none' : 'block',
                 }}
@@ -918,16 +905,11 @@ export default function PaymentButtonPage() {
 
             {/* Success State */}
             {flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction && (
-              <div style={{ 
-                padding: '16px', 
-                background: '#e8f5e9', 
-                borderRadius: '8px',
-                marginTop: '16px',
-              }}>
-                <h4 style={{ margin: '0 0 8px', color: '#2e7d32' }}>Payment Successful!</h4>
-                <div style={{ fontSize: '13px' }}>
+              <div className="p-4 bg-green-50 rounded mt-4">
+                <h4 className="m-0 mb-2 text-green-700">Payment Successful!</h4>
+                <div className="text-[13px]">
                   <div><strong>Transaction ID:</strong></div>
-                  <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>
+                  <code className="text-[11px] break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
                     {paymentTransaction.paymentTransaction.paymentTransactionId}
                   </code>
                 </div>
@@ -938,45 +920,53 @@ export default function PaymentButtonPage() {
       </div>
 
       {/* Event Log */}
-      <div className={styles.eventLog}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h3 style={{ margin: 0 }}>Event Log</h3>
-          <button onClick={clearLog} className={styles.clearButton}>Clear</button>
+      <div className="bg-white border border-gray-200 rounded p-4 max-h-[800px] overflow-y-auto custom-scrollbar">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-base font-bold text-gray-900 m-0">Event Log</h3>
+          <button
+            onClick={clearLog}
+            className="bg-gray-900 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-800 border-none cursor-pointer"
+          >
+            Clear
+          </button>
         </div>
-        <div className={styles.eventLogContent}>
+        <div>
           {eventLog.length === 0 ? (
-            <p style={{ color: '#6f6b7a', fontSize: '12px' }}>Events will appear here...</p>
+            <p className="text-gray-500 text-xs">Events will appear here...</p>
           ) : (
             eventLog.map((event) => (
-              <div key={event.id} className={styles.eventItem}>
-                <div className={styles.eventTitle} style={{
-                  color: event.type === 'error' ? '#f44336'
-                       : event.type === 'success' ? '#4caf50'
-                       : event.type === 'warning' ? '#ff9800'
-                       : '#0b051d'
-                }}>
+              <div key={event.id} className="mb-4 border-b border-gray-200 pb-3 last:border-b-0">
+                <div className={`font-bold mb-1 text-[13px] ${
+                  event.type === 'error'
+                    ? 'text-red-500'
+                    : event.type === 'success'
+                      ? 'text-green-600'
+                      : event.type === 'warning'
+                        ? 'text-amber-500'
+                        : 'text-gray-900'
+                }`}>
                   {event.source === 'sdk' && (
-                    <span className={styles.sourceBadge} style={{ background: '#e3f2fd', color: '#1565c0' }}>SDK</span>
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-blue-100 text-blue-700">SDK</span>
                   )}
                   {event.source === 'api' && event.direction === 'request' && (
-                    <span className={styles.sourceBadge} style={{ background: '#fff3e0', color: '#e65100' }}>API REQ</span>
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-orange-100 text-orange-700">API REQ</span>
                   )}
                   {event.source === 'api' && event.direction === 'response' && (
-                    <span className={styles.sourceBadge} style={{ background: '#f3e5f5', color: '#7b1fa2' }}>API RES</span>
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-purple-100 text-purple-700">API RES</span>
                   )}
                   {event.source === 'flow' && (
-                    <span className={styles.sourceBadge} style={{ background: '#e8f5e9', color: '#2e7d32' }}>FLOW</span>
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-green-100 text-green-700">FLOW</span>
                   )}
                   {event.type === 'error' && '✗ '}
                   {event.type === 'success' && '✓ '}
                   {event.type === 'warning' && '⚠ '}
                   {event.title}
                 </div>
-                <div className={styles.eventTime}>
+                <div className="text-[11px] text-gray-500 mb-1.5">
                   {event.timestamp.toLocaleTimeString()}
                 </div>
                 {event.data !== undefined && event.data !== null && (
-                  <pre>{JSON.stringify(event.data, null, 2)}</pre>
+                  <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
                 )}
               </div>
             ))
