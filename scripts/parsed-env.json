@@ -1,0 +1,23 @@
+{
+  "acquiring_partner_api_key": "klarna_test_api_YigldnZJbmwxVlY2Z2FCL2xZLXMpN2RFR2hablFiUi8sMzkwNGRlZGMtMzg1MC00YTUwLThmYmItMzJkN2IwYmFkNjNhLDEsMThrbGxpUldiS01ka0xFWTZ2NS9VWk5TbE5LQ3V1L1ZyYzhNQU5nNnZMdz0",
+  "subpartner_api_key": "klarna_test_api_bDMtWkRCdjhUOVpuSHYjTWNZSGZqd1BzUUJRWXdtJWYsNWFiYzNlNjctZTIzMS00MDlkLWI2MjAtMjk5ZGJmNjI4YjhjLDEsWi81U01HVlZMVTNhV3p5TnNxT2E0a2xwY1FoSXUwNWRua0xrL056ZGMzTT0",
+  "payment_profile": "krn:network:global:test:payment-profile:ac171a62-ab2c-4d1d-972a-8da14d194687",
+  "payment_acquiring_account_id": "krn:network:global:test:payment-acquiring-account:5cf2f334-a116-4bf3-b36a-3ef3c64a8a1b",
+  "credential_id": "3904dedc-3850-4a50-8fbb-32d7b0bad63a",
+  "partner_account_id": "krn:partner:global:account:test:MKQK5DX2",
+  "ap_partner_account_id": "krn:partner:global:account:test:M48JWZF8",
+  "payment_account_id_standard": "krn:partner:global:account:payment-account:21019dcb-61a8-4267-914b-39a9217acf06",
+  "payment_account_id_PiFnG": "krn:partner:global:account:payment-account:***",
+  "credential_group_owner_id": "krn:partner:global:account:test:MKPMV6MS",
+  "klarna_client_id": "klarna_test_client_b1E_Ynp5aWtUdWN0Km0_c2woZXpoKmpUbUNEP1kxeWIsYjVkZWZlMmEtYjFjOC00ZGRlLTg1MzctOGJlZjA1MDAxZmRmLDEsVXlaZkZ4cmg4REh0VUFWODVreHgvc3pQVUpWUExEQkZXdUdVa1JGYWJmVT0",
+  "secret_key_jwt": "-----BEGIN EC PARAMETERS-----\\nBggqhkjOPQMBBw==\\n-----END EC PARAMETERS-----\\n-----BEGIN EC PRIVATE KEY-----MHcCAQEEIHCS6u58f/1isZHBivd+mrVkfL0cNlWxLg1AP/9bLLQJoAoGCCqGSM49",
+  "1tOVqcrHUkAHuWTarJR8+RwnT966JGpVfw": "=\\n-----END EC PRIVATE KEY-----",
+  "x5c_jwt": "-----BEGIN CERTIFICATE-----\\nMIICFTCCAbugAwIBAgIRAK0+uReRAi2lgtg1zajrcAQwCgYIKoZIzj0EAwIwVDEL\\nMAkGA1UEBhMCU0UxFzAVBgNVBAoMDktsYXJuYSBCYW5rIEFCMSwwKgYDVQQDDCNL\\nbGFybmEtTmV0d29yay1DbGllbnRzLVRlc3QtQ0EtMjAyNDAeFw0yNjAxMjIxNjAw\\nMjVaFw0yOTAxMjExNzAwMjVaMBMxETAPBgNVBAMMCE00OEpXWkY4MFkwEwYHKoZI\\nzj0CAQYIKoZIzj0DAQcDQgAENybnkEH3qR7cWaG6Et22CcsLUYZotcZMETxhq3bu\\nzSDpVfXX+mer1tOVqcrHUkAHuWTarJR8+RwnT966JGpVf6OBrjCBqzAMBgNVHRMB\\nAf8EAjAAMB8GA1UdIwQYMBaAFLSzPdm3IWzm4fWXyzNcSoAda140MB0GA1UdDgQW\\nBBThdBmuz5DvrazzRNdfLTPN3Q9kKTAPBgNVHQ8BAf8EBQMDB4AAMDMGA1UdEQQs\\nMCqGKGtybjpwYXJ0bmVyOmdsb2JhbDphY2NvdW50OnRlc3Q6TTQ4SldaRjgwFQYL\\nKwYBBAGCgyoBAQIBAf8EAwIBATAKBggqhkjOPQQDAgNIADBFAiEA8n/xYFed39Wb\\n8hJGWW3srqA9l+zmm2mDEMW5i3qcHgUCICBa7gWXUU4vz1EbaaBQiREuLNl+h7Ne\\nemfwFEjIAbxQ\\n-----END CERTIFICATE-----",
+  "cpgw_username": "***",
+  "cpgw_password": "***",
+  "username": "***",
+  "password": "***",
+  "bank_account_preset_id": "**",
+  "legacy_price_plan_standard": "***",
+  "legacy_price_plan_PiFnG": "***"
+}

@@ -639,7 +639,7 @@
     "category": "Payment Programs",
     "name": "List all Payment Programs for a Payment Product",
     "method": "GET",
-    "endpoint": "/v2/accounts/{{partner_account_id}}/products/payment/payment-programs",
+    "endpoint": "/v2/accounts/{partner_account_id}/products/payment/payment-programs",
     "pathParams": [
       "partner_account_id"
     ],

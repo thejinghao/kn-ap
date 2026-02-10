@@ -78,7 +78,7 @@ export default function Header() {
                     }`}
                   >
                     <CubeTransparentIcon className="w-4 h-4" />
-                    <span>Account Structure</span>
+                    <span>Manage Partners</span>
                     <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${showStructureMenu ? 'rotate-180' : ''}`} />
                   </button>
                   
@@ -168,6 +168,11 @@ export default function Header() {
                     </div>
                   )}
                 </div>
+                {/* Manage Transactions (placeholder) */}
+                <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 cursor-default">
+                  <DocumentTextIcon className="w-4 h-4" />
+                  <span>Manage Transactions</span>
+                </span>
               </nav>
             </div>
             

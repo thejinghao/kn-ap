@@ -7,7 +7,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'List Webhooks',
       description: 'Get all configured webhooks',
       method: 'GET',
-      endpoint: '/v2/account/integration/notifications/webhooks',
+      endpoint: '/v2/notification/webhooks',
       category: 'webhooks',
     },
 
@@ -16,7 +16,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Create Webhook',
       description: 'Create a new webhook subscription',
       method: 'POST',
-      endpoint: '/v2/account/integration/notifications/webhooks',
+      endpoint: '/v2/notification/webhooks',
       category: 'webhooks',
       bodyTemplate: {
         url: 'https://your-webhook-endpoint.com/klarna',
@@ -29,7 +29,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Get Webhook',
       description: 'Get a specific webhook',
       method: 'GET',
-      endpoint: '/v2/notification/webhooks/:webhook_id',
+      endpoint: '/v2/notification/webhooks/{webhook_id}',
       category: 'webhooks',
       pathParams: [
         {
@@ -45,7 +45,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Update Webhook',
       description: 'Update a webhook subscription',
       method: 'PATCH',
-      endpoint: '/v2/notification/webhooks/:webhook_id',
+      endpoint: '/v2/notification/webhooks/{webhook_id}',
       category: 'webhooks',
       pathParams: [
         {
@@ -66,7 +66,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Delete Webhook',
       description: 'Delete a webhook subscription',
       method: 'DELETE',
-      endpoint: '/v2/notification/webhooks/:webhook_id',
+      endpoint: '/v2/notification/webhooks/{webhook_id}',
       category: 'webhooks',
       pathParams: [
         {
@@ -82,7 +82,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Simulate Webhook',
       description: 'Simulate a webhook event for testing',
       method: 'POST',
-      endpoint: '/v2/notification/webhooks/:webhook_id/simulate',
+      endpoint: '/v2/notification/webhooks/{webhook_id}/simulate',
       category: 'webhooks',
       pathParams: [
         {
@@ -120,7 +120,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Get Signing Key',
       description: 'Get a specific signing key',
       method: 'GET',
-      endpoint: '/v2/notification/signing-keys/:signing_key_id',
+      endpoint: '/v2/notification/signing-keys/{signing_key_id}',
       category: 'webhooks',
       pathParams: [
         {
@@ -136,7 +136,7 @@ export const webhooksPresets: EndpointPreset[] = [
       name: 'Delete Signing Key',
       description: 'Delete a signing key',
       method: 'DELETE',
-      endpoint: '/v2/notification/signing-keys/:signing_key_id',
+      endpoint: '/v2/notification/signing-keys/{signing_key_id}',
       category: 'webhooks',
       pathParams: [
         {

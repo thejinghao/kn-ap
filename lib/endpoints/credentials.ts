@@ -110,7 +110,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Read a Client Identifier',
       description: 'Read a specific client identifier',
       method: 'GET',
-      endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+      endpoint: '/v2/account/integration/credentials/client-identifier/{credential_id}',
       category: 'credentials',
       pathParams: [
         {
@@ -126,7 +126,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Update a Client Identifier',
       description: 'Update a client identifier',
       method: 'PATCH',
-      endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+      endpoint: '/v2/account/integration/credentials/client-identifier/{credential_id}',
       category: 'credentials',
       pathParams: [
         {
@@ -145,7 +145,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Disable a Client Identifier',
       description: 'Disable a client identifier',
       method: 'DELETE',
-      endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+      endpoint: '/v2/account/integration/credentials/client-identifier/{credential_id}',
       category: 'credentials',
       pathParams: [
         {
@@ -203,7 +203,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Read a Client Certificate',
       description: 'Read the data for a specific client certificate',
       method: 'GET',
-      endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id',
+      endpoint: '/v2/account/integration/credentials/client-certificate/{credential_id}',
       category: 'credentials',
       pathParams: [
         {
@@ -219,7 +219,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Update a Client Certificate',
       description: 'Update a client certificate',
       method: 'PATCH',
-      endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id',
+      endpoint: '/v2/account/integration/credentials/client-certificate/{credential_id}',
       category: 'credentials',
       pathParams: [
         {
@@ -238,7 +238,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Revoke a Client Certificate',
       description: 'Revoke a client certificate',
       method: 'POST',
-      endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id/revoke',
+      endpoint: '/v2/account/integration/credentials/client-certificate/{credential_id}/revoke',
       category: 'credentials',
       pathParams: [
         {
@@ -257,7 +257,7 @@ export const credentialsPresets: EndpointPreset[] = [
       name: 'Read mTLS Enforcement Status',
       description: 'Check if mTLS authorization is enforced',
       method: 'GET',
-      endpoint: '/v2/account/integration/credentials/client-certificate/mtls-enforcement',
+      endpoint: '/v2/account/integration/client-certificates/enforcement',
       category: 'credentials',
     },
 

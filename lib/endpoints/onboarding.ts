@@ -71,7 +71,7 @@ export const onboardingPresets: EndpointPreset[] = [
       name: 'List Payment Program Plans',
       description: 'Get all payment program plans',
       method: 'GET',
-      endpoint: '/v2/distribution/payment-program-plans',
+      endpoint: '/v2/distribution/products/payment/payment-program-plans',
       category: 'onboarding',
     },
 
@@ -90,7 +90,7 @@ export const onboardingPresets: EndpointPreset[] = [
       name: 'List Price Plans',
       description: 'Get all price plans',
       method: 'GET',
-      endpoint: '/v2/distribution/price-plans',
+      endpoint: '/v2/distribution/products/payment/price-plans',
       category: 'onboarding',
     },
 
@@ -99,7 +99,7 @@ export const onboardingPresets: EndpointPreset[] = [
       name: 'Read Price Plan',
       description: 'Get a specific price plan',
       method: 'GET',
-      endpoint: '/v2/distribution/price-plans/{price_plan_id}',
+      endpoint: '/v2/distribution/products/payment/price-plans/{price_plan_id}',
       category: 'onboarding',
       pathParams: [
         {
@@ -118,7 +118,7 @@ export const onboardingPresets: EndpointPreset[] = [
       name: 'List Payment Programs',
       description: 'Get all payment programs for a payment program plan',
       method: 'GET',
-      endpoint: '/v2/distribution/payment-program-plans/{payment_program_plan_id}/payment-programs',
+      endpoint: '/v2/distribution/products/payment/payment-program-plans/{payment_program_plan_id}',
       category: 'onboarding',
       pathParams: [
         {

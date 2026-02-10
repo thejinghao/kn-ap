@@ -7,11 +7,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Read Partner Account',
       description: 'Get details of a partner account',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}',
+      endpoint: '/v2/accounts/{partner_account_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account (KRN format)',
           required: true,
           type: 'string',
@@ -25,11 +25,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Update Partner Account',
       description: 'Update partner account details',
       method: 'PATCH',
-      endpoint: '/v2/accounts/{account_id}',
+      endpoint: '/v2/accounts/{partner_account_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -53,11 +53,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'List Business Entities',
       description: 'Get all partner business entities',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/partner-business-entities',
+      endpoint: '/v2/accounts/{partner_account_id}/partner-business-entities',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -71,11 +71,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Read Business Entity',
       description: 'Get a specific partner business entity',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/partner-business-entities/{partner_business_entity_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/partner-business-entities/{partner_business_entity_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -97,11 +97,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'List Brands',
       description: 'Get all brands for a partner account',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/brands',
+      endpoint: '/v2/accounts/{partner_account_id}/brands',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -115,11 +115,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Read Brand',
       description: 'Get a specific brand',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/brands/{brand_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/brands/{brand_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -140,11 +140,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Create Brand',
       description: 'Create a new brand',
       method: 'POST',
-      endpoint: '/v2/accounts/{account_id}/brands',
+      endpoint: '/v2/accounts/{partner_account_id}/brands',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -165,11 +165,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Update Brand',
       description: 'Update an existing brand',
       method: 'PATCH',
-      endpoint: '/v2/accounts/{account_id}/brands/{brand_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/brands/{brand_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -194,11 +194,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'List Store Groups',
       description: 'Get all store groups for a partner account',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/store-groups',
+      endpoint: '/v2/accounts/{partner_account_id}/store-groups',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -212,11 +212,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Read Store Group',
       description: 'Get a specific store group',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/store-groups/{store_group_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/store-groups/{store_group_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -237,11 +237,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Create Store Group',
       description: 'Create a new store group',
       method: 'POST',
-      endpoint: '/v2/accounts/{account_id}/store-groups',
+      endpoint: '/v2/accounts/{partner_account_id}/store-groups',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -259,11 +259,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Update Store Group',
       description: 'Update an existing store group',
       method: 'PATCH',
-      endpoint: '/v2/accounts/{account_id}/store-groups/{store_group_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/store-groups/{store_group_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -288,11 +288,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'List Stores',
       description: 'Get all stores for a partner account',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/stores',
+      endpoint: '/v2/accounts/{partner_account_id}/stores',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -306,11 +306,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Read Store',
       description: 'Get a specific store',
       method: 'GET',
-      endpoint: '/v2/accounts/{account_id}/stores/{store_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/stores/{store_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -331,11 +331,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Create Store',
       description: 'Create a new store',
       method: 'POST',
-      endpoint: '/v2/accounts/{account_id}/stores',
+      endpoint: '/v2/accounts/{partner_account_id}/stores',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -355,11 +355,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Update Store',
       description: 'Update an existing store',
       method: 'PATCH',
-      endpoint: '/v2/accounts/{account_id}/stores/{store_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/stores/{store_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -384,11 +384,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Create Business Entity',
       description: 'Create a new partner business entity',
       method: 'POST',
-      endpoint: '/v2/accounts/{account_id}/partner-business-entities',
+      endpoint: '/v2/accounts/{partner_account_id}/partner-business-entities',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',
@@ -408,11 +408,11 @@ export const accountsPresets: EndpointPreset[] = [
       name: 'Update Business Entity',
       description: 'Update an existing partner business entity',
       method: 'PATCH',
-      endpoint: '/v2/accounts/{account_id}/partner-business-entities/{partner_business_entity_id}',
+      endpoint: '/v2/accounts/{partner_account_id}/partner-business-entities/{partner_business_entity_id}',
       category: 'accounts',
       pathParams: [
         {
-          name: 'account_id',
+          name: 'partner_account_id',
           description: 'The unique identifier of the partner account',
           required: true,
           type: 'string',

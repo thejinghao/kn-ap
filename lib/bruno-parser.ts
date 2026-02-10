@@ -165,7 +165,9 @@ function normalizeUrl(url: string): string {
   return url
     .replace(/\{\{base_url\}\}/g, '')
     .replace(/\{\{version\}\}/g, '/v2')
+    .replace(/\?.*$/g, '') // Remove query string
     .replace(/:(\w+)/g, '{$1}') // Convert :param to {param}
+    .replace(/\{\{(\w+)\}\}/g, '{$1}') // Convert remaining {{param}} to {param}
     .replace(/^\/+/, '/'); // Ensure single leading slash
 }
 

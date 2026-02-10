@@ -7,7 +7,7 @@ export const settlementsPresets: EndpointPreset[] = [
       name: 'List Settlements',
       description: 'Get settlement reports',
       method: 'GET',
-      endpoint: '/v2/distribution/settlements',
+      endpoint: '/v2/settlements',
       category: 'settlements',
     },
 
@@ -16,7 +16,7 @@ export const settlementsPresets: EndpointPreset[] = [
       name: 'Get Settlement Details',
       description: 'Get details of a specific settlement',
       method: 'GET',
-      endpoint: '/v2/distribution/settlements/{settlement_id}',
+      endpoint: '/v2/settlements/{settlement_id}',
       category: 'settlements',
       pathParams: [
         {

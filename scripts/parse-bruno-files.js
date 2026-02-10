@@ -10,7 +10,10 @@ const fs = require('fs');
 const path = require('path');
 
 const REFERENCE_DIR = path.join(__dirname, '../reference');
+const COLLECTION_DIR = path.join(__dirname, '../reference/Klarna_Network_v2_r2512_PUBLIC');
 const BRUNO_DIR = path.join(__dirname, '../reference/Klarna_Network_v2_r2512_PUBLIC/Management API');
+
+const VALIDATE_MODE = process.argv.includes('--validate');
 
 /**
  * Parse a Bruno-style .env file
@@ -192,13 +195,12 @@ function scanDirectory(dir, category = '') {
           .replace(/\{\{base_url\}\}/g, '')
           .replace(/\{\{version\}\}/g, '/v2')
           .replace(/\?.*$/g, '') // Remove query string
-          .replace(/^\/+/, '/'); // Ensure single leading slash
-        
+          .replace(/^\/+/, '/') // Ensure single leading slash
+          .replace(/:(\w+)/g, '{$1}') // Convert :param to {param}
+          .replace(/\{\{(\w+)\}\}/g, '{$1}'); // Convert {{param}} to {param}
+
         // Extract path params from URL
         const urlPathParams = extractPathParamsFromUrl(cleanUrl);
-        
-        // Normalize URL to use {param} format
-        cleanUrl = cleanUrl.replace(/:(\w+)/g, '{$1}');
         
         endpoints.push({
           file: item,
