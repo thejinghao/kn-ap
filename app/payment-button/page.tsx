@@ -166,6 +166,7 @@ export default function PaymentButtonPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mountedButtonRef = useRef<any>(null);
   const sdkMountIdRef = useRef<string>('klarna-sdk-mount');
+  const finalAuthInProgressRef = useRef(false);
 
   // ============================================================================
   // EVENT LOGGING
@@ -302,6 +303,13 @@ export default function PaymentButtonPage() {
     // Handle payment completion
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
+      // Deduplicate: SDK may fire 'complete' twice
+      if (finalAuthInProgressRef.current) {
+        logEvent('Duplicate Complete Event (ignored)', 'warning');
+        return true;
+      }
+      finalAuthInProgressRef.current = true;
+
       logEvent('Payment Complete Event', 'success', {
         paymentRequestId: paymentRequest.paymentRequestId,
         state: paymentRequest.state,
@@ -626,6 +634,7 @@ export default function PaymentButtonPage() {
     presentationRef.current = null;
     setKlarna(null);
     sdkInitializedRef.current = false;
+    finalAuthInProgressRef.current = false;
     clearSdkMount();
     logEvent('Flow Reset', 'info');
   }, [logEvent, clearSdkMount]);
