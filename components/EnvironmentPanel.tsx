@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ChevronDownIcon,
   PlusIcon,
@@ -136,6 +136,18 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
     const baseVar = variablesMap[name];
     return baseVar?.source === 'vercel' || baseVar?.source === 'env_file';
   };
+
+  // Close import modal with ESC key
+  useEffect(() => {
+    function handleEscKey(event: KeyboardEvent) {
+      if (event.key === 'Escape' && showImportModal) {
+        setShowImportModal(false);
+        setImportContent('');
+      }
+    }
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [showImportModal]);
 
   if (isLoading) {
     if (isModal) {

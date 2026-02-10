@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -15,6 +15,7 @@ import {
 import RequestForm from '@/components/RequestForm';
 import CallHistoryPanel from '@/components/CallHistoryPanel';
 import { useEnvironment } from '@/lib/env-context';
+import { staticEndpointPresets } from '@/lib/klarna-endpoints';
 
 // Inner component that uses environment context
 function HomeContent() {
@@ -51,8 +52,8 @@ function HomeContent() {
         // If bodyTemplate is already a formatted string, use it directly
         // Otherwise, stringify it with formatting
         setBody(
-          typeof preset.bodyTemplate === 'string' 
-            ? preset.bodyTemplate 
+          typeof preset.bodyTemplate === 'string'
+            ? preset.bodyTemplate
             : JSON.stringify(preset.bodyTemplate, null, 2)
         );
       } else {
@@ -91,6 +92,19 @@ function HomeContent() {
       setHeaders([]);
     }
   }, []);
+
+  // Read endpoint from sessionStorage on component mount (for navigation from account structure pages)
+  useEffect(() => {
+    const endpointId = sessionStorage.getItem('selectedEndpointId');
+    if (endpointId) {
+      const endpoint = staticEndpointPresets.find(e => e.id === endpointId);
+      if (endpoint) {
+        handleSelectEndpoint(endpoint);
+      }
+      // Clear sessionStorage to prevent reapplication on refresh
+      sessionStorage.removeItem('selectedEndpointId');
+    }
+  }, [handleSelectEndpoint]);
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {

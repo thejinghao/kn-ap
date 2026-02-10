@@ -134,6 +134,54 @@ export const staticEndpointPresets: EndpointPreset[] = [
       },
     },
   },
+  {
+    id: 'get-client-id',
+    name: 'Read a Client Identifier',
+    description: 'Read a specific client identifier',
+    method: 'GET',
+    endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client identifier ID',
+        required: true,
+      },
+    ],
+  },
+  {
+    id: 'update-client-id',
+    name: 'Update a Client Identifier',
+    description: 'Update a client identifier',
+    method: 'PATCH',
+    endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client identifier ID',
+        required: true,
+      },
+    ],
+    bodyTemplate: {
+      description: 'Updated description',
+    },
+  },
+  {
+    id: 'disable-client-id',
+    name: 'Disable a Client Identifier',
+    description: 'Disable a client identifier',
+    method: 'DELETE',
+    endpoint: '/v2/account/integration/credentials/client-identifier/:credential_id',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client identifier ID',
+        required: true,
+      },
+    ],
+  },
 
   // Client Certificates
   {
@@ -160,11 +208,96 @@ export const staticEndpointPresets: EndpointPreset[] = [
     },
   },
   {
+    id: 'create-jwt-certificate',
+    name: 'Create JWT Signing Certificate',
+    description: 'Create a new JWT signing client certificate',
+    method: 'POST',
+    endpoint: '/v2/account/integration/credentials/client-certificate',
+    category: 'credentials',
+    bodyTemplate: {
+      description: 'JWT Signing Certificate',
+      config: {
+        usage: 'JWT_SIGNING',
+        certificate_signing_request: '-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----',
+      },
+    },
+  },
+  {
+    id: 'get-client-certificate',
+    name: 'Read a Client Certificate',
+    description: 'Read the data for a specific client certificate',
+    method: 'GET',
+    endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client certificate ID',
+        required: true,
+      },
+    ],
+  },
+  {
+    id: 'update-client-certificate',
+    name: 'Update a Client Certificate',
+    description: 'Update a client certificate',
+    method: 'PATCH',
+    endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client certificate ID',
+        required: true,
+      },
+    ],
+    bodyTemplate: {
+      description: 'Updated description',
+    },
+  },
+  {
+    id: 'revoke-client-certificate',
+    name: 'Revoke a Client Certificate',
+    description: 'Revoke a client certificate',
+    method: 'POST',
+    endpoint: '/v2/account/integration/credentials/client-certificate/:credential_id/revoke',
+    category: 'credentials',
+    pathParams: [
+      {
+        name: 'credential_id',
+        description: 'The client certificate ID',
+        required: true,
+      },
+    ],
+    bodyTemplate: {
+      revoked_from: new Date().toISOString(),
+    },
+  },
+  {
     id: 'mtls-enforcement-status',
     name: 'Read mTLS Enforcement Status',
     description: 'Check if mTLS authorization is enforced',
     method: 'GET',
     endpoint: '/v2/account/integration/credentials/client-certificate/mtls-enforcement',
+    category: 'credentials',
+  },
+  {
+    id: 'enforce-mtls',
+    name: 'Enforce MTLS Authorization',
+    description: 'Enable mTLS authorization enforcement',
+    method: 'PUT',
+    endpoint: '/v2/account/integration/client-certificates/enforcement',
+    category: 'credentials',
+    bodyTemplate: {
+      enforced_from: 'NOW',
+    },
+  },
+  {
+    id: 'remove-mtls-enforcement',
+    name: 'Remove MTLS Enforcement',
+    description: 'Remove enforcement of mTLS authorization',
+    method: 'DELETE',
+    endpoint: '/v2/account/integration/client-certificates/enforcement',
     category: 'credentials',
   },
 
@@ -402,12 +535,119 @@ export const staticEndpointPresets: EndpointPreset[] = [
     },
   },
   {
+    id: 'get-webhook',
+    name: 'Get Webhook',
+    description: 'Get a specific webhook',
+    method: 'GET',
+    endpoint: '/v2/notification/webhooks/:webhook_id',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'webhook_id',
+        description: 'The webhook ID',
+        required: true,
+      },
+    ],
+  },
+  {
+    id: 'update-webhook',
+    name: 'Update Webhook',
+    description: 'Update a webhook subscription',
+    method: 'PATCH',
+    endpoint: '/v2/notification/webhooks/:webhook_id',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'webhook_id',
+        description: 'The webhook ID',
+        required: true,
+      },
+    ],
+    bodyTemplate: {
+      url: 'https://your-webhook-endpoint.com/klarna',
+      event_types: ['payment.request.*', 'payment.dispute.*'],
+      status: 'ENABLED',
+    },
+  },
+  {
+    id: 'delete-webhook',
+    name: 'Delete Webhook',
+    description: 'Delete a webhook subscription',
+    method: 'DELETE',
+    endpoint: '/v2/notification/webhooks/:webhook_id',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'webhook_id',
+        description: 'The webhook ID',
+        required: true,
+      },
+    ],
+  },
+  {
+    id: 'simulate-webhook',
+    name: 'Simulate Webhook',
+    description: 'Simulate a webhook event for testing',
+    method: 'POST',
+    endpoint: '/v2/notification/webhooks/:webhook_id/simulate',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'webhook_id',
+        description: 'The webhook ID',
+        required: true,
+      },
+    ],
+    bodyTemplate: {
+      event_type: 'payment.request.state-change.completed',
+      event_version: 'v2',
+    },
+  },
+  {
     id: 'list-signing-keys',
     name: 'List Signing Keys',
     description: 'Get webhook signing keys',
     method: 'GET',
-    endpoint: '/v2/account/integration/notifications/signing-keys',
+    endpoint: '/v2/notification/signing-keys',
     category: 'webhooks',
+  },
+  {
+    id: 'create-signing-key',
+    name: 'Create Signing Key',
+    description: 'Create a new signing key for webhooks',
+    method: 'POST',
+    endpoint: '/v2/notification/signing-keys',
+    category: 'webhooks',
+  },
+  {
+    id: 'get-signing-key',
+    name: 'Get Signing Key',
+    description: 'Get a specific signing key',
+    method: 'GET',
+    endpoint: '/v2/notification/signing-keys/:signing_key_id',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'signing_key_id',
+        description: 'The signing key ID',
+        required: true,
+      },
+    ],
+  },
+  {
+    id: 'delete-signing-key',
+    name: 'Delete Signing Key',
+    description: 'Delete a signing key',
+    method: 'DELETE',
+    endpoint: '/v2/notification/signing-keys/:signing_key_id',
+    category: 'webhooks',
+    pathParams: [
+      {
+        name: 'signing_key_id',
+        description: 'The signing key ID',
+        required: true,
+      },
+    ],
   },
 
   // ========== Settlements ==========

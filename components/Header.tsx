@@ -38,6 +38,17 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close environment panel with ESC key
+  useEffect(() => {
+    function handleEscKey(event: KeyboardEvent) {
+      if (event.key === 'Escape' && showEnvPanel) {
+        setShowEnvPanel(false);
+      }
+    }
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [showEnvPanel]);
+
   const isStructurePage = pathname?.startsWith('/account_structure');
   const isPaymentsPage = pathname?.startsWith('/payment-button');
 

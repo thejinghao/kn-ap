@@ -13,6 +13,8 @@ import ReactFlow, {
   Position,
   Handle,
   NodeProps,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -88,7 +90,10 @@ function convertToReactFlow(
   const nodes: Node[] = entities.map((entity) => ({
     id: entity.id,
     type: 'entity',
-    data: entity,
+    data: {
+      ...entity,
+      name: entity.displayNameByView?.[view] ?? entity.name,
+    },
     position: positions[entity.id] || { x: 0, y: 0 },
   }));
 
@@ -131,11 +136,12 @@ interface KlarnaNetworkDiagramProps {
   onEntitySelect: (entity: NetworkEntity | null) => void;
 }
 
-export default function KlarnaNetworkDiagram({
+function KlarnaNetworkDiagramInner({
   view,
   selectedEntityId,
   onEntitySelect,
 }: KlarnaNetworkDiagramProps) {
+  const reactFlowInstance = useReactFlow();
   const entities = useMemo(() => getEntitiesForView(view), [view]);
   const relationships = useMemo(() => getRelationshipsForView(view), [view]);
 
@@ -164,6 +170,19 @@ export default function KlarnaNetworkDiagram({
     );
   }, [selectedEntityId, setNodes]);
 
+  // Custom fitView based on view type
+  useEffect(() => {
+    if (reactFlowInstance) {
+      setTimeout(() => {
+        reactFlowInstance.fitView({
+          padding: 0.2,
+          maxZoom: view === 'partner' ? 0.65 : 1.5,
+          duration: 200,
+        });
+      }, 0);
+    }
+  }, [view, nodes, reactFlowInstance]);
+
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
       const entity = entities.find((e) => e.id === node.id);
@@ -186,11 +205,6 @@ export default function KlarnaNetworkDiagram({
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{
-          padding: 0.2,
-          maxZoom: 1.5,
-        }}
         minZoom={0.3}
         maxZoom={2}
         defaultEdgeOptions={{
@@ -207,5 +221,13 @@ export default function KlarnaNetworkDiagram({
         />
       </ReactFlow>
     </div>
+  );
+}
+
+export default function KlarnaNetworkDiagram(props: KlarnaNetworkDiagramProps) {
+  return (
+    <ReactFlowProvider>
+      <KlarnaNetworkDiagramInner {...props} />
+    </ReactFlowProvider>
   );
 }

@@ -129,6 +129,7 @@ export default function AccountStructurePage() {
           {isPanelOpen && (
             <EntityDetailPanel
               entity={selectedEntity}
+              view={view}
               onClose={handleClosePanel}
               onEndpointClick={handleEndpointClick}
             />

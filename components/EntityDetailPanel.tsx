@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { 
+  ViewType,
   NetworkEntity, 
   entityColors, 
   getRelatedEndpoints 
@@ -20,6 +21,7 @@ import {
 
 interface EntityDetailPanelProps {
   entity: NetworkEntity | null;
+  view?: ViewType;
   onClose: () => void;
   onEndpointClick?: (endpoint: EndpointPreset) => void;
 }
@@ -51,6 +53,7 @@ const operationColors: Record<string, string> = {
 
 export default function EntityDetailPanel({ 
   entity, 
+  view,
   onClose,
   onEndpointClick 
 }: EntityDetailPanelProps) {
@@ -101,7 +104,7 @@ export default function EntityDetailPanel({
             className="text-lg font-semibold truncate"
             style={{ color: colors.text }}
           >
-            {entity.name}
+            {view && entity.displayNameByView?.[view] ?? entity.name}
           </h3>
         </div>
         <button
@@ -186,12 +189,6 @@ export default function EntityDetailPanel({
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {endpoints.length === 0 && (
-          <div className="text-sm text-gray-500 italic">
-            No direct endpoints for this entity
           </div>
         )}
       </div>
