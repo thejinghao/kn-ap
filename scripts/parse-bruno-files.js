@@ -269,33 +269,153 @@ function generateTypeScriptCode(endpoints) {
   console.log(`\nDetailed output written to: ${outputPath}`);
 }
 
+/**
+ * Validate static endpoint definitions against Bruno-parsed endpoints.
+ * Compares URLs by normalizing both and matching on method + name similarity.
+ */
+function validateStaticEndpoints(brunoEndpoints) {
+  // Load static endpoints by requiring the compiled TypeScript
+  // We'll read the source files directly and extract endpoint strings
+  const staticFiles = [
+    'credentials.ts', 'accounts.ts', 'onboarding.ts',
+    'payments.ts', 'webhooks.ts', 'settlements.ts',
+  ];
+
+  const staticEndpoints = [];
+  const endpointRegex = /endpoint:\s*['"]([^'"]+)['"]/g;
+  const nameRegex = /name:\s*['"]([^'"]+)['"]/g;
+  const methodRegex = /method:\s*['"]([^'"]+)['"]/g;
+
+  for (const file of staticFiles) {
+    const filePath = path.join(__dirname, '../lib/endpoints', file);
+    if (!fs.existsSync(filePath)) continue;
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    // Split into individual endpoint blocks by '{' after array items
+    const blocks = content.split(/\n\s*\{/).slice(1);
+
+    for (const block of blocks) {
+      const epMatch = block.match(/endpoint:\s*['"]([^'"]+)['"]/);
+      const nameMatch = block.match(/name:\s*['"]([^'"]+)['"]/);
+      const methodMatch = block.match(/method:\s*['"]([^'"]+)['"]/);
+
+      if (epMatch && nameMatch) {
+        // Normalize :param to {param} for comparison
+        const normalizedEndpoint = epMatch[1].replace(/:(\w+)/g, '{$1}');
+        staticEndpoints.push({
+          name: nameMatch[1],
+          method: methodMatch ? methodMatch[1] : 'GET',
+          endpoint: normalizedEndpoint,
+          file,
+        });
+      }
+    }
+  }
+
+  // Build a lookup of Bruno endpoints by normalized path
+  const brunoByPath = new Map();
+  for (const ep of brunoEndpoints) {
+    const key = `${ep.method} ${ep.endpoint}`;
+    brunoByPath.set(key, ep);
+    // Also index by endpoint path alone for fuzzy matching
+    if (!brunoByPath.has(ep.endpoint)) {
+      brunoByPath.set(ep.endpoint, ep);
+    }
+  }
+
+  console.log('\n=== Validation: Static vs Bruno Endpoints ===\n');
+
+  let mismatches = 0;
+  let matches = 0;
+  let notFound = 0;
+
+  for (const staticEp of staticEndpoints) {
+    const exactKey = `${staticEp.method} ${staticEp.endpoint}`;
+
+    if (brunoByPath.has(exactKey)) {
+      matches++;
+      continue;
+    }
+
+    // Try to find a Bruno endpoint with the same method and similar name
+    const brunoMatch = brunoEndpoints.find(bep => {
+      if (bep.method !== staticEp.method) return false;
+      const bName = bep.name.toLowerCase();
+      const sName = staticEp.name.toLowerCase();
+      return bName.includes(sName) || sName.includes(bName) ||
+        bName.replace(/\s+/g, '').includes(sName.replace(/\s+/g, ''));
+    });
+
+    if (brunoMatch) {
+      if (brunoMatch.endpoint !== staticEp.endpoint) {
+        mismatches++;
+        console.log(`MISMATCH [${staticEp.file}] ${staticEp.name} (${staticEp.method})`);
+        console.log(`  Static: ${staticEp.endpoint}`);
+        console.log(`  Bruno:  ${brunoMatch.endpoint}`);
+        console.log();
+      } else {
+        matches++;
+      }
+    } else {
+      notFound++;
+      console.log(`NOT IN BRUNO [${staticEp.file}] ${staticEp.name} (${staticEp.method} ${staticEp.endpoint})`);
+    }
+  }
+
+  console.log(`\nResults: ${matches} matching, ${mismatches} mismatched, ${notFound} not in Bruno`);
+
+  if (mismatches > 0) {
+    console.log('\n⚠ Fix mismatches by updating the static endpoint URLs to match the Bruno .bru files.');
+    process.exit(1);
+  }
+}
+
 // Main execution
 console.log('Parsing Bruno API collection files...\n');
-console.log(`Scanning directory: ${BRUNO_DIR}\n`);
 
-const endpoints = scanDirectory(BRUNO_DIR);
-generateTypeScriptCode(endpoints);
+// Scan all API directories in the collection, not just Management API
+const allEndpoints = [];
+if (fs.existsSync(COLLECTION_DIR)) {
+  const apiDirs = fs.readdirSync(COLLECTION_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory() && d.name !== 'environments');
 
-// Also parse and output environment variables
-console.log('\n=== Environment Variables ===\n');
-const envVars = loadBrunoEnvFile();
-
-if (envVars) {
-  console.log(`Found ${Object.keys(envVars).length} environment variables:\n`);
-  
-  Object.entries(envVars).forEach(([key, value]) => {
-    // Mask secret values for display
-    const secretPatterns = /api_key|secret|password|token|credential|private|cert|key$/i;
-    const displayValue = secretPatterns.test(key) 
-      ? value.substring(0, 10) + '...' 
-      : value;
-    console.log(`  ${key}: ${displayValue}`);
-  });
-  
-  // Write environment variables to JSON file
-  const envOutputPath = path.join(__dirname, 'parsed-env.json');
-  fs.writeFileSync(envOutputPath, JSON.stringify(envVars, null, 2));
-  console.log(`\nEnvironment variables written to: ${envOutputPath}`);
+  for (const dir of apiDirs) {
+    const dirPath = path.join(COLLECTION_DIR, dir.name);
+    console.log(`Scanning: ${dir.name}`);
+    const dirEndpoints = scanDirectory(dirPath);
+    allEndpoints.push(...dirEndpoints);
+  }
 } else {
-  console.log('No environment variables found.');
+  console.log(`Scanning directory: ${BRUNO_DIR}\n`);
+  allEndpoints.push(...scanDirectory(BRUNO_DIR));
+}
+
+if (VALIDATE_MODE) {
+  validateStaticEndpoints(allEndpoints);
+} else {
+  generateTypeScriptCode(allEndpoints);
+
+  // Also parse and output environment variables
+  console.log('\n=== Environment Variables ===\n');
+  const envVars = loadBrunoEnvFile();
+
+  if (envVars) {
+    console.log(`Found ${Object.keys(envVars).length} environment variables:\n`);
+
+    Object.entries(envVars).forEach(([key, value]) => {
+      // Mask secret values for display
+      const secretPatterns = /api_key|secret|password|token|credential|private|cert|key$/i;
+      const displayValue = secretPatterns.test(key)
+        ? value.substring(0, 10) + '...'
+        : value;
+      console.log(`  ${key}: ${displayValue}`);
+    });
+
+    // Write environment variables to JSON file
+    const envOutputPath = path.join(__dirname, 'parsed-env.json');
+    fs.writeFileSync(envOutputPath, JSON.stringify(envVars, null, 2));
+    console.log(`\nEnvironment variables written to: ${envOutputPath}`);
+  } else {
+    console.log('No environment variables found.');
+  }
 }
