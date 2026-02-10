@@ -197,9 +197,9 @@ export default function OnSiteMessagingPage() {
   const [cssPanelOpen, setCssPanelOpen] = useState(true);
 
   // SDK config
-  const [partnerMode, setPartnerMode] = useState(true);
+  const [partnerMode, setPartnerMode] = useState(false);
   const [partnerAccountId, setPartnerAccountId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [clientId, setClientId] = useState(DEFAULT_SUB_PARTNER_CLIENT_ID);
   const [sdkToken, setSdkToken] = useState('');
 
   // Payment config
@@ -606,26 +606,6 @@ export default function OnSiteMessagingPage() {
 
   return (
     <div className={styles.container}>
-      {/* Info Banner */}
-      <div className={styles.infoBanner}>
-        <div className={styles.infoIcon}>ℹ️</div>
-        <div className={styles.infoContent}>
-          {partnerMode ? (
-            <>
-              <strong>Acquiring Partner:</strong> To use this demo, the partner account must be onboarded with{' '}
-              <code>store_groups[].stores[].type = WEBSITE</code> and <code>store_groups[].stores[].url</code> set to{' '}
-              <code>{currentOrigin || 'this origin'}</code>
-            </>
-          ) : (
-            <>
-              <strong>Sub Partner:</strong> To use this demo, <code>{currentOrigin || 'this origin'}</code> must be
-              registered as an allowed origin in the Klarna Partner Portal. Navigate to Settings → Client Identifier →
-              Allowed Origins.
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Main Row - Placement + Observer */}
       <div className={styles.mainRow} style={{ marginBottom: 20 }}>
         {/* Placement Display */}
@@ -688,7 +668,7 @@ export default function OnSiteMessagingPage() {
                   />
                   <span className={styles.toggleSlider} />
                 </label>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>Acquiring Partner Mode</span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{partnerMode ? 'Acquiring Partner Mode' : 'Sub-Partner Mode'}</span>
               </div>
 
               {partnerMode && (
@@ -724,6 +704,24 @@ export default function OnSiteMessagingPage() {
                   value={sdkToken}
                   onChange={(e) => setSdkToken(e.target.value)}
                 />
+              </div>
+
+              <div className={styles.infoBanner} style={{ marginTop: 8, marginBottom: 0 }}>
+                <div className={styles.infoIcon}>ℹ️</div>
+                <div className={styles.infoContent}>
+                  {partnerMode ? (
+                    <>
+                      The partner account must be onboarded with{' '}
+                      <code>store_groups[].stores[].type = WEBSITE</code> and <code>store_groups[].stores[].url</code> set to{' '}
+                      <code>{currentOrigin || 'this origin'}</code>
+                    </>
+                  ) : (
+                    <>
+                      <code>{currentOrigin || 'this origin'}</code> must be registered as an allowed origin in the
+                      Klarna Partner Portal. Navigate to Settings → Client Identifier → Allowed Origins.
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
