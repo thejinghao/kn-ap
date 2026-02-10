@@ -12,6 +12,7 @@ import {
   DocumentTextIcon,
   CreditCardIcon,
   ChatBubbleBottomCenterTextIcon,
+  ServerIcon,
 } from '@heroicons/react/24/outline';
 import EnvironmentPanel from './EnvironmentPanel';
 import { useEnvironment } from '@/lib/env-context';
@@ -51,7 +52,7 @@ export default function Header() {
   }, [showEnvPanel]);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
-  const isPaymentsPage = pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/on-site-messaging');
+  const isPaymentsPage = pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/server-side') || pathname?.startsWith('/on-site-messaging');
 
   return (
     <>
@@ -148,6 +149,21 @@ export default function Header() {
                         <div>
                           <div className="font-medium">AP Hosted</div>
                           <div className="text-xs text-gray-500">Klarna payment button integration</div>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/server-side"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/server-side'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ServerIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Server-side</div>
+                          <div className="text-xs text-gray-500">Sub-partner payment integration</div>
                         </div>
                       </Link>
                       <Link

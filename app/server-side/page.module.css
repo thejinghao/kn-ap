@@ -1,0 +1,72 @@
+/* Server-side Payment - Minimal CSS Module
+   Only styles requiring pseudo-elements or complex transitions.
+   All other styling uses Tailwind classes for consistency with the site theme. */
+
+/* ========================================================================
+   TOGGLE SWITCH - Requires pseudo-elements
+   ======================================================================== */
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #D1D5DB;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggleSlider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggleSwitch input:checked + .toggleSlider {
+  background: #111827;
+}
+
+.toggleSwitch input:checked + .toggleSlider::before {
+  transform: translateX(20px);
+}
+
+/* ========================================================================
+   COLLAPSIBLE SECTIONS - Max-height transition animation
+   ======================================================================== */
+.collapsibleContent {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+}
+
+.collapseIcon {
+  transition: transform 0.3s;
+}
+
+.collapseIconRotated {
+  transform: rotate(-90deg);
+}
