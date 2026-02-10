@@ -174,6 +174,7 @@ function HomeContent() {
     // Add to history (at the beginning for chronological order - newest first)
     addCall(pendingEntry);
     setIsLoading(true);
+    setIsFormCollapsed(true);
 
     try {
       // Build headers from the headers array (both required and custom)
