@@ -316,8 +316,16 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
         delete next[name];
         return next;
       });
+      // Sync reset to DB
+      if (dbAvailable) {
+        fetch('/api/db/variables', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        }).catch(() => {});
+      }
     }
-  }, [baseVariables]);
+  }, [baseVariables, dbAvailable]);
   
   // Get all variables as an array
   const getAllVariables = useCallback((): EnvironmentVariable[] => {
@@ -328,13 +336,13 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
       // Check if overridden by user
       const userOverride = userVariables[name];
       if (userOverride) {
-        // Show user override with indication it overrides base default
         allVars.push({
           ...userOverride,
-          description: userOverride.description || `Overrides default`,
+          isOverridden: true,
+          baseSource: variable.source,
         });
       } else {
-        allVars.push(variable);
+        allVars.push({ ...variable, isOverridden: false });
       }
     }
     

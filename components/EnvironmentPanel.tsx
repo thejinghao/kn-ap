@@ -16,20 +16,19 @@ import {
 import { useEnvironment } from '@/lib/env-context';
 import { EnvironmentVariable } from '@/lib/types';
 
-// Source badge colors
-const SOURCE_STYLES: Record<string, string> = {
-  vercel: 'bg-black text-white',
-  env_file: 'bg-purple-100 text-purple-700',
-  user: 'bg-blue-100 text-blue-700',
-  response: 'bg-green-100 text-green-700',
-};
-
-const SOURCE_LABELS: Record<string, string> = {
-  vercel: 'Vercel',
-  env_file: 'EnvFile',
-  user: 'User',
-  response: 'Response',
-};
+// Compute display label and style from variable state
+function getSourceDisplay(variable: EnvironmentVariable) {
+  if (variable.isOverridden) {
+    return { label: 'Modified', style: 'bg-amber-100 text-amber-700' };
+  }
+  if (variable.source === 'vercel' || variable.source === 'env_file') {
+    return { label: 'Default', style: 'bg-purple-100 text-purple-700' };
+  }
+  if (variable.source === 'response') {
+    return { label: 'Response', style: 'bg-green-100 text-green-700' };
+  }
+  return { label: 'Custom', style: 'bg-blue-100 text-blue-700' };
+}
 
 interface EditingState {
   name: string;
@@ -130,12 +129,6 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
       setShowImportModal(false);
     }
   }, [importContent, importEnvFile]);
-
-  // Check if a variable has a base default (from Vercel or .env.local)
-  const isBaseDefault = (name: string): boolean => {
-    const baseVar = variablesMap[name];
-    return baseVar?.source === 'vercel' || baseVar?.source === 'env_file';
-  };
 
   // Close import modal with ESC key
   useEffect(() => {
@@ -283,8 +276,8 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                             {variable.name}
                           </td>
                           <td className="px-3 py-1.5">
-                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${SOURCE_STYLES[variable.source]}`}>
-                              {SOURCE_LABELS[variable.source]}
+                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getSourceDisplay(variable).style}`}>
+                              {getSourceDisplay(variable).label}
                             </span>
                           </td>
                           <td className="px-3 py-1.5">
@@ -321,8 +314,8 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                             {variable.name}
                           </td>
                           <td className="px-3 py-1.5">
-                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${SOURCE_STYLES[variable.source]}`}>
-                              {SOURCE_LABELS[variable.source]}
+                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getSourceDisplay(variable).style}`}>
+                              {getSourceDisplay(variable).label}
                             </span>
                           </td>
                           <td className="px-3 py-1.5 font-mono text-xs text-gray-600 max-w-[300px] truncate" title={variable.value}>
@@ -337,7 +330,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                               >
                                 <PencilIcon className="h-4 w-4" />
                               </button>
-                              {variable.source !== 'vercel' && variable.source !== 'env_file' && (
+                              {!variable.isOverridden && variable.source !== 'vercel' && variable.source !== 'env_file' && (
                                 <button
                                   onClick={() => deleteVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -346,7 +339,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               )}
-                              {variable.source === 'user' && isBaseDefault(variable.name) && (
+                              {variable.isOverridden && (
                                 <button
                                   onClick={() => resetVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
@@ -552,8 +545,8 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                             {variable.name}
                           </td>
                           <td className="px-3 py-1.5">
-                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${SOURCE_STYLES[variable.source]}`}>
-                              {SOURCE_LABELS[variable.source]}
+                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getSourceDisplay(variable).style}`}>
+                              {getSourceDisplay(variable).label}
                             </span>
                           </td>
                           <td className="px-3 py-1.5">
@@ -590,8 +583,8 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                             {variable.name}
                           </td>
                           <td className="px-3 py-1.5">
-                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${SOURCE_STYLES[variable.source]}`}>
-                              {SOURCE_LABELS[variable.source]}
+                            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getSourceDisplay(variable).style}`}>
+                              {getSourceDisplay(variable).label}
                             </span>
                           </td>
                           <td className="px-3 py-1.5 font-mono text-xs text-gray-600 max-w-[300px] truncate" title={variable.value}>
@@ -606,7 +599,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                               >
                                 <PencilIcon className="h-4 w-4" />
                               </button>
-                              {variable.source !== 'vercel' && variable.source !== 'env_file' && (
+                              {!variable.isOverridden && variable.source !== 'vercel' && variable.source !== 'env_file' && (
                                 <button
                                   onClick={() => deleteVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -615,7 +608,7 @@ export default function EnvironmentPanel({ isModal = false }: EnvironmentPanelPr
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               )}
-                              {variable.source === 'user' && isBaseDefault(variable.name) && (
+                              {variable.isOverridden && (
                                 <button
                                   onClick={() => resetVariable(variable.name)}
                                   className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"

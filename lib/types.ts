@@ -258,6 +258,8 @@ export interface EnvironmentVariable {
   source: EnvironmentVariableSource;
   description?: string;
   isSecret?: boolean;
+  isOverridden?: boolean;
+  baseSource?: EnvironmentVariableSource;
   metadata?: ResponseMetadata;
   usageCount?: number;
   createdAt?: string;
