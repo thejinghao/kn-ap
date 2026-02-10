@@ -386,9 +386,13 @@ export default function PaymentButtonPage() {
                           paymentRequest.stateContext?.klarnaNetworkSessionToken;
 
       if (sessionToken) {
+        // Save token to sessionStorage so final auth survives page redirect
+        try { sessionStorage.setItem('pendingSessionToken', sessionToken); } catch {}
+
         setFlowState('COMPLETING');
         try {
           const finalResult = await authorizePayment(undefined, sessionToken);
+          try { sessionStorage.removeItem('pendingSessionToken'); } catch {}
 
           logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
           logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
@@ -669,6 +673,39 @@ export default function PaymentButtonPage() {
       }
     }
   }, [logEvent]);
+
+  // Resume final authorization after page redirect (session token saved pre-redirect)
+  useEffect(() => {
+    if (!isMounted || !currentOrigin) return;
+
+    const pendingToken = sessionStorage.getItem('pendingSessionToken');
+    if (!pendingToken) return;
+
+    sessionStorage.removeItem('pendingSessionToken');
+    logEvent('Resuming Final Authorization After Redirect', 'info', undefined, 'flow');
+    setFlowState('COMPLETING');
+
+    authorizePayment(undefined, pendingToken)
+      .then(finalResult => {
+        logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request');
+        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response');
+
+        if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+          setFlowState('SUCCESS');
+          setPaymentTransaction(finalResult.data);
+          logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+        } else {
+          throw new Error(finalResult.error || 'Final authorization failed');
+        }
+      })
+      .catch(error => {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        setFlowState('ERROR');
+        setErrorMessage(message);
+        logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response');
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, currentOrigin]);
 
   // Save event log to localStorage whenever it changes
   useEffect(() => {
