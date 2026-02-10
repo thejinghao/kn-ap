@@ -224,6 +224,11 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
+
+  /* Variable Autocomplete Dropdown */
+  .variable-autocomplete-dropdown {
+    z-index: 1000;
+  }
 }
 
 @layer utilities {

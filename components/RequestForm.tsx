@@ -10,6 +10,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { HttpMethod, HeaderEntry, PathParamEntry, EndpointPreset } from '@/lib/types';
 import EndpointSelector from './EndpointSelector';
+import { useEnvironment } from '@/lib/env-context';
+import { AutocompleteInput, AutocompleteTextarea } from './AutocompleteInput';
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'];
 
@@ -53,7 +55,11 @@ export default function RequestForm({
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [pathParamsExpanded, setPathParamsExpanded] = useState(true);
   const [bodyError, setBodyError] = useState<string | null>(null);
-  
+
+  // Get environment variables for autocomplete
+  const { getAllVariables } = useEnvironment();
+  const allVariables = getAllVariables();
+
   // Separate required and custom headers
   const requiredHeaders = headers.filter(h => h.isRequired);
   const customHeaders = headers.filter(h => !h.isRequired);
@@ -230,13 +236,14 @@ export default function RequestForm({
               <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
             </div>
 
-            <input
-              type="text"
+            <AutocompleteInput
               value={path}
-              onChange={(e) => onPathChange(e.target.value)}
+              onChange={onPathChange}
+              variables={allVariables}
               placeholder="/api/v1/..."
               disabled={isLoading}
-              className="flex-1 px-2 py-1.5 text-sm font-mono border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              wrapperClassName="relative flex-1"
+              className="w-full px-2 py-1.5 text-sm font-mono border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -271,10 +278,10 @@ export default function RequestForm({
                         {param.name}
                         {param.required && <span className="text-red-500 ml-1">*</span>}
                       </label>
-                      <input
-                        type="text"
+                      <AutocompleteInput
                         value={param.value}
-                        onChange={(e) => handleUpdatePathParam(param.id, e.target.value)}
+                        onChange={(newValue) => handleUpdatePathParam(param.id, newValue)}
+                        variables={allVariables}
                         placeholder={`Enter ${param.name}`}
                         disabled={isLoading}
                         required={param.required}
@@ -320,10 +327,10 @@ export default function RequestForm({
                           {header.key}
                           <span className="text-red-500 ml-1">*</span>
                         </label>
-                        <input
-                          type="text"
+                        <AutocompleteInput
                           value={header.value}
-                          onChange={(e) => handleUpdateHeader(header.id, 'value', e.target.value)}
+                          onChange={(newValue) => handleUpdateHeader(header.id, 'value', newValue)}
+                          variables={allVariables}
                           placeholder={`Enter ${header.key}`}
                           disabled={isLoading}
                           className="w-full px-2 py-1 text-xs font-mono border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -342,25 +349,21 @@ export default function RequestForm({
                 
                 {customHeaders.map((header) => (
                   <div key={header.id} className="flex items-center gap-1">
-                    <input
-                      type="text"
+                    <AutocompleteInput
                       value={header.key}
-                      onChange={(e) =>
-                        handleUpdateHeader(header.id, 'key', e.target.value)
-                      }
+                      onChange={(newValue) => handleUpdateHeader(header.id, 'key', newValue)}
+                      variables={allVariables}
                       placeholder="Header name"
                       disabled={isLoading}
-                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100"
+                      className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100"
                     />
-                    <input
-                      type="text"
+                    <AutocompleteInput
                       value={header.value}
-                      onChange={(e) =>
-                        handleUpdateHeader(header.id, 'value', e.target.value)
-                      }
+                      onChange={(newValue) => handleUpdateHeader(header.id, 'value', newValue)}
+                      variables={allVariables}
                       placeholder="Header value"
                       disabled={isLoading}
-                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100"
+                      className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:bg-gray-100"
                     />
                     <button
                       type="button"
@@ -402,9 +405,10 @@ export default function RequestForm({
                   Format JSON
                 </button>
               </div>
-              <textarea
+              <AutocompleteTextarea
                 value={body}
-                onChange={(e) => onBodyChange(e.target.value)}
+                onChange={onBodyChange}
+                variables={allVariables}
                 placeholder={'{\n  "key": "value"\n}'}
                 disabled={isLoading}
                 rows={8}
