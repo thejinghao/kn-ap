@@ -32,8 +32,9 @@ function HomeContent() {
   const [pathParams, setPathParams] = useState<PathParamEntry[]>([]);
 
   // UI state
+  type FormDisplayMode = 'collapsed' | 'expanded' | 'fullpage';
   const [isLoading, setIsLoading] = useState(false);
-  const [isFormCollapsed, setIsFormCollapsed] = useState(true);
+  const [formMode, setFormMode] = useState<FormDisplayMode>('collapsed');
 
   // Call history state (persisted to DB with localStorage fallback)
   const { calls: callHistory, addCall, updateCall: updateCallEntry } = useCallHistory();
@@ -117,11 +118,11 @@ function HomeContent() {
     }
   }, [handleSelectEndpoint]);
 
-  // Handle ESC key to collapse form
+  // Handle ESC key to collapse form completely
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsFormCollapsed(true);
+        setFormMode('collapsed');
       }
     };
 
@@ -202,7 +203,7 @@ function HomeContent() {
     // Add to history (at the beginning for chronological order - newest first)
     addCall(pendingEntry);
     setIsLoading(true);
-    setIsFormCollapsed(true);
+    setFormMode('collapsed');
 
     try {
       // Build headers from the headers array (both required and custom)
@@ -275,7 +276,7 @@ function HomeContent() {
   }, [method, path, headers, body, pathParams, selectedEndpoint?.name, substituteVariables, findMissingVariables, addCall, updateCallEntry]);
 
   // Calculate bottom padding for call history based on form state
-  const formHeight = isFormCollapsed ? 65 : 420; // Approximate heights
+  const formHeight = formMode === 'collapsed' ? 65 : formMode === 'fullpage' ? 0 : 420; // Approximate heights
 
   return (
     <div className="h-[calc(100vh-57px)] flex flex-col bg-gray-50">
@@ -294,7 +295,8 @@ function HomeContent() {
         headers={headers}
         body={body}
         isLoading={isLoading}
-        isCollapsed={isFormCollapsed}
+        isCollapsed={formMode === 'collapsed'}
+        isFullPage={formMode === 'fullpage'}
         pathParams={pathParams}
         selectedEndpoint={selectedEndpoint}
         onMethodChange={setMethod}
@@ -303,7 +305,8 @@ function HomeContent() {
         onBodyChange={setBody}
         onPathParamsChange={setPathParams}
         onSubmit={handleSubmit}
-        onToggleCollapse={() => setIsFormCollapsed(!isFormCollapsed)}
+        onToggleCollapse={() => setFormMode(formMode === 'collapsed' ? 'expanded' : 'collapsed')}
+        onToggleFullPage={() => setFormMode(formMode === 'fullpage' ? 'expanded' : 'fullpage')}
         onSelectEndpoint={handleSelectEndpoint}
       />
     </div>

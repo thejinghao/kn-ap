@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { EndpointPreset, HttpMethod } from '@/lib/types';
 
@@ -64,17 +65,27 @@ export default function EndpointSelector({
     loadEndpoints();
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (updated for portaled dropdown)
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      // Check if click is outside both trigger and dropdown
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   // Calculate dropdown position and max height when opening
   useEffect(() => {
@@ -217,7 +228,7 @@ export default function EndpointSelector({
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       {/* Trigger Button */}
       <button
         ref={triggerRef}
@@ -245,17 +256,24 @@ export default function EndpointSelector({
         />
       </button>
 
-      {/* Dropdown Panel - Dynamic Position */}
-      {isOpen && (
-        <div 
-          className={`absolute left-0 right-0 z-50 bg-white border border-gray-300 rounded shadow-lg flex flex-col ${
-            dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
-          }`}
-          style={{ maxHeight: `${maxHeight}px` }}
+      {/* Dropdown Panel - Portaled to body with fixed positioning */}
+      {isOpen && triggerRef.current && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[60] bg-white border border-gray-300 rounded shadow-lg flex flex-col"
+          style={{
+            left: `${triggerRef.current.getBoundingClientRect().left}px`,
+            width: `${triggerRef.current.getBoundingClientRect().width}px`,
+            maxHeight: `${maxHeight}px`,
+            ...(dropdownPosition === 'top' ? {
+              bottom: `${window.innerHeight - triggerRef.current.getBoundingClientRect().top + 4}px`
+            } : {
+              top: `${triggerRef.current.getBoundingClientRect().bottom + 4}px`
+            })
+          }}
         >
           {/* Search Header */}
           <div className="p-2 border-b border-gray-200 flex-shrink-0">
-            {/* Search Input */}
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -291,7 +309,8 @@ export default function EndpointSelector({
               Use Custom Endpoint
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
