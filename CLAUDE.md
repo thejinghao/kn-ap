@@ -105,7 +105,9 @@ npm run db:studio     # Open Drizzle Studio GUI
 **Pages:**
 - `app/page.tsx` - API Tester interface (main page)
 - `app/account_structure/page.tsx` - Account structure visualization with network diagram
+- `app/payments/page.tsx` - Payments Integration Guide with sequence diagrams and live mini demos
 - `app/ap-hosted/page.tsx` - AP Hosted payment button demo
+- `app/server-side/page.tsx` - Server-side (sub-partner) payment demo
 - `app/on-site-messaging/page.tsx` - On-Site Messaging demo with placement configuration
 
 **Core Components:**
@@ -113,6 +115,9 @@ npm run db:studio     # Open Drizzle Studio GUI
 - `components/ResponsePanel.tsx` - Response display with JSON viewer
 - `components/EnvironmentPanel.tsx` - Environment variable management
 - `components/KlarnaNetworkDiagram.tsx` - Visual network structure using ReactFlow
+- `components/SequenceDiagram.tsx` - Interactive click-through sequence diagram (CSS Grid + SVG arrows)
+- `components/MiniPaymentDemo.tsx` - Simplified live payment SDK demo (AP Hosted / Server-side modes)
+- `components/MiniOSMDemo.tsx` - Simplified live On-Site Messaging SDK demo
 
 **API Integration:**
 - `lib/endpoints/` - Endpoint preset definitions split by category (credentials, accounts, onboarding, payments, webhooks, settlements)

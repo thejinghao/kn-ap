@@ -13,6 +13,7 @@ import {
   CreditCardIcon,
   ChatBubbleBottomCenterTextIcon,
   ServerIcon,
+  BookOpenIcon,
 } from '@heroicons/react/24/outline';
 import EnvironmentPanel from './EnvironmentPanel';
 import { useEnvironment } from '@/lib/env-context';
@@ -52,7 +53,7 @@ export default function Header() {
   }, [showEnvPanel]);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
-  const isPaymentsPage = pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/server-side') || pathname?.startsWith('/on-site-messaging');
+  const isPaymentsPage = pathname?.startsWith('/payments') || pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/server-side') || pathname?.startsWith('/on-site-messaging');
 
   return (
     <>
@@ -136,6 +137,22 @@ export default function Header() {
                   
                   {showPaymentsMenu && (
                     <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <Link
+                        href="/payments"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/payments'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <BookOpenIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Integration Guide</div>
+                          <div className="text-xs text-gray-500">Overview of all payment flows</div>
+                        </div>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1" />
                       <Link
                         href="/ap-hosted"
                         onClick={() => setShowPaymentsMenu(false)}
