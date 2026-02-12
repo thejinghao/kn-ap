@@ -123,7 +123,7 @@ export default function AccountStructurePage() {
         <div 
           className={`
             border-l bg-white transition-all duration-300 ease-in-out
-            ${isPanelOpen ? 'w-80' : 'w-0'}
+            ${isPanelOpen ? 'w-[420px]' : 'w-0'}
           `}
         >
           {isPanelOpen && (
