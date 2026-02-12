@@ -97,6 +97,9 @@ const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 // localStorage key for event log persistence (separate from ap-hosted)
 const EVENT_LOG_STORAGE_KEY = 'klarna-sub-partner-payment-event-log';
 
+const OSM_CLIENT_ID = 'klarna_test_client_L0ZwWW55akg3MjUzcmgyP1RuP3A_KEdIJFBINUxzZXMsOGU5M2NmZGItNmFiOC00ZjQ3LWFhMGMtZDI4NTE1OGU0MTNmLDEsQ3VNRmtmdlpHd1VIRmdDT1Q0Zkh2ZkJ1YkxETy9ZTGFiYUZvYVJ4ZTAyYz0';
+const OSM_PLACEMENT_KEY = 'credit-promotion-auto-size';
+
 const inputClasses = 'w-full border border-gray-300 rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
 
 const PRODUCT_CATALOG: CatalogItem[] = [
@@ -257,6 +260,10 @@ export default function ServerSidePaymentPage() {
   const finalAuthInProgressRef = useRef(false);
   const cartTotalRef = useRef(cartTotal);
   const allLineItemsRef = useRef(allLineItems);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const osmKlarnaRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const osmPlacementRef = useRef<any>(null);
 
   // ============================================================================
   // CART MANIPULATION
@@ -652,6 +659,27 @@ export default function ServerSidePaymentPage() {
       const presentationResult = await getPresentation(klarnaInstance);
       mountPaymentButton(presentationResult);
 
+      // Initialize On-Site Messaging (separate SDK instance)
+      try {
+        const osmKlarna = await KlarnaSDK({
+          clientId: OSM_CLIENT_ID,
+          products: ['MESSAGING'],
+        });
+        osmKlarnaRef.current = osmKlarna;
+
+        const placement = osmKlarna.Messaging.placement({
+          key: OSM_PLACEMENT_KEY,
+          amount: cartTotalRef.current,
+          locale: DEFAULT_CONFIG.locale,
+          theme: 'default',
+          id: 'klarna-osm-placement',
+        });
+        osmPlacementRef.current = placement;
+        placement.mount('#klarna-osm-placement');
+      } catch (osmError) {
+        console.error('OSM initialization failed:', osmError);
+      }
+
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setFlowState('ERROR');
@@ -685,6 +713,29 @@ export default function ServerSidePaymentPage() {
   useEffect(() => {
     allLineItemsRef.current = allLineItems;
   }, [allLineItems]);
+
+  // Update OSM placement when cart total changes
+  useEffect(() => {
+    if (!osmKlarnaRef.current || !osmPlacementRef.current) return;
+
+    try {
+      osmPlacementRef.current.unmount();
+    } catch {}
+
+    try {
+      const placement = osmKlarnaRef.current.Messaging.placement({
+        key: OSM_PLACEMENT_KEY,
+        amount: cartTotal,
+        locale: DEFAULT_CONFIG.locale,
+        theme: 'default',
+        id: 'klarna-osm-placement',
+      });
+      osmPlacementRef.current = placement;
+      placement.mount('#klarna-osm-placement');
+    } catch (error) {
+      console.error('OSM update failed:', error);
+    }
+  }, [cartTotal]);
 
   // Auto-regenerate paymentRequestDataJson when cart changes
   useEffect(() => {
@@ -776,6 +827,10 @@ export default function ServerSidePaymentPage() {
       if (existingMount && existingMount.parentNode) {
         existingMount.parentNode.removeChild(existingMount);
       }
+      // Clean up OSM placement
+      if (osmPlacementRef.current) {
+        try { osmPlacementRef.current.unmount(); } catch {}
+      }
     };
   }, []);
 
@@ -793,6 +848,12 @@ export default function ServerSidePaymentPage() {
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
     clearSdkMount();
+    // Clean up OSM
+    if (osmPlacementRef.current) {
+      try { osmPlacementRef.current.unmount(); } catch {}
+      osmPlacementRef.current = null;
+    }
+    osmKlarnaRef.current = null;
     setCartItems([
       { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
       { catalogItem: PRODUCT_CATALOG[1], quantity: 1 },
@@ -1147,6 +1208,12 @@ export default function ServerSidePaymentPage() {
                       />
                     </div>
                   </div>
+
+                  {/* On-Site Messaging */}
+                  <div
+                    id="klarna-osm-placement"
+                    style={{ width: '100%', marginTop: '8px' }}
+                  />
                 </div>
               </>
             )}

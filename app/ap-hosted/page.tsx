@@ -97,6 +97,9 @@ const DEFAULT_PARTNER_ACCOUNT_ID = 'krn:partner:global:account:test:MKPMV6MS';
 // localStorage key for event log persistence
 const EVENT_LOG_STORAGE_KEY = 'klarna-payment-button-event-log';
 
+const OSM_CLIENT_ID = 'klarna_test_client_L0ZwWW55akg3MjUzcmgyP1RuP3A_KEdIJFBINUxzZXMsOGU5M2NmZGItNmFiOC00ZjQ3LWFhMGMtZDI4NTE1OGU0MTNmLDEsQ3VNRmtmdlpHd1VIRmdDT1Q0Zkh2ZkJ1YkxETy9ZTGFiYUZvYVJ4ZTAyYz0';
+const OSM_PLACEMENT_KEY = 'credit-promotion-auto-size';
+
 const inputClasses = 'w-full border border-gray-300 rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400';
 
 const PRODUCT_CATALOG: CatalogItem[] = [
@@ -198,7 +201,8 @@ export default function PaymentButtonPage() {
   // Configuration State
   const [clientId, setClientId] = useState(DEFAULT_CLIENT_ID);
   const [partnerAccountId, setPartnerAccountId] = useState(DEFAULT_PARTNER_ACCOUNT_ID);
-  
+  const [sessionToken, setSessionToken] = useState('');
+
   // Flow State
   const [flowState, setFlowState] = useState<FlowState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -251,6 +255,10 @@ export default function PaymentButtonPage() {
   const finalAuthInProgressRef = useRef(false);
   const cartTotalRef = useRef(cartTotal);
   const allLineItemsRef = useRef(allLineItems);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const osmKlarnaRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const osmPlacementRef = useRef<any>(null);
 
   // ============================================================================
   // CART MANIPULATION
@@ -656,7 +664,10 @@ export default function PaymentButtonPage() {
 
     setFlowState('INITIALIZING');
     setErrorMessage(null);
-    logEvent('Initializing Klarna SDK', 'info', { clientId: clientId.substring(0, 30) + '...' }, 'sdk');
+    logEvent('Initializing Klarna SDK', 'info', {
+      clientId: clientId.substring(0, 30) + '...',
+      hasSessionToken: !!sessionToken.trim(),
+    }, 'sdk');
 
     try {
       // Patch customElements.define for React Strict Mode
@@ -676,11 +687,15 @@ export default function PaymentButtonPage() {
       const { KlarnaSDK } = KlarnaModule;
 
       // Initialize SDK
-      const klarnaInstance = await KlarnaSDK({
+      const sdkConfig: Record<string, unknown> = {
         clientId: clientId.trim(),
         partnerAccountId: partnerAccountId.trim(),
         products: ['PAYMENT'],
-      });
+      };
+      if (sessionToken.trim()) {
+        sdkConfig.klarnaNetworkSessionToken = sessionToken.trim();
+      }
+      const klarnaInstance = await KlarnaSDK(sdkConfig);
 
       logEvent('SDK Initialized Successfully', 'success', undefined, 'sdk');
 
@@ -700,13 +715,34 @@ export default function PaymentButtonPage() {
       const presentationResult = await getPresentation(klarnaInstance);
       mountPaymentButton(presentationResult);
 
+      // Initialize On-Site Messaging (separate SDK instance)
+      try {
+        const osmKlarna = await KlarnaSDK({
+          clientId: OSM_CLIENT_ID,
+          products: ['MESSAGING'],
+        });
+        osmKlarnaRef.current = osmKlarna;
+
+        const placement = osmKlarna.Messaging.placement({
+          key: OSM_PLACEMENT_KEY,
+          amount: cartTotalRef.current,
+          locale: DEFAULT_CONFIG.locale,
+          theme: 'default',
+          id: 'klarna-osm-placement',
+        });
+        osmPlacementRef.current = placement;
+        placement.mount('#klarna-osm-placement');
+      } catch (osmError) {
+        console.error('OSM initialization failed:', osmError);
+      }
+
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setFlowState('ERROR');
       setErrorMessage(`SDK initialization failed: ${message}`);
       logEvent('SDK Initialization Error', 'error', { error: message }, 'sdk');
     }
-  }, [clientId, partnerAccountId, attachSDKEventHandlers, getPresentation, mountPaymentButton, logEvent]);
+  }, [clientId, partnerAccountId, sessionToken, attachSDKEventHandlers, getPresentation, mountPaymentButton, logEvent]);
 
   // ============================================================================
   // EFFECTS
@@ -729,6 +765,29 @@ export default function PaymentButtonPage() {
   useEffect(() => {
     allLineItemsRef.current = allLineItems;
   }, [allLineItems]);
+
+  // Update OSM placement when cart total changes
+  useEffect(() => {
+    if (!osmKlarnaRef.current || !osmPlacementRef.current) return;
+
+    try {
+      osmPlacementRef.current.unmount();
+    } catch {}
+
+    try {
+      const placement = osmKlarnaRef.current.Messaging.placement({
+        key: OSM_PLACEMENT_KEY,
+        amount: cartTotal,
+        locale: DEFAULT_CONFIG.locale,
+        theme: 'default',
+        id: 'klarna-osm-placement',
+      });
+      osmPlacementRef.current = placement;
+      placement.mount('#klarna-osm-placement');
+    } catch (error) {
+      console.error('OSM update failed:', error);
+    }
+  }, [cartTotal]);
 
   // Auto-regenerate paymentRequestDataJson when cart changes
   useEffect(() => {
@@ -821,6 +880,10 @@ export default function PaymentButtonPage() {
       if (existingMount && existingMount.parentNode) {
         existingMount.parentNode.removeChild(existingMount);
       }
+      // Clean up OSM placement
+      if (osmPlacementRef.current) {
+        try { osmPlacementRef.current.unmount(); } catch {}
+      }
     };
   }, []);
 
@@ -838,6 +901,12 @@ export default function PaymentButtonPage() {
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
     clearSdkMount();
+    // Clean up OSM
+    if (osmPlacementRef.current) {
+      try { osmPlacementRef.current.unmount(); } catch {}
+      osmPlacementRef.current = null;
+    }
+    osmKlarnaRef.current = null;
     setCartItems([
       { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
       { catalogItem: PRODUCT_CATALOG[1], quantity: 1 },
@@ -891,6 +960,21 @@ export default function PaymentButtonPage() {
                 placeholder="klarna_test_client_..."
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
+                disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
+              />
+            </div>
+
+            <div className="grid gap-1.5 mb-2.5">
+              <label htmlFor="session-token" className="text-xs font-medium text-gray-500">
+                Klarna Network Session Token <span className="text-gray-400">(optional)</span>
+              </label>
+              <input
+                id="session-token"
+                type="text"
+                className={inputClasses}
+                placeholder="Enter session token..."
+                value={sessionToken}
+                onChange={(e) => setSessionToken(e.target.value)}
                 disabled={flowState !== 'IDLE' && flowState !== 'ERROR'}
               />
             </div>
@@ -1135,6 +1219,12 @@ export default function PaymentButtonPage() {
                       />
                     </div>
                   </div>
+
+                  {/* On-Site Messaging */}
+                  <div
+                    id="klarna-osm-placement"
+                    style={{ width: '100%', marginTop: '8px' }}
+                  />
                 </div>
               </>
             )}
