@@ -33,7 +33,7 @@ function HomeContent() {
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
-  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(true);
 
   // Call history state (persisted to DB with localStorage fallback)
   const { calls: callHistory, addCall, updateCall: updateCallEntry } = useCallHistory();
@@ -116,6 +116,18 @@ function HomeContent() {
       sessionStorage.removeItem('selectedEndpointId');
     }
   }, [handleSelectEndpoint]);
+
+  // Handle ESC key to collapse form
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsFormCollapsed(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {
