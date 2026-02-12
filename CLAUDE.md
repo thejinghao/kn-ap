@@ -205,6 +205,17 @@ Commits changes with an auto-generated descriptive commit message and pushes to 
 
 **Skill location:** `.claude/skills/done/SKILL.md`
 
+## Work Style: Subagents and Parallelization
+
+Prioritize using subagents (Task tool) and parallelizing work wherever it makes sense:
+- **Research in parallel**: When exploring multiple files, APIs, or concepts, launch multiple Explore subagents concurrently rather than searching sequentially
+- **Independent edits in parallel**: When changes span multiple files with no dependencies, make all Edit calls in a single message
+- **Delegate deep dives**: Use subagents for tasks like reading large files, searching across the codebase, or investigating unfamiliar code — keep the main context focused
+- **Parallel builds/checks**: Run linting, type-checking, and tests concurrently when verifying changes
+- **Plan with subagents**: When planning, use Explore agents to investigate different parts of the codebase simultaneously
+
+The goal is to minimize sequential round-trips and maximize throughput. If two things can happen at the same time, they should.
+
 ## Clarification Pattern
 
 When requirements are ambiguous or multiple approaches exist, ask for clarification rather than making assumptions. This applies to:
