@@ -153,6 +153,43 @@ export default function Header() {
                         </div>
                       </Link>
                       <div className="border-t border-gray-100 my-1" />
+                      <div className="px-4 py-1">
+                        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Flow Diagrams</div>
+                      </div>
+                      <Link
+                        href="/payments/ap-hosted"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/payments/ap-hosted'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <CreditCardIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">AP Hosted Flow</div>
+                          <div className="text-xs text-gray-500">Live sequence diagram + demo</div>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/payments/server-side"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/payments/server-side'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ServerIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Server-side Flow</div>
+                          <div className="text-xs text-gray-500">Live sequence diagram + demo</div>
+                        </div>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1" />
+                      <div className="px-4 py-1">
+                        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Configuration Explorer</div>
+                      </div>
                       <Link
                         href="/ap-hosted"
                         onClick={() => setShowPaymentsMenu(false)}
@@ -164,8 +201,8 @@ export default function Header() {
                       >
                         <CreditCardIcon className="w-4 h-4 text-gray-500" />
                         <div>
-                          <div className="font-medium">AP Hosted</div>
-                          <div className="text-xs text-gray-500">Klarna payment button integration</div>
+                          <div className="font-medium">AP Hosted Explorer</div>
+                          <div className="text-xs text-gray-500">Full config, cart, and event log</div>
                         </div>
                       </Link>
                       <Link
@@ -179,8 +216,8 @@ export default function Header() {
                       >
                         <ServerIcon className="w-4 h-4 text-gray-500" />
                         <div>
-                          <div className="font-medium">Server-side</div>
-                          <div className="text-xs text-gray-500">Sub-partner payment integration</div>
+                          <div className="font-medium">Server-side Explorer</div>
+                          <div className="text-xs text-gray-500">Full config, cart, and event log</div>
                         </div>
                       </Link>
                       <Link

@@ -1,36 +1,10 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import type { Party, StepTemplate, StepDetail, SequenceDiagramRef, SequenceDiagramState } from '@/lib/types/payment-flow';
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface Party {
-  id: string;
-  label: string;
-  color: 'blue' | 'pink' | 'amber' | 'green';
-}
-
-export interface SequenceStep {
-  id: string;
-  from: string;
-  to: string;
-  label: string;
-  sublabel?: string;
-  type: 'call' | 'response' | 'event' | 'redirect';
-  isLive?: boolean;
-  liveAction?: () => Promise<void>;
-}
-
-interface SequenceDiagramProps {
-  parties: Party[];
-  steps: SequenceStep[];
-  title?: string;
-  onStepActivate?: (step: SequenceStep, index: number) => void;
-  stepDelayMs?: number;
-  initialStep?: number;
-}
+// Re-export types for convenience
+export type { Party, StepTemplate, StepDetail, SequenceDiagramRef, SequenceDiagramState };
 
 // ============================================================================
 // COLOR MAPS
@@ -43,7 +17,7 @@ const PARTY_COLORS: Record<Party['color'], { bg: string; border: string; text: s
   green: { bg: 'bg-green-50', border: 'border-green-400', text: 'text-green-700', dot: 'bg-green-400' },
 };
 
-const STEP_TYPE_STYLES: Record<SequenceStep['type'], { color: string; dash: string }> = {
+const STEP_TYPE_STYLES: Record<StepTemplate['type'], { color: string; dash: string }> = {
   call: { color: '#374151', dash: '' },
   response: { color: '#6B7280', dash: '4,3' },
   event: { color: '#7C3AED', dash: '2,2' },
@@ -51,235 +25,334 @@ const STEP_TYPE_STYLES: Record<SequenceStep['type'], { color: string; dash: stri
 };
 
 // ============================================================================
-// COMPONENT
+// STEP INSPECTOR COMPONENT
 // ============================================================================
 
-export default function SequenceDiagram({ parties, steps, title, onStepActivate, stepDelayMs = 800, initialStep }: SequenceDiagramProps) {
-  const [currentStep, setCurrentStep] = useState(initialStep ?? -1);
-  const [isRunningLive, setIsRunningLive] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const cancelRef = useRef(false);
-
-  const startAutoPlay = useCallback(async () => {
-    cancelRef.current = false;
-    setIsPlaying(true);
-    setCurrentStep(-1);
-
-    for (let i = 0; i < steps.length; i++) {
-      if (cancelRef.current) break;
-
-      const step = steps[i];
-      setCurrentStep(i);
-      onStepActivate?.(step, i);
-
-      if (step.isLive && step.liveAction) {
-        setIsRunningLive(true);
-        try {
-          await step.liveAction();
-        } catch {
-          // Live action failed - still advance
-        }
-        setIsRunningLive(false);
-      }
-
-      // Delay between steps (unless last step or cancelled)
-      if (i < steps.length - 1 && !cancelRef.current) {
-        await new Promise(resolve => setTimeout(resolve, stepDelayMs));
-      }
-    }
-
-    setIsPlaying(false);
-  }, [steps, stepDelayMs, onStepActivate]);
-
-  const reset = useCallback(() => {
-    cancelRef.current = true;
-    setCurrentStep(-1);
-    setIsRunningLive(false);
-    setIsPlaying(false);
-  }, []);
-
-  // Build party index map for positioning
-  const partyIndex = new Map(parties.map((p, i) => [p.id, i]));
-  const colCount = parties.length;
+export function StepInspector({ stepId, label, detail }: { stepId: string | null; label: string | null; detail: StepDetail | null }) {
+  if (!stepId || !detail) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-4 text-center text-xs text-gray-400">
+        Click a completed step to inspect its details
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      {/* Header */}
-      {title && (
-        <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
-        </div>
-      )}
-
-      {/* Party Headers */}
-      <div
-        className="grid gap-2 px-4 pt-3 pb-2"
-        style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
-      >
-        {parties.map((party) => {
-          const colors = PARTY_COLORS[party.color];
-          return (
-            <div
-              key={party.id}
-              className={`${colors.bg} ${colors.border} border rounded-md px-2 py-1.5 text-center`}
-            >
-              <div className={`text-xs font-semibold ${colors.text}`}>{party.label}</div>
-            </div>
-          );
-        })}
+      <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Step Inspector</span>
+        {label && <span className="text-xs text-gray-400 ml-2">&mdash; {label}</span>}
       </div>
+      <div className="p-4">
+        {detail.type === 'code' && (
+          <div>
+            <span className="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded bg-gray-100 text-gray-600 uppercase mb-2">{detail.language}</span>
+            <pre className="bg-gray-900 text-green-400 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">{detail.code}</pre>
+          </div>
+        )}
+        {detail.type === 'api-request' && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-700">{detail.method}</span>
+              <code className="text-xs text-gray-700 font-mono">{detail.path}</code>
+            </div>
+            {detail.body != null && (
+              <pre className="bg-gray-900 text-amber-300 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">
+                {typeof detail.body === 'string' ? detail.body : JSON.stringify(detail.body, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
+        {detail.type === 'api-response' && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded ${
+                detail.status >= 200 && detail.status < 300 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {detail.status}
+              </span>
+              <span className="text-xs text-gray-500">Response</span>
+            </div>
+            <pre className="bg-gray-900 text-emerald-300 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">
+              {typeof detail.body === 'string' ? detail.body : JSON.stringify(detail.body, null, 2)}
+            </pre>
+          </div>
+        )}
+        {detail.type === 'event' && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-700">EVENT</span>
+              <code className="text-xs text-gray-700 font-mono">{detail.name}</code>
+            </div>
+            {detail.data != null && (
+              <pre className="bg-gray-900 text-purple-300 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">
+                {typeof detail.data === 'string' ? detail.data : JSON.stringify(detail.data, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
+        {detail.type === 'info' && (
+          <div className="text-sm text-gray-600">{detail.message}</div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-      {/* Lifelines + Steps */}
-      <div className="relative px-4 pb-4" style={{ overflow: 'visible' }}>
-        {/* Vertical lifelines */}
+// ============================================================================
+// SEQUENCE DIAGRAM PROPS
+// ============================================================================
+
+interface SequenceDiagramProps {
+  parties: Party[];
+  steps: StepTemplate[];
+  title?: string;
+  onStepSelect?: (stepId: string | null, detail: StepDetail | null, label: string | null) => void;
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+const SequenceDiagram = forwardRef<SequenceDiagramRef, SequenceDiagramProps>(
+  function SequenceDiagram({ parties, steps, title, onStepSelect }, ref) {
+    const [activatedSteps, setActivatedSteps] = useState<Map<string, StepDetail | undefined>>(new Map());
+    const [activeStepId, setActiveStepId] = useState<string | null>(null);
+    const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+
+    const handleStepClick = useCallback((stepId: string) => {
+      if (!activatedSteps.has(stepId)) return; // Can't click future steps
+      setSelectedStepId(stepId);
+      const detail = activatedSteps.get(stepId) ?? null;
+      const step = steps.find(s => s.id === stepId);
+      onStepSelect?.(stepId, detail, step?.label ?? null);
+    }, [activatedSteps, steps, onStepSelect]);
+
+    useImperativeHandle(ref, () => ({
+      activateStep(stepId: string, detail?: StepDetail) {
+        setActivatedSteps(prev => {
+          const next = new Map(prev);
+          // Mark all previous steps as activated (if not already)
+          const stepIndex = steps.findIndex(s => s.id === stepId);
+          for (let i = 0; i < stepIndex; i++) {
+            if (!next.has(steps[i].id)) {
+              next.set(steps[i].id, undefined);
+            }
+          }
+          next.set(stepId, detail);
+          return next;
+        });
+        setActiveStepId(stepId);
+        setSelectedStepId(stepId);
+        const step = steps.find(s => s.id === stepId);
+        onStepSelect?.(stepId, detail ?? null, step?.label ?? null);
+      },
+
+      reset() {
+        setActivatedSteps(new Map());
+        setActiveStepId(null);
+        setSelectedStepId(null);
+        onStepSelect?.(null, null, null);
+      },
+
+      getState(): SequenceDiagramState {
+        const obj: Record<string, StepDetail | null> = {};
+        activatedSteps.forEach((v, k) => { obj[k] = v ?? null; });
+        return { activatedSteps: obj, activeStepId, selectedStepId };
+      },
+
+      restoreState(state: SequenceDiagramState) {
+        const map = new Map<string, StepDetail | undefined>();
+        for (const [k, v] of Object.entries(state.activatedSteps)) {
+          map.set(k, v ?? undefined);
+        }
+        setActivatedSteps(map);
+        setActiveStepId(state.activeStepId);
+        setSelectedStepId(state.selectedStepId);
+        if (state.selectedStepId) {
+          const detail = state.activatedSteps[state.selectedStepId] ?? null;
+          const step = steps.find(s => s.id === state.selectedStepId);
+          onStepSelect?.(state.selectedStepId, detail, step?.label ?? null);
+        }
+      },
+    }), [activatedSteps, activeStepId, selectedStepId, steps, onStepSelect]);
+
+    // Build party index map for positioning
+    const partyIndex = new Map(parties.map((p, i) => [p.id, i]));
+    const colCount = parties.length;
+
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* Header */}
+        {title && (
+          <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
+          </div>
+        )}
+
+        {/* Party Headers */}
         <div
-          className="grid gap-2"
+          className="grid gap-2 px-4 pt-3 pb-2"
           style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
         >
           {parties.map((party) => {
             const colors = PARTY_COLORS[party.color];
             return (
-              <div key={party.id} className="flex justify-center">
-                <div
-                  className={`w-px ${colors.dot} opacity-30`}
-                  style={{ height: `${steps.length * 48 + 8}px` }}
-                />
+              <div
+                key={party.id}
+                className={`${colors.bg} ${colors.border} border rounded-md px-2 py-1.5 text-center`}
+              >
+                <div className={`text-xs font-semibold ${colors.text}`}>{party.label}</div>
               </div>
             );
           })}
         </div>
 
-        {/* Steps overlay */}
-        <div className="absolute inset-x-4 top-0" style={{ paddingTop: '4px', overflow: 'visible' }}>
-          {steps.map((step, idx) => {
-            const fromIdx = partyIndex.get(step.from) ?? 0;
-            const toIdx = partyIndex.get(step.to) ?? 0;
-            const isActive = idx === currentStep;
-            const isCompleted = idx < currentStep;
-            const isFuture = idx > currentStep;
-
-            // Calculate horizontal positions as percentages
-            const colWidth = 100 / colCount;
-            const fromCenter = fromIdx * colWidth + colWidth / 2;
-            const toCenter = toIdx * colWidth + colWidth / 2;
-            const leftPct = Math.min(fromCenter, toCenter);
-            const rightPct = 100 - Math.max(fromCenter, toCenter);
-            const goesRight = toIdx > fromIdx;
-            const isSelf = fromIdx === toIdx;
-
-            const typeStyle = STEP_TYPE_STYLES[step.type];
-
-            return (
-              <div
-                key={step.id}
-                className={`relative transition-all duration-300 ${
-                  isFuture ? 'opacity-30' : 'opacity-100'
-                }`}
-                style={{ height: '48px', overflow: 'visible' }}
-              >
-                {/* Step number + label — positioned at left edge, extends freely */}
-                <div
-                  className={`absolute flex items-start gap-1 transition-all duration-300 ${
-                    isActive ? 'scale-[1.02]' : ''
-                  }`}
-                  style={{
-                    top: '2px',
-                    left: `${leftPct}%`,
-                    whiteSpace: 'nowrap',
-                    zIndex: isActive ? 10 : 1,
-                  }}
-                >
-                  {/* Step badge */}
+        {/* Lifelines + Steps */}
+        <div className="relative px-4 pb-4" style={{ overflow: 'visible' }}>
+          {/* Vertical lifelines */}
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
+          >
+            {parties.map((party) => {
+              const colors = PARTY_COLORS[party.color];
+              return (
+                <div key={party.id} className="flex justify-center">
                   <div
-                    className={`shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold transition-colors ${
-                      isCompleted
-                        ? 'bg-green-500 text-white'
-                        : isActive
-                          ? 'bg-gray-900 text-white ring-2 ring-gray-900/20'
-                          : 'bg-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {isCompleted ? '\u2713' : idx + 1}
-                  </div>
+                    className={`w-px ${colors.dot} opacity-30`}
+                    style={{ height: `${steps.length * 48 + 8}px` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
 
-                  {/* Label */}
-                  <div>
-                    <span
-                      className={`text-[10px] leading-none ${
-                        isActive ? 'font-semibold text-gray-900' : 'text-gray-600'
+          {/* Steps overlay */}
+          <div className="absolute inset-x-4 top-0" style={{ paddingTop: '4px', overflow: 'visible' }}>
+            {steps.map((step, idx) => {
+              const fromIdx = partyIndex.get(step.from) ?? 0;
+              const toIdx = partyIndex.get(step.to) ?? 0;
+              const isActivated = activatedSteps.has(step.id);
+              const isActive = step.id === activeStepId;
+              const isSelected = step.id === selectedStepId;
+              const isCompleted = isActivated && !isActive;
+              const isFuture = !isActivated;
+
+              // Calculate horizontal positions as percentages
+              const colWidth = 100 / colCount;
+              const fromCenter = fromIdx * colWidth + colWidth / 2;
+              const toCenter = toIdx * colWidth + colWidth / 2;
+              const leftPct = Math.min(fromCenter, toCenter);
+              const rightPct = 100 - Math.max(fromCenter, toCenter);
+              const goesRight = toIdx > fromIdx;
+              const isSelf = fromIdx === toIdx;
+
+              const typeStyle = STEP_TYPE_STYLES[step.type];
+
+              return (
+                <div
+                  key={step.id}
+                  className={`relative transition-all duration-300 ${
+                    isFuture ? 'opacity-30' : 'opacity-100'
+                  } ${isActivated ? 'cursor-pointer' : ''}`}
+                  style={{ height: '48px', overflow: 'visible' }}
+                  onClick={() => handleStepClick(step.id)}
+                >
+                  {/* Step number + label */}
+                  <div
+                    className={`absolute flex items-start gap-1 transition-all duration-300 ${
+                      isActive ? 'scale-[1.02]' : ''
+                    }`}
+                    style={{
+                      top: '2px',
+                      left: `${leftPct}%`,
+                      whiteSpace: 'nowrap',
+                      zIndex: isActive ? 10 : 1,
+                    }}
+                  >
+                    {/* Step badge */}
+                    <div
+                      className={`shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold transition-colors ${
+                        isCompleted
+                          ? 'bg-green-500 text-white'
+                          : isActive
+                            ? 'bg-gray-900 text-white ring-2 ring-gray-900/20'
+                            : 'bg-gray-200 text-gray-500'
                       }`}
                     >
-                      {step.label}
-                      {step.isLive && (
-                        <span className="ml-1 inline-block px-0.5 py-px text-[8px] font-bold rounded bg-green-100 text-green-700 uppercase align-middle">live</span>
-                      )}
-                    </span>
-                    {step.sublabel && (
-                      <div className="text-[9px] text-gray-400 leading-none mt-0.5">
-                        {step.sublabel}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                      {isCompleted ? '\u2713' : idx + 1}
+                    </div>
 
-                {/* Arrow line (SVG) */}
-                {!isSelf && (
-                  <svg
-                    className="absolute pointer-events-none"
-                    style={{
-                      top: '28px',
-                      left: `${leftPct}%`,
-                      right: `${rightPct}%`,
-                      height: '12px',
-                      width: `${Math.abs(toCenter - fromCenter)}%`,
-                    }}
-                    preserveAspectRatio="none"
-                    viewBox="0 0 100 12"
-                  >
-                    <line
-                      x1={goesRight ? 2 : 98}
-                      y1="6"
-                      x2={goesRight ? 92 : 8}
-                      y2="6"
-                      stroke={isActive ? typeStyle.color : isCompleted ? '#22C55E' : '#D1D5DB'}
-                      strokeWidth={isActive ? 2 : 1.5}
-                      strokeDasharray={typeStyle.dash}
-                    />
-                    {/* Arrowhead */}
-                    <polygon
-                      points={goesRight ? '92,2 100,6 92,10' : '8,2 0,6 8,10'}
-                      fill={isActive ? typeStyle.color : isCompleted ? '#22C55E' : '#D1D5DB'}
-                    />
-                  </svg>
-                )}
-              </div>
-            );
-          })}
+                    {/* Label */}
+                    <div>
+                      <span
+                        className={`text-[10px] leading-none ${
+                          isSelected
+                            ? 'font-semibold text-blue-600'
+                            : isActive
+                              ? 'font-semibold text-gray-900'
+                              : 'text-gray-600'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      {step.sublabel && (
+                        <div className="text-[9px] text-gray-400 leading-none mt-0.5">
+                          {step.sublabel}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arrow line (SVG) */}
+                  {!isSelf && (
+                    <svg
+                      className="absolute pointer-events-none"
+                      style={{
+                        top: '28px',
+                        left: `${leftPct}%`,
+                        right: `${rightPct}%`,
+                        height: '12px',
+                        width: `${Math.abs(toCenter - fromCenter)}%`,
+                      }}
+                      preserveAspectRatio="none"
+                      viewBox="0 0 100 12"
+                    >
+                      <line
+                        x1={goesRight ? 2 : 98}
+                        y1="6"
+                        x2={goesRight ? 92 : 8}
+                        y2="6"
+                        stroke={isActive ? typeStyle.color : isCompleted ? '#22C55E' : '#D1D5DB'}
+                        strokeWidth={isActive ? 2 : 1.5}
+                        strokeDasharray={typeStyle.dash}
+                      />
+                      {/* Arrowhead */}
+                      <polygon
+                        points={goesRight ? '92,2 100,6 92,10' : '8,2 0,6 8,10'}
+                        fill={isActive ? typeStyle.color : isCompleted ? '#22C55E' : '#D1D5DB'}
+                      />
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          <span className="text-xs text-gray-400">
+            {activatedSteps.size} / {steps.length} steps
+          </span>
+          {activatedSteps.size === steps.length && (
+            <span className="text-xs font-semibold text-green-600">Complete</span>
+          )}
         </div>
       </div>
+    );
+  }
+);
 
-      {/* Controls */}
-      <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center gap-3">
-        <button
-          onClick={startAutoPlay}
-          disabled={isPlaying || isRunningLive}
-          className="bg-gray-900 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {isPlaying ? (isRunningLive ? 'Running live action...' : 'Playing...') : currentStep >= steps.length - 1 ? 'Replay' : 'Start'}
-        </button>
-        {(isPlaying || currentStep > -1) && (
-          <button
-            onClick={reset}
-            className="text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded text-xs font-medium transition-colors"
-          >
-            Reset
-          </button>
-        )}
-        <div className="flex-1" />
-        <span className="text-xs text-gray-400">
-          {currentStep === -1 ? '0' : currentStep + 1} / {steps.length}
-        </span>
-      </div>
-    </div>
-  );
-}
+export default SequenceDiagram;

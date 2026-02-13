@@ -105,9 +105,11 @@ npm run db:studio     # Open Drizzle Studio GUI
 **Pages:**
 - `app/page.tsx` - API Tester interface (main page)
 - `app/account_structure/page.tsx` - Account structure visualization with network diagram
-- `app/payments/page.tsx` - Payments Integration Guide with sequence diagrams and live mini demos
-- `app/ap-hosted/page.tsx` - AP Hosted payment button demo
-- `app/server-side/page.tsx` - Server-side (sub-partner) payment demo
+- `app/payments/page.tsx` - Payments Integration Guide (overview cards + comparison table)
+- `app/payments/ap-hosted/page.tsx` - AP Hosted flow overview with live sequence diagram + demo panel
+- `app/payments/server-side/page.tsx` - Server-side flow overview with live sequence diagram + demo panel
+- `app/ap-hosted/page.tsx` - AP Hosted full configuration explorer (cart, event log, SDK config)
+- `app/server-side/page.tsx` - Server-side full configuration explorer
 - `app/on-site-messaging/page.tsx` - On-Site Messaging demo with placement configuration
 
 **Core Components:**
@@ -115,13 +117,16 @@ npm run db:studio     # Open Drizzle Studio GUI
 - `components/ResponsePanel.tsx` - Response display with JSON viewer
 - `components/EnvironmentPanel.tsx` - Environment variable management
 - `components/KlarnaNetworkDiagram.tsx` - Visual network structure using ReactFlow
-- `components/SequenceDiagram.tsx` - Interactive click-through sequence diagram (CSS Grid + SVG arrows)
-- `components/MiniPaymentDemo.tsx` - Simplified live payment SDK demo (AP Hosted / Server-side modes)
-- `components/MiniOSMDemo.tsx` - Simplified live On-Site Messaging SDK demo
+- `components/SequenceDiagram.tsx` - Event-driven sequence diagram with forwardRef/useImperativeHandle (CSS Grid + SVG arrows + step inspector)
 
 **API Integration:**
 - `lib/endpoints/` - Endpoint preset definitions split by category (credentials, accounts, onboarding, payments, webhooks, settlements)
 - `lib/types.ts` - TypeScript interfaces for requests, responses, and UI state
+
+**Payment Flow (Live Sequence Diagrams):**
+- `lib/types/payment-flow.ts` - Shared types for sequence diagrams, flow events, and hook interface
+- `lib/payment-flow-steps.ts` - Step template definitions and step ID mappings for AP Hosted and Server-side flows
+- `lib/hooks/usePaymentFlowDemo.ts` - Hook managing the Klarna SDK lifecycle with flow event emissions
 
 **Database Layer:**
 - `lib/db/schema.ts` - Drizzle table definitions
