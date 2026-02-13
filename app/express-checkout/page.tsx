@@ -262,6 +262,7 @@ export default function ExpressCheckoutPage() {
   const mountedButtonRef = useRef<any>(null);
   const sdkMountIdRef = useRef<string>('klarna-express-mount');
   const finalAuthInProgressRef = useRef(false);
+  const selectedShippingCostRef = useRef(0);
   const cartTotalRef = useRef(cartTotal);
   const allLineItemsRef = useRef(allLineItems);
 
@@ -337,7 +338,32 @@ export default function ExpressCheckoutPage() {
   const authorizePayment = useCallback(async (
     klarnaNetworkSessionToken: string,
     finalAmount?: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    shippingData?: { shippingCost: number; shipping?: any },
   ): Promise<AuthorizeResponse> => {
+    // Build line items: cart items + shipping fee if present
+    const lineItems = [...allLineItemsRef.current];
+    if (shippingData && shippingData.shippingCost > 0) {
+      lineItems.push({
+        name: 'Shipping',
+        quantity: 1,
+        totalAmount: shippingData.shippingCost,
+        unitPrice: shippingData.shippingCost,
+      });
+    }
+
+    // Build supplementary purchase data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supplementaryPurchaseData: any = {
+      purchaseReference: `purchase_${Date.now()}`,
+      lineItems,
+    };
+
+    // Add shipping recipient/address if available
+    if (shippingData?.shipping) {
+      supplementaryPurchaseData.shipping = shippingData.shipping;
+    }
+
     const response = await fetch('/api/payment/authorize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -349,10 +375,7 @@ export default function ExpressCheckoutPage() {
         paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
         returnUrl: `${window.location.origin}/express-checkout`,
         klarnaNetworkSessionToken,
-        supplementaryPurchaseData: {
-          purchaseReference: `purchase_${Date.now()}`,
-          lineItems: allLineItemsRef.current,
-        },
+        supplementaryPurchaseData,
       }),
     });
 
@@ -500,7 +523,20 @@ export default function ExpressCheckoutPage() {
           const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
 
           try {
-            const finalResult = await authorizePayment(sessionToken, paymentRequest.amount);
+            // Build shipping data from stateContext and tracked shipping cost
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let shippingData: { shippingCost: number; shipping?: any } | undefined;
+            const shippingCost = selectedShippingCostRef.current;
+            const stateShipping = paymentRequest.stateContext?.shipping;
+
+            if (shippingCost > 0 || stateShipping) {
+              shippingData = { shippingCost };
+              if (stateShipping) {
+                shippingData.shipping = stateShipping;
+              }
+            }
+
+            const finalResult = await authorizePayment(sessionToken, paymentRequest.amount, shippingData);
 
             logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
             logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
@@ -555,15 +591,15 @@ export default function ExpressCheckoutPage() {
       klarnaInstance.Payment.on('shippingaddresschange', (_paymentRequest: any, _shippingAddressChange: any) => {
         const baseAmount = cartTotalRef.current;
         const defaultShipping = SHIPPING_OPTIONS[0];
+        selectedShippingCostRef.current = defaultShipping.amount;
 
-        logEvent('Shipping Address Changed', 'info', {
-          shippingOptions: SHIPPING_OPTIONS.map(o => o.displayName),
-          selectedDefault: defaultShipping.displayName,
-        }, 'sdk');
-
-        return {
+        const responsePayload = {
           amount: baseAmount + defaultShipping.amount,
           selectedShippingOptionReference: defaultShipping.shippingOptionReference,
+          lineItems: [
+            ...allLineItemsRef.current,
+            { name: defaultShipping.displayName, quantity: 1, totalAmount: defaultShipping.amount },
+          ],
           shippingOptions: SHIPPING_OPTIONS.map(opt => ({
             shippingOptionReference: opt.shippingOptionReference,
             amount: opt.amount,
@@ -572,6 +608,14 @@ export default function ExpressCheckoutPage() {
             shippingType: opt.shippingType,
           })),
         };
+
+        logEvent('Shipping Address Changed', 'info', {
+          shippingOptions: SHIPPING_OPTIONS.map(o => o.displayName),
+          selectedDefault: defaultShipping.displayName,
+          responsePayload,
+        }, 'sdk');
+
+        return responsePayload;
       });
 
       // Shipping option selected
@@ -581,16 +625,24 @@ export default function ExpressCheckoutPage() {
           opt => opt.shippingOptionReference === shippingOptionSelect.shippingOptionReference
         );
         const shippingCost = selectedOption?.amount || SHIPPING_OPTIONS[0].amount;
+        selectedShippingCostRef.current = shippingCost;
+
+        const responsePayload = {
+          amount: cartTotalRef.current + shippingCost,
+          lineItems: [
+            ...allLineItemsRef.current,
+            { name: selectedOption?.displayName || 'Shipping', quantity: 1, totalAmount: shippingCost },
+          ],
+        };
 
         logEvent('Shipping Option Selected', 'info', {
           selected: selectedOption?.displayName || 'Unknown',
           shippingCost,
           totalAmount: cartTotalRef.current + shippingCost,
+          responsePayload,
         }, 'sdk');
 
-        return {
-          amount: cartTotalRef.current + shippingCost,
-        };
+        return responsePayload;
       });
 
       // ------------------------------------------------------------------
@@ -641,6 +693,7 @@ export default function ExpressCheckoutPage() {
     setPaymentTransaction(null);
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
+    selectedShippingCostRef.current = 0;
     clearSdkMount();
     setCartItems([
       { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
