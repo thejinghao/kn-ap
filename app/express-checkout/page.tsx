@@ -7,7 +7,7 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline';
 // TYPES
 // ============================================================================
 
-type FlowState = 'IDLE' | 'INITIALIZING' | 'READY' | 'PROCESSING' | 'SUCCESS' | 'ERROR';
+type FlowState = 'IDLE' | 'INITIALIZING' | 'READY' | 'PROCESSING' | 'COMPLETING' | 'SUCCESS' | 'ERROR';
 
 interface EventLogItem {
   id: string;
@@ -15,7 +15,7 @@ interface EventLogItem {
   timestamp: Date;
   type: 'info' | 'success' | 'error' | 'warning';
   data?: unknown;
-  source?: 'sdk' | 'flow';
+  source?: 'sdk' | 'api' | 'flow';
   direction?: 'request' | 'response';
   path?: string;
 }
@@ -23,10 +23,31 @@ interface EventLogItem {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KlarnaSDKType = any;
 
-interface CompletionData {
-  paymentRequestId?: string;
-  state?: string;
-  stateContext?: Record<string, unknown>;
+interface AuthorizeResponse {
+  success: boolean;
+  data: {
+    result: 'APPROVED' | 'DECLINED' | 'STEP_UP_REQUIRED';
+    resultReason?: string;
+    paymentTransaction?: {
+      paymentTransactionId: string;
+      paymentTransactionReference: string;
+      amount: number;
+      currency: string;
+    };
+    paymentRequest?: {
+      paymentRequestId: string;
+      paymentRequestReference: string;
+      state: string;
+    };
+  } | null;
+  error?: string;
+  rawKlarnaRequest?: unknown;
+  rawKlarnaResponse?: unknown;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
+  requestMetadata: {
+    correlationId: string;
+  };
 }
 
 interface CatalogItem {
@@ -194,7 +215,7 @@ export default function ExpressCheckoutPage() {
   // Flow State
   const [flowState, setFlowState] = useState<FlowState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [completionData, setCompletionData] = useState<CompletionData | null>(null);
+  const [paymentTransaction, setPaymentTransaction] = useState<AuthorizeResponse['data'] | null>(null);
 
   // Event Log
   const [eventLog, setEventLog] = useState<EventLogItem[]>([]);
@@ -240,6 +261,7 @@ export default function ExpressCheckoutPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mountedButtonRef = useRef<any>(null);
   const sdkMountIdRef = useRef<string>('klarna-express-mount');
+  const finalAuthInProgressRef = useRef(false);
   const cartTotalRef = useRef(cartTotal);
   const allLineItemsRef = useRef(allLineItems);
 
@@ -282,6 +304,8 @@ export default function ExpressCheckoutPage() {
     type: EventLogItem['type'],
     data?: unknown,
     source?: EventLogItem['source'],
+    direction?: EventLogItem['direction'],
+    path?: string,
   ) => {
     setEventLog(prev => [{
       id: generateId(),
@@ -290,6 +314,8 @@ export default function ExpressCheckoutPage() {
       type,
       data,
       source,
+      direction,
+      path,
     }, ...prev]);
   }, []);
 
@@ -303,6 +329,34 @@ export default function ExpressCheckoutPage() {
       }
     }
   }, []);
+
+  // ============================================================================
+  // AUTHORIZE PAYMENT API CALL
+  // ============================================================================
+
+  const authorizePayment = useCallback(async (
+    klarnaNetworkSessionToken: string,
+  ): Promise<AuthorizeResponse> => {
+    const response = await fetch('/api/payment/authorize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        partnerAccountId,
+        currency: COUNTRY_MAPPING[country].currency,
+        amount: cartTotalRef.current,
+        paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
+        paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
+        returnUrl: `${window.location.origin}/express-checkout`,
+        klarnaNetworkSessionToken,
+        supplementaryPurchaseData: {
+          purchaseReference: `purchase_${Date.now()}`,
+          lineItems: allLineItemsRef.current,
+        },
+      }),
+    });
+
+    return response.json();
+  }, [partnerAccountId, country]);
 
   // ============================================================================
   // INITIATE CALLBACK (called when Klarna button is clicked)
@@ -422,19 +476,53 @@ export default function ExpressCheckoutPage() {
 
       // Complete
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      klarnaInstance.Payment.on('complete', (paymentRequest: any) => {
-        logEvent('Payment Complete', 'success', {
+      klarnaInstance.Payment.on('complete', async (paymentRequest: any) => {
+        // Deduplicate: SDK may fire 'complete' twice
+        if (finalAuthInProgressRef.current) {
+          logEvent('Duplicate Complete Event (ignored)', 'warning', undefined, 'sdk');
+          return false;
+        }
+        finalAuthInProgressRef.current = true;
+
+        logEvent('Payment Complete Event', 'success', {
           paymentRequestId: paymentRequest.paymentRequestId,
           state: paymentRequest.state,
           stateContext: paymentRequest.stateContext,
         }, 'sdk');
 
-        setCompletionData({
-          paymentRequestId: paymentRequest.paymentRequestId,
-          state: paymentRequest.state,
-          stateContext: paymentRequest.stateContext,
-        });
-        setFlowState('SUCCESS');
+        // Extract session token for final authorization
+        const sessionToken = paymentRequest.stateContext?.klarnaNetworkSessionToken ||
+                            paymentRequest.stateContext?.klarna_network_session_token;
+
+        if (sessionToken) {
+          setFlowState('COMPLETING');
+          const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
+
+          try {
+            const finalResult = await authorizePayment(sessionToken);
+
+            logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
+            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
+
+            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+              setFlowState('SUCCESS');
+              setPaymentTransaction(finalResult.data);
+              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+            } else {
+              throw new Error(finalResult.error || 'Final authorization failed');
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setFlowState('ERROR');
+            setErrorMessage(message);
+            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
+          }
+        } else {
+          setFlowState('ERROR');
+          setErrorMessage('No session token received from Klarna');
+          logEvent('Missing Session Token', 'error', { stateContext: paymentRequest.stateContext }, 'flow');
+        }
+
         return false;
       });
 
@@ -540,7 +628,7 @@ export default function ExpressCheckoutPage() {
       setErrorMessage(`SDK initialization failed: ${message}`);
       logEvent('SDK Initialization Error', 'error', { error: message }, 'sdk');
     }
-  }, [clientId, partnerAccountId, sdkToken, country, locale, handleInitiate, logEvent, clearSdkMount]);
+  }, [clientId, partnerAccountId, sdkToken, country, locale, handleInitiate, authorizePayment, logEvent, clearSdkMount]);
 
   // ============================================================================
   // RESET FLOW
@@ -549,8 +637,9 @@ export default function ExpressCheckoutPage() {
   const resetFlow = useCallback(() => {
     setFlowState('IDLE');
     setErrorMessage(null);
-    setCompletionData(null);
+    setPaymentTransaction(null);
     sdkInitializedRef.current = false;
+    finalAuthInProgressRef.current = false;
     clearSdkMount();
     setCartItems([
       { catalogItem: PRODUCT_CATALOG[0], quantity: 2 },
@@ -777,7 +866,7 @@ export default function ExpressCheckoutPage() {
                   disabled
                   className="bg-gray-300 text-white px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
                 >
-                  {flowState === 'INITIALIZING' ? 'Initializing...' : flowState === 'SUCCESS' ? 'Payment Complete' : 'Processing...'}
+                  {flowState === 'INITIALIZING' ? 'Initializing...' : flowState === 'SUCCESS' ? 'Payment Complete' : flowState === 'COMPLETING' ? 'Authorizing...' : 'Processing...'}
                 </button>
               )}
 
@@ -810,7 +899,7 @@ export default function ExpressCheckoutPage() {
                 <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z" />
               </svg>
               <span className="text-gray-500 font-mono text-xs">
-                cool-sneakers.com{flowState === 'SUCCESS' ? '/order-confirmation' : '/checkout'}
+                cool-sneakers.com{flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? '/order-confirmation' : '/checkout'}
               </span>
             </div>
             {/* Browser Content Area */}
@@ -823,7 +912,7 @@ export default function ExpressCheckoutPage() {
                   <div className="text-gray-400 text-sm mb-1">Configure settings and click</div>
                   <div className="text-gray-500 font-medium text-sm">&quot;Initialize &amp; Show Button&quot; to start</div>
                 </div>
-              ) : flowState === 'SUCCESS' && completionData ? (
+              ) : flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? (
                 /* ---- Order Confirmation ---- */
                 <div className="text-center">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -831,29 +920,25 @@ export default function ExpressCheckoutPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-bold text-gray-900 mb-4">Payment Completed</h4>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">Order Confirmed</h4>
 
                   <div className="bg-gray-50 rounded p-3 text-left text-sm mb-3 space-y-3">
-                    {completionData.paymentRequestId && (
-                      <div>
-                        <div className="text-xs text-gray-500">Payment Request ID</div>
-                        <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
-                          {completionData.paymentRequestId}
-                        </code>
-                      </div>
-                    )}
-                    {completionData.state && (
-                      <div>
-                        <div className="text-xs text-gray-500">State</div>
-                        <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
-                          {completionData.state}
-                        </code>
-                      </div>
-                    )}
+                    <div>
+                      <div className="text-xs text-gray-500">Transaction Reference <span className="text-gray-400 italic">— Provided by the partner</span></div>
+                      <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
+                        {paymentTransaction.paymentTransaction.paymentTransactionReference}
+                      </code>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Transaction ID <span className="text-gray-400 italic">— From Klarna</span></div>
+                      <code className="text-xs break-all bg-gray-200 px-1 py-0.5 rounded font-mono">
+                        {paymentTransaction.paymentTransaction.paymentTransactionId}
+                      </code>
+                    </div>
                   </div>
 
                   <div className="text-sm font-medium text-gray-700 mb-4">
-                    Total: <span className="font-bold">{formatAmount(cartTotal, currency)}</span>
+                    Amount charged: <span className="font-bold">{formatAmount(paymentTransaction.paymentTransaction.amount, paymentTransaction.paymentTransaction.currency)}</span>
                   </div>
 
                   <button
@@ -943,11 +1028,10 @@ export default function ExpressCheckoutPage() {
                   {errorMessage && (
                     <div className="text-red-500 text-xs mb-2">{errorMessage}</div>
                   )}
-                  {flowState === 'INITIALIZING' && (
-                    <div className="text-xs text-blue-500 mb-2">Loading Klarna SDK...</div>
-                  )}
-                  {flowState === 'PROCESSING' && (
-                    <div className="text-xs text-blue-500 mb-2">Processing payment...</div>
+                  {(flowState === 'INITIALIZING' || flowState === 'PROCESSING' || flowState === 'COMPLETING') && (
+                    <div className="text-xs text-blue-500 mb-2">
+                      {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : flowState === 'COMPLETING' ? 'Completing authorization...' : 'Processing payment...'}
+                    </div>
                   )}
 
                   {/* Express Button Mount Area */}
@@ -992,6 +1076,12 @@ export default function ExpressCheckoutPage() {
                   {event.source === 'sdk' && (
                     <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-blue-100 text-blue-700">SDK</span>
                   )}
+                  {event.source === 'api' && event.direction === 'request' && (
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-orange-100 text-orange-700">API REQ</span>
+                  )}
+                  {event.source === 'api' && event.direction === 'response' && (
+                    <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-purple-100 text-purple-700">API RES</span>
+                  )}
                   {event.source === 'flow' && (
                     <span className="inline-block text-[9px] font-bold px-[5px] py-px rounded tracking-wide uppercase align-middle mr-1 bg-green-100 text-green-700">FLOW</span>
                   )}
@@ -1000,14 +1090,44 @@ export default function ExpressCheckoutPage() {
                   {event.type === 'warning' && '\u26A0 '}
                   {event.title}
                 </div>
+                {event.path && (
+                  <div className="text-[11px] font-mono text-gray-400 mb-0.5 break-all">
+                    {event.path}
+                  </div>
+                )}
                 <div className="text-[11px] text-gray-500 mb-1.5">
                   {event.timestamp.toLocaleTimeString()}
                 </div>
-                {event.data !== undefined && event.data !== null && (
-                  <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">
-                    {JSON.stringify(event.data, null, 2)}
-                  </pre>
-                )}
+                {event.data !== undefined && event.data !== null && (() => {
+                  const d = event.data as { body?: unknown; headers?: Record<string, string> };
+                  const isApiEvent = event.source === 'api' && d && typeof d === 'object' && 'body' in d;
+                  return isApiEvent ? (
+                    <>
+                      {d.headers && Object.keys(d.headers).length > 0 && (
+                        <details className="my-2">
+                          <summary className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700">
+                            Headers ({Object.keys(d.headers).length})
+                          </summary>
+                          <div className="bg-gray-50 border border-gray-200 rounded p-2 mt-1 font-mono text-[11px] leading-relaxed overflow-x-auto">
+                            {Object.entries(d.headers).map(([k, v]) => (
+                              <div key={k} className="flex gap-2">
+                                <span className="text-gray-500 shrink-0">{k}:</span>
+                                <span className="text-gray-800 break-all">{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                      {d.body !== undefined && d.body !== null && (
+                        <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(d.body, null, 2)}</pre>
+                      )}
+                    </>
+                  ) : (
+                    <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">
+                      {JSON.stringify(event.data, null, 2)}
+                    </pre>
+                  );
+                })()}
               </div>
             ))
           )}
