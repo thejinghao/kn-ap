@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { InformationCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import SequenceDiagram, { type Party, type SequenceStep } from '@/components/SequenceDiagram';
@@ -86,8 +86,12 @@ const OSM_STEPS: SequenceStep[] = [
 // MAIN PAGE
 // ============================================================================
 
+const SESSION_KEY = 'payments-guide-state';
+
 export default function PaymentsGuidePage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [restoredFlow, setRestoredFlow] = useState<string | null>(null);
+  const [restoredStep, setRestoredStep] = useState<number | null>(null);
   const apHostedDemoRef = useRef<MiniPaymentDemoRef>(null);
   const serverSideDemoRef = useRef<MiniPaymentDemoRef>(null);
   const osmDemoRef = useRef<MiniOSMDemoRef>(null);
@@ -98,8 +102,30 @@ export default function PaymentsGuidePage() {
     // Handle return URL from payment demo redirects
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
-    if (status) {
+    const flow = params.get('flow');
+
+    if (status && flow) {
+      // Restore sequence diagram state from sessionStorage
+      try {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (saved) {
+          const { step } = JSON.parse(saved);
+          setRestoredFlow(flow);
+          setRestoredStep(step);
+        }
+      } catch { /* ignore parse errors */ }
+
+      // Mark the demo as completed after refs are ready
+      setTimeout(() => {
+        if (flow === 'ap-hosted') {
+          apHostedDemoRef.current?.markCompleted();
+        } else if (flow === 'server-side') {
+          serverSideDemoRef.current?.markCompleted();
+        }
+      }, 100);
+
       window.history.replaceState({}, '', window.location.pathname);
+      sessionStorage.removeItem(SESSION_KEY);
     }
   }, []);
 
@@ -145,6 +171,30 @@ export default function PaymentsGuidePage() {
     }
     return step;
   });
+
+  // Step activation callbacks — push labeled events into the demo event logs + persist to sessionStorage
+  const handleApHostedStepActivate = useCallback((step: SequenceStep, index: number) => {
+    const typeMap: Record<SequenceStep['type'], 'info' | 'success' | 'warning'> = {
+      call: 'info', response: 'success', event: 'warning', redirect: 'warning',
+    };
+    apHostedDemoRef.current?.pushEvent(`Step ${index + 1}: ${step.label}`, step.isLive ? 'info' : typeMap[step.type]);
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ flow: 'ap-hosted', step: index })); } catch { /* ignore */ }
+  }, []);
+
+  const handleServerSideStepActivate = useCallback((step: SequenceStep, index: number) => {
+    const typeMap: Record<SequenceStep['type'], 'info' | 'success' | 'warning'> = {
+      call: 'info', response: 'success', event: 'warning', redirect: 'warning',
+    };
+    serverSideDemoRef.current?.pushEvent(`Step ${index + 1}: ${step.label}`, step.isLive ? 'info' : typeMap[step.type]);
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ flow: 'server-side', step: index })); } catch { /* ignore */ }
+  }, []);
+
+  const handleOsmStepActivate = useCallback((step: SequenceStep, index: number) => {
+    const typeMap: Record<SequenceStep['type'], 'info' | 'success' | 'warning'> = {
+      call: 'info', response: 'success', event: 'warning', redirect: 'warning',
+    };
+    osmDemoRef.current?.pushEvent(`Step ${index + 1}: ${step.label}`, step.isLive ? 'info' : typeMap[step.type]);
+  }, []);
 
   if (!isMounted) {
     return <div className="min-h-[calc(100vh-57px)] bg-gray-50" />;
@@ -244,6 +294,8 @@ export default function PaymentsGuidePage() {
             title="Sequence Diagram"
             parties={AP_HOSTED_PARTIES}
             steps={apHostedStepsWithLive}
+            onStepActivate={handleApHostedStepActivate}
+            initialStep={restoredFlow === 'ap-hosted' && restoredStep !== null ? restoredStep : undefined}
           />
           <MiniPaymentDemo ref={apHostedDemoRef} mode="ap-hosted" />
         </div>
@@ -277,6 +329,8 @@ export default function PaymentsGuidePage() {
             title="Sequence Diagram"
             parties={SERVER_SIDE_PARTIES}
             steps={serverSideStepsWithLive}
+            onStepActivate={handleServerSideStepActivate}
+            initialStep={restoredFlow === 'server-side' && restoredStep !== null ? restoredStep : undefined}
           />
           <MiniPaymentDemo ref={serverSideDemoRef} mode="server-side" />
         </div>
@@ -310,6 +364,7 @@ export default function PaymentsGuidePage() {
             title="Sequence Diagram"
             parties={OSM_PARTIES}
             steps={osmStepsWithLive}
+            onStepActivate={handleOsmStepActivate}
           />
           <MiniOSMDemo ref={osmDemoRef} />
         </div>

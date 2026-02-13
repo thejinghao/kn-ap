@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 
 // ============================================================================
 // TYPES
@@ -27,6 +27,9 @@ interface SequenceDiagramProps {
   parties: Party[];
   steps: SequenceStep[];
   title?: string;
+  onStepActivate?: (step: SequenceStep, index: number) => void;
+  stepDelayMs?: number;
+  initialStep?: number;
 }
 
 // ============================================================================
@@ -51,31 +54,48 @@ const STEP_TYPE_STYLES: Record<SequenceStep['type'], { color: string; dash: stri
 // COMPONENT
 // ============================================================================
 
-export default function SequenceDiagram({ parties, steps, title }: SequenceDiagramProps) {
-  const [currentStep, setCurrentStep] = useState(-1);
+export default function SequenceDiagram({ parties, steps, title, onStepActivate, stepDelayMs = 800, initialStep }: SequenceDiagramProps) {
+  const [currentStep, setCurrentStep] = useState(initialStep ?? -1);
   const [isRunningLive, setIsRunningLive] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const cancelRef = useRef(false);
 
-  const nextStep = useCallback(async () => {
-    const nextIdx = currentStep + 1;
-    if (nextIdx >= steps.length) return;
+  const startAutoPlay = useCallback(async () => {
+    cancelRef.current = false;
+    setIsPlaying(true);
+    setCurrentStep(-1);
 
-    const step = steps[nextIdx];
-    setCurrentStep(nextIdx);
+    for (let i = 0; i < steps.length; i++) {
+      if (cancelRef.current) break;
 
-    if (step.isLive && step.liveAction) {
-      setIsRunningLive(true);
-      try {
-        await step.liveAction();
-      } catch {
-        // Live action failed - still advance
+      const step = steps[i];
+      setCurrentStep(i);
+      onStepActivate?.(step, i);
+
+      if (step.isLive && step.liveAction) {
+        setIsRunningLive(true);
+        try {
+          await step.liveAction();
+        } catch {
+          // Live action failed - still advance
+        }
+        setIsRunningLive(false);
       }
-      setIsRunningLive(false);
+
+      // Delay between steps (unless last step or cancelled)
+      if (i < steps.length - 1 && !cancelRef.current) {
+        await new Promise(resolve => setTimeout(resolve, stepDelayMs));
+      }
     }
-  }, [currentStep, steps]);
+
+    setIsPlaying(false);
+  }, [steps, stepDelayMs, onStepActivate]);
 
   const reset = useCallback(() => {
+    cancelRef.current = true;
     setCurrentStep(-1);
     setIsRunningLive(false);
+    setIsPlaying(false);
   }, []);
 
   // Build party index map for positioning
@@ -241,18 +261,20 @@ export default function SequenceDiagram({ parties, steps, title }: SequenceDiagr
       {/* Controls */}
       <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center gap-3">
         <button
-          onClick={nextStep}
-          disabled={currentStep >= steps.length - 1 || isRunningLive}
+          onClick={startAutoPlay}
+          disabled={isPlaying || isRunningLive}
           className="bg-gray-900 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          {currentStep === -1 ? 'Start' : isRunningLive ? 'Running...' : 'Next Step'}
+          {isPlaying ? (isRunningLive ? 'Running live action...' : 'Playing...') : currentStep >= steps.length - 1 ? 'Replay' : 'Start'}
         </button>
-        <button
-          onClick={reset}
-          className="text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded text-xs font-medium transition-colors"
-        >
-          Reset
-        </button>
+        {(isPlaying || currentStep > -1) && (
+          <button
+            onClick={reset}
+            className="text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded text-xs font-medium transition-colors"
+          >
+            Reset
+          </button>
+        )}
         <div className="flex-1" />
         <span className="text-xs text-gray-400">
           {currentStep === -1 ? '0' : currentStep + 1} / {steps.length}

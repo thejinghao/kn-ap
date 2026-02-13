@@ -21,6 +21,8 @@ type FlowState = 'IDLE' | 'INITIALIZING' | 'READY' | 'AUTHORIZING' | 'STEP_UP' |
 
 export interface MiniPaymentDemoRef {
   initializeSDK: () => Promise<void>;
+  pushEvent: (title: string, type: 'info' | 'success' | 'error' | 'warning') => void;
+  markCompleted: () => void;
 }
 
 interface MiniPaymentDemoProps {
@@ -82,7 +84,7 @@ const MiniPaymentDemo = forwardRef<MiniPaymentDemoRef, MiniPaymentDemoProps>(
 
     const logEvent = useCallback((title: string, type: EventLogItem['type']) => {
       const event: EventLogItem = { id: generateId(), title, type };
-      setEvents(prev => [event, ...prev].slice(0, 5));
+      setEvents(prev => [event, ...prev].slice(0, 15));
       onEvent?.(event);
     }, [onEvent]);
 
@@ -314,8 +316,17 @@ const MiniPaymentDemo = forwardRef<MiniPaymentDemoRef, MiniPaymentDemoProps>(
       }
     }, [clientId, partnerAccountId, mode, attachEventHandlers, handleInitiate, clearSdkMount, logEvent]);
 
-    // Expose initializeSDK for sequence diagram live steps
-    useImperativeHandle(ref, () => ({ initializeSDK }), [initializeSDK]);
+    // Expose initializeSDK, pushEvent, and markCompleted for sequence diagram integration
+    useImperativeHandle(ref, () => ({
+      initializeSDK,
+      pushEvent: (title: string, type: EventLogItem['type']) => {
+        logEvent(title, type);
+      },
+      markCompleted: () => {
+        setFlowState('SUCCESS');
+        logEvent('Payment completed (returned from Klarna journey)', 'success');
+      },
+    }), [initializeSDK, logEvent]);
 
     const resetFlow = useCallback(() => {
       setFlowState('IDLE');

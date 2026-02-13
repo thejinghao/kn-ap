@@ -21,6 +21,7 @@ type FlowState = 'IDLE' | 'INITIALIZING' | 'READY' | 'ERROR';
 
 export interface MiniOSMDemoRef {
   initializeSDK: () => Promise<void>;
+  pushEvent: (title: string, type: 'info' | 'success' | 'error' | 'warning') => void;
 }
 
 interface MiniOSMDemoProps {
@@ -73,7 +74,7 @@ const MiniOSMDemo = forwardRef<MiniOSMDemoRef, MiniOSMDemoProps>(
 
     const logEvent = useCallback((title: string, type: EventLogItem['type']) => {
       const event: EventLogItem = { id: generateId(), title, type };
-      setEvents(prev => [event, ...prev].slice(0, 5));
+      setEvents(prev => [event, ...prev].slice(0, 15));
       onEvent?.(event);
     }, [onEvent]);
 
@@ -149,8 +150,13 @@ const MiniOSMDemo = forwardRef<MiniOSMDemoRef, MiniOSMDemoProps>(
       }
     }, [clientId, placementKey, amount, theme, clearPlacement, logEvent]);
 
-    // Expose initializeSDK for sequence diagram live steps
-    useImperativeHandle(ref, () => ({ initializeSDK }), [initializeSDK]);
+    // Expose initializeSDK and pushEvent for sequence diagram integration
+    useImperativeHandle(ref, () => ({
+      initializeSDK,
+      pushEvent: (title: string, type: EventLogItem['type']) => {
+        logEvent(title, type);
+      },
+    }), [initializeSDK, logEvent]);
 
     const resetFlow = useCallback(() => {
       setFlowState('IDLE');
