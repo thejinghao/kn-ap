@@ -186,7 +186,11 @@ function buildDefaultPaymentRequestData(
       lineItems,
     },
     customerInteractionConfig: {
-      returnUrl: `${origin}/server-side?status=complete`,
+      returnUrl: `${origin}/server-side?payment_request_id={klarna.payment_request.id}&state={klarna.payment_request.state}&klarna_network_session_token={klarna.payment_request.klarna_network_session_token}&payment_request_reference={klarna.payment_request.payment_request_reference}`,
+    },
+    shippingConfig: {
+      mode: 'EDITABLE',
+      supportedCountries: [DEFAULT_CONFIG.country],
     },
   }, null, 2);
 }
@@ -356,7 +360,7 @@ export default function ServerSidePaymentPage() {
         paymentOptionId,
         paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
         paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
-        returnUrl: `${currentOrigin}/server-side?status=complete`,
+        returnUrl: `${currentOrigin}/server-side?payment_request_id={klarna.payment_request.id}&state={klarna.payment_request.state}&klarna_network_session_token={klarna.payment_request.klarna_network_session_token}&payment_request_reference={klarna.payment_request.payment_request_reference}`,
         klarnaNetworkSessionToken,
         supplementaryPurchaseData: {
           purchaseReference: `purchase_${Date.now()}`,
@@ -880,13 +884,32 @@ export default function ServerSidePaymentPage() {
   }, []);
 
   // Handle URL parameters (for return from Klarna journey)
+  // In redirect mode, Klarna populates template variables in the returnUrl.
+  // Extract the klarna_network_session_token and save to sessionStorage so the
+  // resume handler below can pick it up for final authorization.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const status = params.get('status');
+      const state = params.get('state');
+      const sessionToken = params.get('klarna_network_session_token');
+      const paymentRequestId = params.get('payment_request_id');
 
-      if (status) {
-        logEvent('Returned from Klarna Journey', 'info', { status }, 'flow');
+      if (status || state || sessionToken) {
+        logEvent('Returned from Klarna Journey', 'info', {
+          status,
+          state,
+          paymentRequestId,
+          hasToken: !!sessionToken,
+        }, 'flow');
+
+        // Save klarna_network_session_token to sessionStorage for the resume handler.
+        // In redirect mode the complete event may not fire (page navigated away),
+        // so the token must come from URL params populated by Klarna.
+        if (sessionToken) {
+          try { sessionStorage.setItem('pendingSessionToken', sessionToken); } catch {}
+        }
+
         // Clear URL parameters
         window.history.replaceState({}, '', window.location.pathname);
       }
