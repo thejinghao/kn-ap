@@ -96,6 +96,7 @@ export interface UsePaymentFlowReturn {
   flowState: FlowState;
   errorMessage: string | null;
   buttonContainerRef: RefObject<HTMLDivElement>;
+  presentationRef: RefObject<any>;
   start: () => Promise<void>;
   reset: () => void;
   resumeAfterRedirect: (sessionToken: string) => Promise<void>;

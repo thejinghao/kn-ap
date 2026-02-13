@@ -26,6 +26,9 @@ export default function ServerSideFlowPage() {
 
   const diagramRef = useRef<SequenceDiagramRef>(null);
 
+  // Redirect params ref (captured in effect 1, consumed in effect 2)
+  const redirectParamsRef = useRef<{ status: string; pendingToken: string | null } | null>(null);
+
   const handleStepSelect = useCallback((stepId: string | null, detail: StepDetail | null, label: string | null) => {
     setInspectorStepId(stepId);
     setInspectorDetail(detail);
@@ -51,35 +54,43 @@ export default function ServerSideFlowPage() {
     }
   }, [flowState]);
 
-  // Handle mount + redirect return
+  // Effect 1: Detect redirect params, clean up URL, set mounted
   useEffect(() => {
-    setIsMounted(true);
-
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
 
     if (status) {
-      // Restore diagram state
-      try {
-        const saved = sessionStorage.getItem(SESSION_KEY);
-        if (saved && diagramRef.current) {
-          diagramRef.current.restoreState(JSON.parse(saved));
-        }
-      } catch { /* ignore */ }
-
-      // Get pending session token
       const pendingToken = sessionStorage.getItem('pendingSessionToken');
-      if (pendingToken) {
-        sessionStorage.removeItem('pendingSessionToken');
-        sessionStorage.removeItem(SESSION_KEY);
-        // Resume the flow
-        resumeAfterRedirect(pendingToken);
-      }
-
-      // Clean up URL
+      redirectParamsRef.current = { status, pendingToken };
+      // Clean up URL immediately
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    setIsMounted(true);
+  }, []);
+
+  // Effect 2: After mount, restore diagram state and resume redirect flow
+  useEffect(() => {
+    if (!isMounted) return;
+    const redirect = redirectParamsRef.current;
+    if (!redirect) return;
+    redirectParamsRef.current = null;
+
+    // Restore diagram state (diagramRef.current is now available)
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved && diagramRef.current) {
+        diagramRef.current.restoreState(JSON.parse(saved));
+      }
+    } catch { /* ignore */ }
+
+    // Resume flow with pending token
+    if (redirect.pendingToken) {
+      sessionStorage.removeItem('pendingSessionToken');
+      sessionStorage.removeItem(SESSION_KEY);
+      resumeAfterRedirect(redirect.pendingToken);
+    }
+  }, [isMounted, resumeAfterRedirect]);
 
   const handleReset = useCallback(() => {
     reset();

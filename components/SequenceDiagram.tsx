@@ -221,7 +221,7 @@ const SequenceDiagram = forwardRef<SequenceDiagramRef, SequenceDiagramProps>(
                 <div key={party.id} className="flex justify-center">
                   <div
                     className={`w-px ${colors.dot} opacity-30`}
-                    style={{ height: `${steps.length * 48 + 8}px` }}
+                    style={{ height: `${steps.length * 56 + 8}px` }}
                   />
                 </div>
               );
@@ -256,12 +256,12 @@ const SequenceDiagram = forwardRef<SequenceDiagramRef, SequenceDiagramProps>(
                   className={`relative transition-all duration-300 ${
                     isFuture ? 'opacity-30' : 'opacity-100'
                   } ${isActivated ? 'cursor-pointer' : ''}`}
-                  style={{ height: '48px', overflow: 'visible' }}
+                  style={{ height: '56px', overflow: 'visible' }}
                   onClick={() => handleStepClick(step.id)}
                 >
                   {/* Step number + label */}
                   <div
-                    className={`absolute flex items-start gap-1 transition-all duration-300 ${
+                    className={`absolute flex items-center gap-1 transition-all duration-300 ${
                       isActive ? 'scale-[1.02]' : ''
                     }`}
                     style={{
@@ -310,7 +310,7 @@ const SequenceDiagram = forwardRef<SequenceDiagramRef, SequenceDiagramProps>(
                     <svg
                       className="absolute pointer-events-none"
                       style={{
-                        top: '28px',
+                        top: '36px',
                         left: `${leftPct}%`,
                         right: `${rightPct}%`,
                         height: '12px',

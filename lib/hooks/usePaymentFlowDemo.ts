@@ -520,6 +520,7 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
     flowState,
     errorMessage,
     buttonContainerRef: buttonContainerRef as React.RefObject<HTMLDivElement>,
+    presentationRef,
     start,
     reset,
     resumeAfterRedirect,
