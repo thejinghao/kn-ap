@@ -98,9 +98,9 @@ const PRODUCT_CATALOG: CatalogItem[] = [
 const TAX_RATE = 0.08;
 
 const SHIPPING_OPTIONS = [
-  { reference: 'standard', name: 'Standard Shipping', amount: 499, description: '5-7 business days' },
-  { reference: 'express', name: 'Express Shipping', amount: 999, description: '2-3 business days' },
-  { reference: 'next-day', name: 'Next Day Delivery', amount: 1499, description: 'Next business day' },
+  { shippingOptionReference: 'standard', displayName: 'Standard Shipping', amount: 499, description: '5-7 business days', shippingType: 'TO_DOOR' as const },
+  { shippingOptionReference: 'express', displayName: 'Express Shipping', amount: 999, description: '2-3 business days', shippingType: 'TO_DOOR' as const },
+  { shippingOptionReference: 'next-day', displayName: 'Next Day Delivery', amount: 1499, description: 'Next business day', shippingType: 'TO_DOOR' as const },
 ];
 
 // ============================================================================
@@ -169,6 +169,9 @@ function buildDefaultPaymentRequestData(
     shippingConfig: {
       mode: 'EDITABLE',
       supportedCountries: [country],
+    },
+    customerInteractionConfig: {
+      returnUrl: 'https://klarna.com/example-redirect?payref={klarna.payment_request.payment_reference}',
     },
   }, null, 2);
 }
@@ -432,7 +435,7 @@ export default function ExpressCheckoutPage() {
           stateContext: paymentRequest.stateContext,
         });
         setFlowState('SUCCESS');
-        return true;
+        return false;
       });
 
       // Abort
@@ -465,18 +468,19 @@ export default function ExpressCheckoutPage() {
         const defaultShipping = SHIPPING_OPTIONS[0];
 
         logEvent('Shipping Address Changed', 'info', {
-          shippingOptions: SHIPPING_OPTIONS.map(o => o.name),
-          selectedDefault: defaultShipping.name,
+          shippingOptions: SHIPPING_OPTIONS.map(o => o.displayName),
+          selectedDefault: defaultShipping.displayName,
         }, 'sdk');
 
         return {
           amount: baseAmount + defaultShipping.amount,
-          selectedShippingOptionReference: defaultShipping.reference,
+          selectedShippingOptionReference: defaultShipping.shippingOptionReference,
           shippingOptions: SHIPPING_OPTIONS.map(opt => ({
-            reference: opt.reference,
-            name: opt.name,
+            shippingOptionReference: opt.shippingOptionReference,
             amount: opt.amount,
+            displayName: opt.displayName,
             description: opt.description,
+            shippingType: opt.shippingType,
           })),
         };
       });
@@ -485,12 +489,12 @@ export default function ExpressCheckoutPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       klarnaInstance.Payment.on('shippingoptionselect', (_paymentRequest: any, shippingOptionSelect: any) => {
         const selectedOption = SHIPPING_OPTIONS.find(
-          opt => opt.reference === shippingOptionSelect.selectedShippingOptionReference
+          opt => opt.shippingOptionReference === shippingOptionSelect.shippingOptionReference
         );
         const shippingCost = selectedOption?.amount || SHIPPING_OPTIONS[0].amount;
 
         logEvent('Shipping Option Selected', 'info', {
-          selected: selectedOption?.name || 'Unknown',
+          selected: selectedOption?.displayName || 'Unknown',
           shippingCost,
           totalAmount: cartTotalRef.current + shippingCost,
         }, 'sdk');
