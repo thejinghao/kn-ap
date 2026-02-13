@@ -26,8 +26,6 @@ interface AuthorizeRequest {
       totalAmount: number;
       unitPrice: number;
     }>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    shipping?: any;
   };
 }
 
@@ -282,11 +280,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
           unit_price: item.unitPrice,
         })),
       };
-
-      // Pass through shipping recipient/address data if provided
-      if (body.supplementaryPurchaseData.shipping) {
-        klarnaBody.supplementary_purchase_data.shipping = body.supplementaryPurchaseData.shipping;
-      }
     }
 
     // Add step_up_config for initial authorization (when no session token)
