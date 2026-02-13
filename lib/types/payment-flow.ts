@@ -6,8 +6,8 @@ import { RefObject } from 'react';
 
 export type StepDetail =
   | { type: 'code'; language: string; code: string }
-  | { type: 'api-request'; method: string; path: string; body?: unknown }
-  | { type: 'api-response'; status: number; body: unknown }
+  | { type: 'api-request'; method: string; path: string; body?: unknown; headers?: Record<string, string> }
+  | { type: 'api-response'; status: number; body: unknown; headers?: Record<string, string> }
   | { type: 'event'; name: string; data?: unknown }
   | { type: 'info'; message: string };
 
@@ -136,6 +136,8 @@ export interface AuthorizeResponse {
   error?: string;
   rawKlarnaRequest?: unknown;
   rawKlarnaResponse?: unknown;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
   requestMetadata: {
     correlationId: string;
     idempotencyKey?: string;

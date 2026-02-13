@@ -181,12 +181,24 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
     // Call the API
     const result = await authorizePayment(paymentOptionId);
 
+    // Re-emit authorize-request with actual headers from the API response
+    if (result.requestHeaders) {
+      emit('authorize-request', {
+        type: 'api-request',
+        method: 'POST',
+        path: `/v2/accounts/${partnerAccountId}/payment/authorize`,
+        body: authBody,
+        headers: result.requestHeaders,
+      });
+    }
+
     if (!result.success || !result.data) {
       const errorMsg = result.error || 'Authorization failed';
       emit('authorize-response', {
         type: 'api-response',
         status: 400,
         body: result.rawKlarnaResponse || { error: errorMsg },
+        headers: result.responseHeaders,
       });
       setFlowState('ERROR');
       setErrorMessage(errorMsg);
@@ -198,6 +210,7 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
       type: 'api-response',
       status: 200,
       body: result.rawKlarnaResponse || result.data,
+      headers: result.responseHeaders,
     });
 
     switch (result.data.result) {
@@ -306,10 +319,21 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
           try {
             const finalResult = await authorizePayment(undefined, pending);
 
+            if (finalResult.requestHeaders) {
+              emit('final-authorize-request', {
+                type: 'api-request',
+                method: 'POST',
+                path: `/v2/accounts/${partnerAccountId}/payment/authorize`,
+                body: { klarnaNetworkSessionToken: pending.substring(0, 20) + '...', currency: 'USD', amount },
+                headers: finalResult.requestHeaders,
+              });
+            }
+
             emit('final-authorize-response', {
               type: 'api-response',
               status: finalResult.success ? 200 : 400,
               body: finalResult.rawKlarnaResponse || finalResult.data,
+              headers: finalResult.responseHeaders,
             });
 
             if (finalResult.success && finalResult.data?.result === 'APPROVED') {
@@ -401,7 +425,27 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
       emit('presentation-received', {
         type: 'code',
         language: 'javascript',
-        code: `const presentation = await klarna.Payment.presentation(${JSON.stringify(presentationCall, null, 2)})`,
+        code: `const presentation = await klarna.Payment.presentation(${JSON.stringify(presentationCall, null, 2)})
+
+// Mount heading — the payment method name (e.g. "Pay with Klarna")
+presentation.header
+  .component()
+  .mount(headerContainer)
+
+// Mount subheading — short description (e.g. "Pay in 4 interest-free payments")
+presentation.subheader.short
+  .component()
+  .mount(subheaderContainer)
+
+// Mount icon badge — the Klarna logo
+presentation.icon
+  .component({ shape: 'badge' })
+  .mount(iconContainer)
+
+// Mount enriched messaging — shown when Klarna is selected
+presentation.subheader.enriched
+  .component()
+  .mount(messageContainer)`,
       });
 
       // Step 3: Mount button
@@ -492,10 +536,21 @@ export function usePaymentFlowDemo(options: UsePaymentFlowOptions): UsePaymentFl
     try {
       const finalResult = await authorizePayment(undefined, sessionToken);
 
+      if (finalResult.requestHeaders) {
+        emit('final-authorize-request', {
+          type: 'api-request',
+          method: 'POST',
+          path: `/v2/accounts/${partnerAccountId}/payment/authorize`,
+          body: { klarnaNetworkSessionToken: sessionToken.substring(0, 20) + '...', currency: 'USD', amount },
+          headers: finalResult.requestHeaders,
+        });
+      }
+
       emit('final-authorize-response', {
         type: 'api-response',
         status: finalResult.success ? 200 : 400,
         body: finalResult.rawKlarnaResponse || finalResult.data,
+        headers: finalResult.responseHeaders,
       });
 
       if (finalResult.success && finalResult.data?.result === 'APPROVED') {

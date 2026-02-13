@@ -25,6 +25,38 @@ const STEP_TYPE_STYLES: Record<StepTemplate['type'], { color: string; dash: stri
 };
 
 // ============================================================================
+// HEADERS DISPLAY COMPONENT
+// ============================================================================
+
+function HeadersDisplay({ headers }: { headers: Record<string, string> }) {
+  const [open, setOpen] = useState(false);
+  const entries = Object.entries(headers);
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider bg-transparent border-none cursor-pointer px-0 py-0.5 hover:text-gray-700"
+      >
+        <span className="transition-transform" style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
+        Headers ({entries.length})
+      </button>
+      {open && (
+        <div className="bg-gray-50 border border-gray-200 rounded p-2 mt-1 font-mono text-[11px] leading-relaxed overflow-x-auto">
+          {entries.map(([key, value]) => (
+            <div key={key} className="flex gap-2">
+              <span className="text-gray-500 shrink-0">{key}:</span>
+              <span className="text-gray-800 break-all">{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // STEP INSPECTOR COMPONENT
 // ============================================================================
 
@@ -56,6 +88,7 @@ export function StepInspector({ stepId, label, detail }: { stepId: string | null
               <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-700">{detail.method}</span>
               <code className="text-xs text-gray-700 font-mono">{detail.path}</code>
             </div>
+            {detail.headers && <HeadersDisplay headers={detail.headers} />}
             {detail.body != null && (
               <pre className="bg-gray-900 text-amber-300 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">
                 {typeof detail.body === 'string' ? detail.body : JSON.stringify(detail.body, null, 2)}
@@ -73,6 +106,7 @@ export function StepInspector({ stepId, label, detail }: { stepId: string | null
               </span>
               <span className="text-xs text-gray-500">Response</span>
             </div>
+            {detail.headers && <HeadersDisplay headers={detail.headers} />}
             <pre className="bg-gray-900 text-emerald-300 text-xs p-3 rounded-md overflow-x-auto font-mono leading-relaxed whitespace-pre-wrap">
               {typeof detail.body === 'string' ? detail.body : JSON.stringify(detail.body, null, 2)}
             </pre>

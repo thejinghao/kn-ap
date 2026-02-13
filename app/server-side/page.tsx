@@ -49,6 +49,8 @@ interface AuthorizeResponse {
   error?: string;
   rawKlarnaRequest?: unknown;
   rawKlarnaResponse?: unknown;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
   requestMetadata: {
     correlationId: string;
   };
@@ -905,8 +907,8 @@ export default function ServerSidePaymentPage() {
     const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
     authorizePayment(undefined, pendingToken)
       .then(finalResult => {
-        logEvent('Final Authorization Request', 'info', finalResult.rawKlarnaRequest, 'api', 'request', authPath);
-        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', finalResult.rawKlarnaResponse, 'api', 'response', authPath);
+        logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
+        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
 
         if (finalResult.success && finalResult.data?.result === 'APPROVED') {
           setFlowState('SUCCESS');
@@ -1460,9 +1462,34 @@ export default function ServerSidePaymentPage() {
                 <div className="text-[11px] text-gray-500 mb-1.5">
                   {event.timestamp.toLocaleTimeString()}
                 </div>
-                {event.data !== undefined && event.data !== null && (
-                  <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
-                )}
+                {event.data !== undefined && event.data !== null && (() => {
+                  const d = event.data as { body?: unknown; headers?: Record<string, string> };
+                  const isApiEvent = event.source === 'api' && d && typeof d === 'object' && 'body' in d;
+                  return isApiEvent ? (
+                    <>
+                      {d.headers && Object.keys(d.headers).length > 0 && (
+                        <details className="my-2">
+                          <summary className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700">
+                            Headers ({Object.keys(d.headers).length})
+                          </summary>
+                          <div className="bg-gray-50 border border-gray-200 rounded p-2 mt-1 font-mono text-[11px] leading-relaxed overflow-x-auto">
+                            {Object.entries(d.headers).map(([k, v]) => (
+                              <div key={k} className="flex gap-2">
+                                <span className="text-gray-500 shrink-0">{k}:</span>
+                                <span className="text-gray-800 break-all">{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                      {d.body !== undefined && d.body !== null && (
+                        <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(d.body, null, 2)}</pre>
+                      )}
+                    </>
+                  ) : (
+                    <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] overflow-x-auto my-2 max-h-[300px] overflow-y-auto break-words">{JSON.stringify(event.data, null, 2)}</pre>
+                  );
+                })()}
               </div>
             ))
           )}

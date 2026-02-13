@@ -59,6 +59,8 @@ interface AuthorizeResponse {
   error?: string;
   rawKlarnaRequest?: unknown;
   rawKlarnaResponse?: unknown;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
   requestMetadata: {
     timestamp: string;
     correlationId: string;
@@ -113,7 +115,7 @@ async function makeKlarnaRequest(
   url: string,
   headers: Record<string, string>,
   body?: unknown
-): Promise<{ status: number; statusText: string; data: unknown }> {
+): Promise<{ status: number; statusText: string; data: unknown; headers: Record<string, string> }> {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const { cert, key } = loadCertificates();
@@ -157,10 +159,18 @@ async function makeKlarnaRequest(
           data = responseData;
         }
 
+        const responseHeaders: Record<string, string> = {};
+        Object.entries(res.headers).forEach(([key, value]) => {
+          if (value) {
+            responseHeaders[key] = Array.isArray(value) ? value.join(', ') : value;
+          }
+        });
+
         resolve({
           status: res.statusCode || 500,
           statusText: res.statusMessage || 'Unknown',
           data,
+          headers: responseHeaders,
         });
       });
     });
@@ -239,6 +249,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
     if (body.klarnaNetworkSessionToken) {
       headers['Klarna-Network-Session-Token'] = body.klarnaNetworkSessionToken;
     }
+
+    // Build sanitized request headers (redact auth)
+    const sanitizedRequestHeaders = { ...headers };
+    sanitizedRequestHeaders['Authorization'] = 'Basic ****';
 
     // Build request body for Klarna API
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,6 +356,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
         data: transformedData,
         rawKlarnaRequest: klarnaBody,
         rawKlarnaResponse: responseData,
+        requestHeaders: sanitizedRequestHeaders,
+        responseHeaders: response.headers,
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       });
     } else {
@@ -372,6 +388,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Authorize
         error: errorMessage,
         rawKlarnaRequest: klarnaBody,
         rawKlarnaResponse: responseData,
+        requestHeaders: sanitizedRequestHeaders,
+        responseHeaders: response.headers,
         requestMetadata: { timestamp, correlationId, idempotencyKey },
       }, { status: response.status });
     }
