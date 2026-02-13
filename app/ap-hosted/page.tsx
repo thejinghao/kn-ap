@@ -8,14 +8,15 @@ import styles from './page.module.css';
 // TYPES
 // ============================================================================
 
-type FlowState = 
-  | 'IDLE' 
-  | 'INITIALIZING' 
-  | 'READY' 
-  | 'AUTHORIZING' 
-  | 'STEP_UP' 
-  | 'COMPLETING' 
-  | 'SUCCESS' 
+type FlowState =
+  | 'IDLE'
+  | 'INITIALIZING'
+  | 'READY'
+  | 'AUTHORIZING'
+  | 'STEP_UP'
+  | 'COMPLETING'
+  | 'AWAITING_AUTHORIZATION'
+  | 'SUCCESS'
   | 'ERROR';
 
 interface EventLogItem {
@@ -214,6 +215,9 @@ export default function PaymentButtonPage() {
   const [presentationInfo, setPresentationInfo] = useState<PresentationInfo | null>(null);
   const [paymentTransaction, setPaymentTransaction] = useState<AuthorizeResponse['data'] | null>(null);
 
+  // Pending session token (shown on interim page before manual final auth)
+  const [pendingSessionToken, setPendingSessionToken] = useState<string | null>(null);
+
   // Payment method selection
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'klarna' | null>(null);
   
@@ -248,7 +252,7 @@ export default function PaymentButtonPage() {
     { name: 'Tax (8%)', quantity: 1, totalAmount: cartTax, unitPrice: cartTax },
   ], [cartLineItems, cartTax]);
 
-  const cartLocked = flowState !== 'IDLE' && flowState !== 'ERROR';
+  const cartLocked = flowState !== 'IDLE' && flowState !== 'ERROR' && flowState !== 'AWAITING_AUTHORIZATION';
 
   // Refs
   const bottomButtonWrapperRef = useRef<HTMLDivElement>(null);
@@ -362,6 +366,39 @@ export default function PaymentButtonPage() {
 
     return response.json();
   }, [partnerAccountId, currentOrigin]);
+
+  // ============================================================================
+  // MANUAL FINAL AUTHORIZATION (triggered from interim page)
+  // ============================================================================
+
+  const handleFinalAuthorize = useCallback(async () => {
+    if (!pendingSessionToken) return;
+
+    setFlowState('COMPLETING');
+    logEvent('Manual Final Authorization Triggered', 'info', undefined, 'flow');
+
+    const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
+    try {
+      const finalResult = await authorizePayment(undefined, pendingSessionToken);
+
+      logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
+      logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
+
+      if (finalResult.success && finalResult.data?.result === 'APPROVED') {
+        setFlowState('SUCCESS');
+        setPaymentTransaction(finalResult.data);
+        setPendingSessionToken(null);
+        logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
+      } else {
+        throw new Error(finalResult.error || 'Final authorization failed');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setFlowState('ERROR');
+      setErrorMessage(message);
+      logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
+    }
+  }, [pendingSessionToken, partnerAccountId, authorizePayment, logEvent]);
 
   // ============================================================================
   // INITIATE CALLBACK (called when button is clicked)
@@ -480,40 +517,22 @@ export default function PaymentButtonPage() {
                           paymentRequest.stateContext?.klarnaNetworkSessionToken;
 
       if (sessionToken) {
-        // Save token to sessionStorage — final auth will happen after redirect
-        // (Don't call authorize here: the page will redirect to returnUrl and the
-        //  redirect-based useEffect will pick up the token and do final auth.
-        //  Calling authorize in BOTH places caused a 409 RESOURCE_CONFLICT.)
+        // Save token to sessionStorage for persistence across redirect
         try { sessionStorage.setItem('pendingSessionToken', sessionToken); } catch {}
         setFlowState('COMPLETING');
         logEvent('Session Token Saved — Awaiting Redirect', 'info', undefined, 'flow');
 
-        // Fallback: if no redirect occurs within 3s (e.g. popup mode), do final auth here
-        setTimeout(async () => {
+        // Fallback: if no redirect occurs within 3s (e.g. popup mode), show interim page
+        setTimeout(() => {
           const pending = sessionStorage.getItem('pendingSessionToken');
           if (!pending) return; // redirect handler already consumed it
           sessionStorage.removeItem('pendingSessionToken');
 
-          const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
-          try {
-            const finalResult = await authorizePayment(undefined, pending);
-
-            logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
-            logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
-
-            if (finalResult.success && finalResult.data?.result === 'APPROVED') {
-              setFlowState('SUCCESS');
-              setPaymentTransaction(finalResult.data);
-              logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
-            } else {
-              throw new Error(finalResult.error || 'Final authorization failed');
-            }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            setFlowState('ERROR');
-            setErrorMessage(message);
-            logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
-          }
+          setPendingSessionToken(pending);
+          setFlowState('AWAITING_AUTHORIZATION');
+          logEvent('Session Token Available — Manual Authorization Required', 'info', {
+            token: pending.substring(0, 40) + '...',
+          }, 'flow');
         }, 3000);
       } else {
         setFlowState('SUCCESS');
@@ -946,37 +965,19 @@ export default function PaymentButtonPage() {
     }
   }, [logEvent]);
 
-  // Resume final authorization after page redirect (session token saved pre-redirect)
+  // After redirect: show interim page with session token instead of auto-authorizing
   useEffect(() => {
     if (!isMounted || !currentOrigin) return;
 
-    const pendingToken = sessionStorage.getItem('pendingSessionToken');
-    if (!pendingToken) return;
+    const token = sessionStorage.getItem('pendingSessionToken');
+    if (!token) return;
 
     sessionStorage.removeItem('pendingSessionToken');
-    logEvent('Resuming Final Authorization After Redirect', 'info', undefined, 'flow');
-    setFlowState('COMPLETING');
-
-    const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
-    authorizePayment(undefined, pendingToken)
-      .then(finalResult => {
-        logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
-        logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
-
-        if (finalResult.success && finalResult.data?.result === 'APPROVED') {
-          setFlowState('SUCCESS');
-          setPaymentTransaction(finalResult.data);
-          logEvent('Payment Successfully Completed', 'success', finalResult.data.paymentTransaction, 'flow');
-        } else {
-          throw new Error(finalResult.error || 'Final authorization failed');
-        }
-      })
-      .catch(error => {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        setFlowState('ERROR');
-        setErrorMessage(message);
-        logEvent('Final Authorization Error', 'error', { error: message }, 'api', 'response', authPath);
-      });
+    setPendingSessionToken(token);
+    setFlowState('AWAITING_AUTHORIZATION');
+    logEvent('Returned with Session Token — Manual Authorization Required', 'info', {
+      token: token.substring(0, 40) + '...',
+    }, 'flow');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted, currentOrigin]);
 
@@ -1024,6 +1025,7 @@ export default function PaymentButtonPage() {
     setErrorMessage(null);
     setPaymentTransaction(null);
     setPresentationInfo(null);
+    setPendingSessionToken(null);
     presentationRef.current = null;
     setKlarna(null);
     sdkInitializedRef.current = false;
@@ -1162,7 +1164,7 @@ export default function PaymentButtonPage() {
                   disabled
                   className="bg-gray-300 text-white px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
                 >
-                  {flowState === 'INITIALIZING' ? 'Initializing...' : flowState === 'SUCCESS' ? 'Payment Complete' : 'Processing...'}
+                  {flowState === 'INITIALIZING' ? 'Initializing...' : flowState === 'SUCCESS' ? 'Payment Complete' : flowState === 'AWAITING_AUTHORIZATION' ? 'Awaiting Authorization' : 'Processing...'}
                 </button>
               )}
 
@@ -1192,8 +1194,10 @@ export default function PaymentButtonPage() {
               <svg className="w-3 h-3 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z" />
               </svg>
-              <span className="text-gray-500 font-mono text-xs">
-                checkout.acquiring-partner.com{flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? '/order-confirmation' : '/checkout'}
+              <span className="text-gray-500 font-mono text-xs truncate">
+                {flowState === 'AWAITING_AUTHORIZATION' && pendingSessionToken
+                  ? `checkout.acquiring-partner.com/checkout/return?klarna_network_session_token=${pendingSessionToken.substring(0, 24)}...`
+                  : `checkout.acquiring-partner.com${flowState === 'SUCCESS' && paymentTransaction?.paymentTransaction ? '/order-confirmation' : '/checkout'}`}
               </span>
             </div>
             {/* Browser Content Area */}
@@ -1241,6 +1245,69 @@ export default function PaymentButtonPage() {
                 >
                   New Order
                 </button>
+              </div>
+            ) : flowState === 'AWAITING_AUTHORIZATION' && pendingSessionToken ? (
+              /* ---- Interim: Session Token Returned ---- */
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-gray-900 m-0">Customer Returned from Klarna</h4>
+                    <p className="text-xs text-gray-500 m-0">The Klarna journey is complete. The SDK returned a network session token.</p>
+                  </div>
+                </div>
+
+                {/* Explanation */}
+                <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-4 text-xs text-blue-800 leading-relaxed">
+                  <strong>What happened:</strong> The customer completed the Klarna checkout experience. The SDK&apos;s <code className="bg-blue-100/70 px-1 py-0.5 rounded text-[11px] font-mono">complete</code> event returned a <code className="bg-blue-100/70 px-1 py-0.5 rounded text-[11px] font-mono">klarna_network_session_token</code> in the <code className="bg-blue-100/70 px-1 py-0.5 rounded text-[11px] font-mono">stateContext</code>. This token is also available as a query parameter in the return URL.
+                </div>
+
+                {/* Token Display */}
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-gray-500 mb-1.5">Network Session Token</div>
+                  <div className="bg-gray-900 rounded p-3 overflow-x-auto">
+                    <code className="text-[11px] font-mono text-green-400 break-all leading-relaxed">
+                      {pendingSessionToken}
+                    </code>
+                  </div>
+                </div>
+
+                {/* Return URL Display */}
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-gray-500 mb-1.5">Return URL (with token)</div>
+                  <div className="bg-gray-50 border border-gray-200 rounded p-2 overflow-x-auto">
+                    <code className="text-[11px] font-mono text-gray-600 break-all leading-relaxed">
+                      {currentOrigin}/ap-hosted?status=complete&klarna_network_session_token=<span className="text-amber-600">{pendingSessionToken.substring(0, 20)}...</span>
+                    </code>
+                  </div>
+                </div>
+
+                {/* Next Step */}
+                <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-4 text-xs text-amber-800 leading-relaxed">
+                  <strong>Next step:</strong> The Acquiring Partner must call the <code className="bg-amber-100/70 px-1 py-0.5 rounded text-[11px] font-mono">POST /payment/authorize</code> endpoint again, this time including the <code className="bg-amber-100/70 px-1 py-0.5 rounded text-[11px] font-mono">Klarna-Network-Session-Token</code> header. This final authorization returns the <code className="bg-amber-100/70 px-1 py-0.5 rounded text-[11px] font-mono">paymentTransactionId</code> needed to confirm the order.
+                </div>
+
+                {/* Authorize Button */}
+                <button
+                  onClick={handleFinalAuthorize}
+                  className="w-full bg-gray-900 text-white px-5 py-3 rounded text-sm font-bold hover:bg-gray-800 border-none cursor-pointer"
+                >
+                  Call Final Authorization
+                </button>
+                <div className="text-[11px] text-gray-400 text-center mt-1.5">
+                  POST /v2/accounts/{'{'}partnerAccountId{'}'}/payment/authorize with session token header
+                </div>
+              </div>
+            ) : flowState === 'COMPLETING' && !pendingSessionToken ? (
+              /* ---- Completing: Final auth in progress ---- */
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-10 h-10 border-3 border-gray-200 border-t-gray-900 rounded-full animate-spin mb-4" />
+                <div className="text-sm font-medium text-gray-700">Completing Authorization...</div>
+                <div className="text-xs text-gray-500 mt-1">Calling final authorization endpoint</div>
               </div>
             ) : (
               /* ---- Checkout Content ---- */
@@ -1379,10 +1446,13 @@ export default function PaymentButtonPage() {
                 {errorMessage && (
                   <div className="text-red-500 text-xs mb-2">{errorMessage}</div>
                 )}
-                {(flowState === 'INITIALIZING' || flowState === 'AUTHORIZING' || flowState === 'COMPLETING') && (
+                {(flowState === 'INITIALIZING' || flowState === 'AUTHORIZING') && (
                   <div className="text-xs text-blue-500 mb-2">
-                    {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : flowState === 'AUTHORIZING' ? 'Authorizing payment...' : 'Completing authorization...'}
+                    {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : 'Authorizing payment...'}
                   </div>
+                )}
+                {flowState === 'COMPLETING' && (
+                  <div className="text-xs text-blue-500 mb-2">Waiting for redirect...</div>
                 )}
                 {flowState === 'STEP_UP' && (
                   <div className="text-xs text-purple-600 mb-2">Customer in Klarna journey...</div>
