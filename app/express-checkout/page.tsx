@@ -336,6 +336,7 @@ export default function ExpressCheckoutPage() {
 
   const authorizePayment = useCallback(async (
     klarnaNetworkSessionToken: string,
+    finalAmount?: number,
   ): Promise<AuthorizeResponse> => {
     const response = await fetch('/api/payment/authorize', {
       method: 'POST',
@@ -343,7 +344,7 @@ export default function ExpressCheckoutPage() {
       body: JSON.stringify({
         partnerAccountId,
         currency: COUNTRY_MAPPING[country].currency,
-        amount: cartTotalRef.current,
+        amount: finalAmount ?? cartTotalRef.current,
         paymentTransactionReference: `tx_${Date.now()}_${generateId()}`,
         paymentRequestReference: `pr_${Date.now()}_${generateId()}`,
         returnUrl: `${window.location.origin}/express-checkout`,
@@ -499,7 +500,7 @@ export default function ExpressCheckoutPage() {
           const authPath = `POST /v2/accounts/${partnerAccountId}/payment/authorize`;
 
           try {
-            const finalResult = await authorizePayment(sessionToken);
+            const finalResult = await authorizePayment(sessionToken, paymentRequest.amount);
 
             logEvent('Final Authorization Request', 'info', { body: finalResult.rawKlarnaRequest, headers: finalResult.requestHeaders }, 'api', 'request', authPath);
             logEvent('Final Authorization Response', finalResult.success ? 'success' : 'error', { body: finalResult.rawKlarnaResponse, headers: finalResult.responseHeaders }, 'api', 'response', authPath);
