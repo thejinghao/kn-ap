@@ -14,6 +14,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ServerIcon,
   BookOpenIcon,
+  BoltIcon,
 } from '@heroicons/react/24/outline';
 import EnvironmentPanel from './EnvironmentPanel';
 import { useEnvironment } from '@/lib/env-context';
@@ -53,7 +54,7 @@ export default function Header() {
   }, [showEnvPanel]);
 
   const isStructurePage = pathname?.startsWith('/account_structure');
-  const isPaymentsPage = pathname?.startsWith('/payments') || pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/server-side') || pathname?.startsWith('/on-site-messaging');
+  const isPaymentsPage = pathname?.startsWith('/payments') || pathname?.startsWith('/ap-hosted') || pathname?.startsWith('/server-side') || pathname?.startsWith('/on-site-messaging') || pathname?.startsWith('/express-checkout');
 
   return (
     <>
@@ -233,6 +234,21 @@ export default function Header() {
                         <div>
                           <div className="font-medium">On-Site Messaging (SDK)</div>
                           <div className="text-xs text-gray-500">Configure messaging placements</div>
+                        </div>
+                      </Link>
+                      <Link
+                        href="/express-checkout"
+                        onClick={() => setShowPaymentsMenu(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          pathname === '/express-checkout'
+                            ? 'bg-gray-50 text-gray-900'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <BoltIcon className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <div className="font-medium">Express Checkout</div>
+                          <div className="text-xs text-gray-500">Payment.button() direct mount</div>
                         </div>
                       </Link>
                     </div>

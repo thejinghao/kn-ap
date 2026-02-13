@@ -111,6 +111,7 @@ npm run db:studio     # Open Drizzle Studio GUI
 - `app/ap-hosted/page.tsx` - AP Hosted full configuration explorer (cart, event log, SDK config)
 - `app/server-side/page.tsx` - Server-side full configuration explorer
 - `app/on-site-messaging/page.tsx` - On-Site Messaging demo with placement configuration
+- `app/express-checkout/page.tsx` - Express Checkout using Payment.button() direct mount (multi-country, shipping events)
 
 **Core Components:**
 - `components/RequestForm.tsx` - Request configuration (method, path, headers, body)
