@@ -716,7 +716,7 @@ export default function PaymentButtonPage() {
       // Mount the button from the presentation
       const buttonInstance = paymentOption.paymentButton
         .component({
-          shape: 'pill',
+          shape: 'rect',
           theme: 'default',
           locale: DEFAULT_CONFIG.locale,
           intents: ['PAY'],
@@ -1387,7 +1387,7 @@ export default function PaymentButtonPage() {
                 )}
 
                 {/* Bottom Button Area */}
-                <div className="mt-3 flex justify-end">
+                <div className="mt-4 flex justify-center">
                   {/* SDK payment button mount target — right-aligned, hidden when inactive */}
                   <div
                     ref={bottomButtonWrapperRef}

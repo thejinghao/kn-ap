@@ -213,6 +213,9 @@ export default function ServerSidePaymentPage() {
   const [presentationInfo, setPresentationInfo] = useState<PresentationInfo | null>(null);
   const [paymentTransaction, setPaymentTransaction] = useState<{ paymentTransaction?: { paymentTransactionId: string; paymentTransactionReference: string; amount: number; currency: string } } | null>(null);
 
+  // Payment method selection
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'klarna' | null>(null);
+
   // Event Log
   const [eventLog, setEventLog] = useState<EventLogItem[]>([]);
 
@@ -251,7 +254,7 @@ export default function ServerSidePaymentPage() {
   const cartLocked = flowState !== 'IDLE' && flowState !== 'ERROR';
 
   // Refs
-  const buttonWrapperRef = useRef<HTMLDivElement>(null);
+  const bottomButtonWrapperRef = useRef<HTMLDivElement>(null);
   const sdkInitializedRef = useRef(false);
   const presentationRef = useRef<PaymentPresentation | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -264,6 +267,22 @@ export default function ServerSidePaymentPage() {
   const osmKlarnaRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const osmPlacementRef = useRef<any>(null);
+
+  // SDK sub-component mount targets (DOM elements)
+  const iconMountRef = useRef<HTMLDivElement>(null);
+  const headerMountRef = useRef<HTMLDivElement>(null);
+  const subheaderMountRef = useRef<HTMLDivElement>(null);
+  const messageMountRef = useRef<HTMLDivElement>(null);
+
+  // SDK sub-component mounted instances (for cleanup)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mountedIconRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mountedHeaderRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mountedSubheaderRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mountedMessageRef = useRef<any>(null);
 
   // ============================================================================
   // CART MANIPULATION
@@ -539,8 +558,82 @@ export default function ServerSidePaymentPage() {
     }
   }, []);
 
+  // Helper to unmount all SDK presentation sub-components
+  const clearSdkSubComponents = useCallback(() => {
+    for (const ref of [mountedIconRef, mountedHeaderRef, mountedSubheaderRef, mountedMessageRef]) {
+      if (ref.current) {
+        try {
+          if (typeof ref.current.unmount === 'function') ref.current.unmount();
+        } catch {}
+        ref.current = null;
+      }
+    }
+    // Clear the inner content of mount targets
+    for (const ref of [iconMountRef, headerMountRef, subheaderMountRef, messageMountRef]) {
+      if (ref.current) ref.current.innerHTML = '';
+    }
+  }, []);
+
+  // Mount icon, header, and subheader.short from presentation
+  const mountPresentationComponents = useCallback((presentation: PaymentPresentation) => {
+    if (!presentation) return;
+
+    try {
+      // Mount icon (badge shape)
+      if (iconMountRef.current && presentation.icon) {
+        const iconInstance = presentation.icon.component({ shape: 'badge' }).mount(iconMountRef.current);
+        mountedIconRef.current = iconInstance;
+      }
+
+      // Mount header
+      if (headerMountRef.current && presentation.header) {
+        const headerInstance = presentation.header.component().mount(headerMountRef.current);
+        mountedHeaderRef.current = headerInstance;
+      }
+
+      // Mount subheader.short
+      if (subheaderMountRef.current && presentation.subheader?.short) {
+        const subheaderInstance = presentation.subheader.short.component().mount(subheaderMountRef.current);
+        mountedSubheaderRef.current = subheaderInstance;
+      }
+
+      logEvent('Presentation Components Mounted', 'success', undefined, 'sdk');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logEvent('Presentation Component Mount Error', 'error', { error: message }, 'sdk');
+    }
+  }, [logEvent]);
+
+  // Mount enriched subheader (message) — shown when Klarna is selected
+  const mountMessageComponent = useCallback(() => {
+    const presentation = presentationRef.current;
+    if (!presentation?.subheader?.enriched || !messageMountRef.current) return;
+
+    // Already mounted
+    if (mountedMessageRef.current) return;
+
+    try {
+      const messageInstance = presentation.subheader.enriched.component().mount(messageMountRef.current);
+      mountedMessageRef.current = messageInstance;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logEvent('Message Component Mount Error', 'error', { error: message }, 'sdk');
+    }
+  }, [logEvent]);
+
+  // Unmount just the enriched subheader/message
+  const unmountMessageComponent = useCallback(() => {
+    if (mountedMessageRef.current) {
+      try {
+        if (typeof mountedMessageRef.current.unmount === 'function') mountedMessageRef.current.unmount();
+      } catch {}
+      mountedMessageRef.current = null;
+    }
+    if (messageMountRef.current) messageMountRef.current.innerHTML = '';
+  }, []);
+
   const mountPaymentButton = useCallback((presentationResult: PaymentPresentation) => {
-    if (!buttonWrapperRef.current || !presentationResult?.paymentOption) {
+    if (!bottomButtonWrapperRef.current || !presentationResult?.paymentOption) {
       return;
     }
 
@@ -564,12 +657,12 @@ export default function ServerSidePaymentPage() {
       mountTarget.style.cssText = 'width: 100%;';
 
       // Append to the wrapper (React won't track this child)
-      buttonWrapperRef.current.appendChild(mountTarget);
+      bottomButtonWrapperRef.current.appendChild(mountTarget);
 
       // Mount the button from the presentation
       const buttonInstance = paymentOption.paymentButton
         .component({
-          shape: 'pill',
+          shape: 'rect',
           theme: 'default',
           locale: DEFAULT_CONFIG.locale,
           intents: ['PAY'],
@@ -582,7 +675,6 @@ export default function ServerSidePaymentPage() {
       mountedButtonRef.current = buttonInstance;
 
       logEvent('Payment Button Mounted', 'success', undefined, 'sdk');
-      setFlowState('READY');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       logEvent('Button Mount Error', 'error', { error: message }, 'sdk');
@@ -590,6 +682,23 @@ export default function ServerSidePaymentPage() {
       setFlowState('ERROR');
     }
   }, [handleInitiate, logEvent, clearSdkMount]);
+
+  // Handle payment method selection
+  const handlePaymentMethodSelect = useCallback((method: 'credit_card' | 'klarna') => {
+    setSelectedPaymentMethod(method);
+
+    if (method === 'klarna') {
+      // Mount enriched message + payment button
+      mountMessageComponent();
+      if (presentationRef.current) {
+        mountPaymentButton(presentationRef.current);
+      }
+    } else {
+      // Unmount message and button
+      unmountMessageComponent();
+      clearSdkMount();
+    }
+  }, [mountMessageComponent, unmountMessageComponent, mountPaymentButton, clearSdkMount]);
 
   // ============================================================================
   // SDK INITIALIZATION
@@ -655,9 +764,20 @@ export default function ServerSidePaymentPage() {
         (window as any).klarna = klarnaInstance;
       }
 
-      // Get presentation and mount button
+      // Get presentation and mount sub-components (icon, header, subheader)
       const presentationResult = await getPresentation(klarnaInstance);
-      mountPaymentButton(presentationResult);
+      mountPresentationComponents(presentationResult);
+
+      // Respect instruction field
+      const instruction = presentationResult.instruction;
+      if (instruction === 'PRESELECT_KLARNA' || instruction === 'SHOW_ONLY_KLARNA') {
+        setSelectedPaymentMethod('klarna');
+        // Mount message + button for pre-selected state
+        mountMessageComponent();
+        mountPaymentButton(presentationResult);
+      }
+
+      setFlowState('READY');
 
       // Initialize On-Site Messaging (separate SDK instance)
       try {
@@ -686,7 +806,7 @@ export default function ServerSidePaymentPage() {
       setErrorMessage(`SDK initialization failed: ${message}`);
       logEvent('SDK Initialization Error', 'error', { error: message }, 'sdk');
     }
-  }, [clientId, sdkToken, sessionToken, attachSDKEventHandlers, getPresentation, mountPaymentButton, logEvent]);
+  }, [clientId, sdkToken, sessionToken, attachSDKEventHandlers, getPresentation, mountPresentationComponents, mountMessageComponent, mountPaymentButton, logEvent]);
 
   // ============================================================================
   // EFFECTS
@@ -827,6 +947,12 @@ export default function ServerSidePaymentPage() {
       if (existingMount && existingMount.parentNode) {
         existingMount.parentNode.removeChild(existingMount);
       }
+      // Clean up SDK sub-components
+      for (const ref of [mountedIconRef, mountedHeaderRef, mountedSubheaderRef, mountedMessageRef]) {
+        if (ref.current) {
+          try { if (typeof ref.current.unmount === 'function') ref.current.unmount(); } catch {}
+        }
+      }
       // Clean up OSM placement
       if (osmPlacementRef.current) {
         try { osmPlacementRef.current.unmount(); } catch {}
@@ -847,7 +973,9 @@ export default function ServerSidePaymentPage() {
     setKlarna(null);
     sdkInitializedRef.current = false;
     finalAuthInProgressRef.current = false;
+    setSelectedPaymentMethod(null);
     clearSdkMount();
+    clearSdkSubComponents();
     // Clean up OSM
     if (osmPlacementRef.current) {
       try { osmPlacementRef.current.unmount(); } catch {}
@@ -859,7 +987,7 @@ export default function ServerSidePaymentPage() {
       { catalogItem: PRODUCT_CATALOG[1], quantity: 1 },
     ]);
     logEvent('Flow Reset', 'info', undefined, 'flow');
-  }, [logEvent, clearSdkMount]);
+  }, [logEvent, clearSdkMount, clearSdkSubComponents]);
 
   // ============================================================================
   // RENDER
@@ -1162,58 +1290,117 @@ export default function ServerSidePaymentPage() {
                   </div>
                 </div>
 
+                {/* On-Site Messaging — above payment methods */}
+                <div
+                  id="klarna-osm-placement"
+                  style={{ width: '100%', marginBottom: '12px' }}
+                />
+
                 {/* Payment Method */}
                 <div className="mb-2">
                   <div className="text-xs font-medium text-gray-500 mb-2">Payment Method</div>
 
-                  {/* Credit Card - mock disabled */}
-                  <div className="p-3 bg-gray-50 rounded border border-gray-200 mb-2 opacity-60">
+                  {/* Credit Card option */}
+                  <div
+                    className={`p-3 rounded border-2 mb-2 cursor-pointer transition-colors ${
+                      selectedPaymentMethod === 'credit_card'
+                        ? 'bg-gray-50 border-gray-400'
+                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => flowState === 'READY' && handlePaymentMethodSelect('credit_card')}
+                  >
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                      <span className="text-sm text-gray-500">Credit Card</span>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        selectedPaymentMethod === 'credit_card' ? 'border-gray-600 bg-gray-600' : 'border-gray-300'
+                      }`}>
+                        {selectedPaymentMethod === 'credit_card' && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <span className={`text-sm ${selectedPaymentMethod === 'credit_card' ? 'font-medium text-gray-900' : 'text-gray-500'}`}>Credit Card</span>
+                      <div className="ml-auto flex gap-1">
+                        <div className="bg-[#1A1F71] text-white text-[8px] font-bold px-1.5 py-0.5 rounded">VISA</div>
+                        <div className="bg-[#EB001B] text-white text-[8px] font-bold px-1.5 py-0.5 rounded">MC</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Klarna - selected */}
-                  <div className="p-3 bg-pink-50 rounded border-2 border-pink-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-4 h-4 rounded-full border-2 border-pink-400 bg-pink-400 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {/* Klarna option — uses SDK sub-components */}
+                  {presentationInfo?.instruction !== 'HIDE_KLARNA' && (
+                    <div
+                      className={`p-3 rounded border-2 cursor-pointer transition-colors ${
+                        selectedPaymentMethod === 'klarna'
+                          ? 'bg-pink-50 border-pink-300'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => flowState === 'READY' && handlePaymentMethodSelect('klarna')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          selectedPaymentMethod === 'klarna' ? 'border-pink-400 bg-pink-400' : 'border-gray-300'
+                        }`}>
+                          {selectedPaymentMethod === 'klarna' && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {/* SDK header — bold, primary */}
+                          <div ref={headerMountRef} className="text-sm font-semibold text-gray-900" />
+                          {/* SDK subheader.short — dimmed, smaller */}
+                          <div ref={subheaderMountRef} className="text-xs text-gray-500 leading-snug" />
+                        </div>
+                        {/* SDK icon — right-aligned, sized to match VISA+MC badges above */}
+                        <div ref={iconMountRef} className="shrink-0 ml-auto" style={{ width: 56, height: 22 }} />
                       </div>
-                      <span className="text-sm font-medium text-gray-900">Pay with Klarna</span>
-                    </div>
-
-                    {/* Flow Status */}
-                    {errorMessage && (
-                      <div className="text-red-500 text-xs mb-2 ml-6">{errorMessage}</div>
-                    )}
-                    {(flowState === 'INITIALIZING' || flowState === 'AUTHORIZING' || flowState === 'COMPLETING') && (
-                      <div className="text-xs text-blue-500 mb-2 ml-6">
-                        {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : flowState === 'AUTHORIZING' ? 'Initiating payment...' : 'Completing payment...'}
-                      </div>
-                    )}
-                    {flowState === 'STEP_UP' && (
-                      <div className="text-xs text-purple-600 mb-2 ml-6">Customer in Klarna journey...</div>
-                    )}
-
-                    {/* Button Mount Container */}
-                    <div className="min-h-[48px] flex items-center justify-center relative">
-                      {/* SDK Mount Target - React will NOT manage children of this div */}
+                      {/* SDK subheader.enriched (message) — body text, only when selected */}
                       <div
-                        ref={buttonWrapperRef}
-                        style={{
-                          width: '100%',
-                          display: flowState === 'INITIALIZING' ? 'none' : 'block',
-                        }}
+                        ref={messageMountRef}
+                        style={{ display: selectedPaymentMethod === 'klarna' ? 'block' : 'none' }}
+                        className="mt-2 ml-6 text-sm text-gray-700 leading-relaxed"
                       />
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* On-Site Messaging */}
+                {/* Flow Status */}
+                {errorMessage && (
+                  <div className="text-red-500 text-xs mb-2">{errorMessage}</div>
+                )}
+                {(flowState === 'INITIALIZING' || flowState === 'AUTHORIZING' || flowState === 'COMPLETING') && (
+                  <div className="text-xs text-blue-500 mb-2">
+                    {flowState === 'INITIALIZING' ? 'Loading Klarna SDK...' : flowState === 'AUTHORIZING' ? 'Initiating payment...' : 'Completing payment...'}
+                  </div>
+                )}
+                {flowState === 'STEP_UP' && (
+                  <div className="text-xs text-purple-600 mb-2">Customer in Klarna journey...</div>
+                )}
+
+                {/* Bottom Button Area */}
+                <div className="mt-4 flex justify-center">
+                  {/* SDK payment button mount target — right-aligned, hidden when inactive */}
                   <div
-                    id="klarna-osm-placement"
-                    style={{ width: '100%', marginTop: '8px' }}
+                    ref={bottomButtonWrapperRef}
+                    style={{
+                      display: selectedPaymentMethod === 'klarna' ? 'block' : 'none',
+                    }}
                   />
+                  {/* Fallback buttons when Klarna button is not shown */}
+                  {selectedPaymentMethod === 'credit_card' && (
+                    <button
+                      disabled
+                      className="w-full bg-gray-300 text-gray-500 px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
+                    >
+                      Pay with Credit Card
+                    </button>
+                  )}
+                  {!selectedPaymentMethod && flowState === 'READY' && (
+                    <button
+                      disabled
+                      className="w-full bg-gray-200 text-gray-400 px-5 py-3 rounded text-sm font-bold border-none cursor-not-allowed"
+                    >
+                      Select a payment method
+                    </button>
+                  )}
                 </div>
               </>
             )}
